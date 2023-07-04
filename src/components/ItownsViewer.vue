@@ -457,7 +457,6 @@ export default {
           onMeshCreated: function scaleZ(mesh) {
               mesh.children.forEach(c => {
                   c.scale.z = 0.01
-                  //TODO : Génerer sol ici ???
                   meshes.push(c)
               })
           },
