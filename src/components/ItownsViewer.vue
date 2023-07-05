@@ -172,7 +172,7 @@ export default {
           // mesh.updateMatrixWorld()
           mesh.geometry.applyMatrix4(mesh.matrixWorld);
           geometries.push(mesh.geometry)
-          this.exportMeshAsGeoJSON(mesh)
+          // this.exportMeshAsGeoJSON(mesh)
 
           // const material = new itowns.THREE.MeshBasicMaterial({ color: 0xffffff, side: itowns.THREE.DoubleSide });
           // const mesh = new itowns.THREE.Mesh(object3D.children[0].children[0].children[0].geometry, material);
