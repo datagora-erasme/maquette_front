@@ -27,7 +27,7 @@ var lyonPlacement
 var coordMouse
 var selectedArea
 var draggable
-var wfsMeshes
+// var wfsMeshes
 const raycaster = new itowns.THREE.Raycaster(); // create once
 const clickMouse = new itowns.THREE.Vector2();  // create once
 
@@ -40,18 +40,18 @@ export default {
     }
   },
   computed: {
-    currentZoomLevel() {
-      if (view && view.controls) {
-        return view.controls.getZoom()
-      } else {
-        return null
-      }
-    }
+    // currentZoomLevel() {
+    //   if (view && view.controls) {
+    //     return view.controls.getZoom()
+    //   } else {
+    //     return null
+    //   }
+    // }
   },
   watch: {
-    currentZoomLevel() {
-      console.log(this.currentZoomLevel)
-    }
+    // currentZoomLevel() {
+    //   console.log(this.currentZoomLevel)
+    // }
   },
   mounted() {
     // ===== Init iTowns vars =====
@@ -61,36 +61,43 @@ export default {
         range: 30000,
     }
     viewerDiv = document.getElementById('viewerDiv')
+    
 
-    // ===== Init View =====
-    view = new itowns.GlobeView(viewerDiv, lyonPlacement)
+    itowns.proj4.defs('EPSG:3946', '+proj=lcc +lat_1=45.25 +lat_2=46.75 +lat_0=46 +lon_0=3 +x_0=1700000 +y_0=5200000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs');
+
+    const extent = new itowns.Extent('EPSG:3946', 1837816.94334, 1847692.32501, 5170036.4587, 5178412.82698);
+    view = new itowns.PlanarView(viewerDiv, extent, { placement: { heading: 49.6, range: 6200, tilt: 17 } });
   
     // ===== Init Data and add layer to iTowns =====
-    this.loadFdpData(view)
+    this.loadWmsData(view, extent);
+    // this.add3DTilesFromUDVizData(view);
+    this.add3DTilesFromLiris2018(view);
+    // // this.loadFdpData(view)
     // ===== Init Navigation Widgets =====
-    this.addNavigationWidget(view)
+    // // this.addNavigationWidget(view)
     // ===== Init Searchbar Widgets =====
-    this.addSearchBarWidget(view)
+    // // this.addSearchBarWidget(view)
     // ===== Add 3D Building =====
-    this.addBuildingLayer()
-
+    // // this.addBuildingLayer()
+    // Add scale widget
+    this.addScaleWidget(view)
     // Finally...
     view.notifyChange()
 
     // Global init Event
-    view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function m() {
-      console.info('-Globe initialized-')
-        // ===== Show Debug =====
-        this.showDebugInfos()
-        // ===== Show All Layers =====
-        this.showAllLayers()
-    }.bind(this))
+    // view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function m() {
+    //   console.info('-Globe initialized-')
+    //     // ===== Show Debug =====
+    //     this.showDebugInfos()
+    //     // ===== Show All Layers =====
+    //     this.showAllLayers()
+    // }.bind(this))
 
     // Add Mouse move Event listener
-    window.addEventListener('mousemove', this.handleMouseMove);
-    // Add Wheel Event listener
-    window.addEventListener('wheel', this.handleMouseMove)
-    // Add Click Event listener
+    // window.addEventListener('mousemove', this.handleMouseMove);
+    // // Add Wheel Event listener
+    // window.addEventListener('wheel', this.handleMouseMove)
+    // // Add Click Event listener
     viewerDiv.addEventListener('click', this.handleClick)
   },
   methods: {
@@ -129,8 +136,9 @@ export default {
 
       let geometry;
       if (selectedArea) {
-        // 
-        geometry = this.regroupGeometriesFromWFSData(selectedArea, wfsMeshes)
+        // geometry = this.regroupGeometriesFromWFSData(selectedArea, wfsMeshes)
+        // geometry = this.extractBuildingsFromTileLayersData(selectedArea, view)
+        geometry = this.extractBuildingsFromTileLayersDataUsingPositions(selectedArea, view)
       }
 
       if (geometry) {
@@ -152,7 +160,6 @@ export default {
 
       selectedAreaBoundingBox  = new itowns.THREE.Box3().setFromObject(selectedArea);
       // Iterate through each object
-      console.log('wfsMeshes', wfsMeshes)
       for (const groupOfMeshes of wfsMeshes) {
         let meshBoundingBox;
         let mesh = groupOfMeshes.children[0].children[0].children[0]
@@ -165,14 +172,12 @@ export default {
           meshBoundingBox = new itowns.THREE.Box3().setFromObject(mesh);
         }
         if (meshBoundingBox && this.intersectArea(selectedAreaBoundingBox, meshBoundingBox.min, meshBoundingBox.max)) {
-          console.log(mesh)
+          // console.log(mesh)
           mesh.position.copy(groupOfMeshes.children[0].position);
           mesh.quaternion.copy(groupOfMeshes.children[0].quaternion);
-          // mesh.updateMatrix()
-          // mesh.updateMatrixWorld()
           mesh.geometry.applyMatrix4(mesh.matrixWorld);
           geometries.push(mesh.geometry)
-          this.exportMeshAsGeoJSON(mesh)
+          // this.exportMeshAsGeoJSON(mesh)
 
           // const material = new itowns.THREE.MeshBasicMaterial({ color: 0xffffff, side: itowns.THREE.DoubleSide });
           // const mesh = new itowns.THREE.Mesh(object3D.children[0].children[0].children[0].geometry, material);
@@ -181,7 +186,7 @@ export default {
           // const bottomMesh = new itowns.THREE.Mesh(bottomGeometry, bottomMaterial);
           // bottomMesh.rotation.x = -Math.PI / 2; // Rotate the bottom face to face upwards
           // bottomMesh.position.copy(mesh.position); // Position the bottom face at the same position as the main mesh
-          // const morphPosition = new THREE.BufferAttribute(bottomMesh.position.array.slice(), 3);
+          // const morphPosition = new itowns.THREE.BufferAttribute(bottomMesh.position.array.slice(), 3);
 
           // // console.log(bottomMesh)
           // geometries.push(bottomMesh.geometry)
@@ -192,6 +197,76 @@ export default {
       }
       // console.log('geometries.length', geometries.length)
       // console.log(geometries)
+      let combinedGeometry
+      if (geometries.length)
+        combinedGeometry = mergeBufferGeometries(geometries);
+      return combinedGeometry;
+    },
+    // ? See extractBuildingsFromTileLayersDataUsingPositions()
+    // extractBuildingsFromTileLayersData(selectedArea, view) {
+    //   const geometries = []
+    //   let selectedAreaBoundingBox;
+
+    //   selectedAreaBoundingBox  = new itowns.THREE.Box3().setFromObject(selectedArea);
+    //   // Iterate through each object
+    //   console.log('selectedArea', selectedArea)
+    //   console.log(view)
+    //   const lyonBuildings = view.scene.children[1]
+    //   const arrayOfZones = lyonBuildings.children[0].children
+    //   for (const zone of arrayOfZones) {
+    //     let meshBoundingBox;
+    //     let zoneMesh = zone.children[0].children[0]
+    //     // let zoneMesh = zone.content.children[0]
+    //     if (zoneMesh) {
+    //       meshBoundingBox = new itowns.THREE.Box3().setFromObject(zoneMesh);
+    //     }
+    //     if (meshBoundingBox && this.intersectArea(selectedAreaBoundingBox, meshBoundingBox.min, meshBoundingBox.max)) {
+    //       zoneMesh.position.copy(zone.children[0].position);
+    //       // zoneMesh.quaternion.copy(zone.children[0].quaternion);
+    //       geometries.push(zoneMesh.geometry)
+    //       // this.exportGeometry(zoneMesh.geometry)
+    //     }
+    //   }
+    //   let combinedGeometry
+    //   if (geometries.length)
+    //     combinedGeometry = mergeBufferGeometries(geometries);
+    //   return combinedGeometry;
+    // },
+    extractBuildingsFromTileLayersDataUsingPositions(selectedArea, view) {
+      const geometries = []
+      let selectedAreaBoundingBox;
+
+      selectedAreaBoundingBox  = new itowns.THREE.Box3().setFromObject(selectedArea);
+      // Iterate through each object
+      console.log('selectedArea', selectedArea)
+      console.log(view)
+      const lyonBuildings = view.scene.children[1]
+      const arrayOfZones = lyonBuildings.children[0].children
+      for (const zone of arrayOfZones) {
+        let zoneMesh = zone.children[0].children[0]
+        const zoneMeshPositions = zoneMesh.geometry.attributes.position.array;
+        const newPositions = []
+          zoneMesh.position.copy(zone.children[0].position);
+          zoneMesh.geometry.applyMatrix4(zoneMesh.matrixWorld);
+        // console.log(newPositions)
+        for (let i = 0; i < zoneMeshPositions.length; i += 3) {
+          const x = zoneMeshPositions[i];
+          const y = zoneMeshPositions[i + 1];
+          const z = zoneMeshPositions[i + 2];
+          // Step 3: Check if the vertex is inside the cube's bounding box
+          const vertex = new itowns.THREE.Vector3(x, y, z);
+          if (this.intersectArea(selectedAreaBoundingBox, { x: vertex.x, y: vertex.y }, { x: vertex.x, y: vertex.y })) {
+            // Step 4: Add the position to the new positions array
+            newPositions.push(x, y, z);
+          }
+        }
+        // console.log(newPositions)
+
+        const newGeometry = new itowns.THREE.BufferGeometry();
+        newGeometry.setAttribute('position', new itowns.THREE.Float32BufferAttribute( newPositions, 3 ) );
+        newGeometry.computeVertexNormals()
+        geometries.push(newGeometry)
+      }
       let combinedGeometry
       if (geometries.length)
         combinedGeometry = mergeBufferGeometries(geometries);
@@ -304,8 +379,9 @@ export default {
      * @param {itowns.THREE.BufferGeometry} geometry
      */
     exportGeometry(geometry) {
-      const material = new itowns.THREE.MeshBasicMaterial({ color: 0xffffff });
+      const material = new itowns.THREE.MeshNormalMaterial({ color: 0xffffff });
       const mesh = new itowns.THREE.Mesh(geometry, material);
+      console.log(mesh)
       const options = { binary: false };
       const exporter = new OBJExporter();
       const result = exporter.parse(mesh, options);
@@ -324,11 +400,9 @@ export default {
       element.click();
 
       document.body.removeChild(element);
-      console.log(result)
     },
     intersectArea(areaSelected, min, max) {
       const area = areaSelected;
-
       if (!area.min || !area.max) return false;
 
       // TODO could be optimize if not compute at each intersect
@@ -340,7 +414,6 @@ export default {
         Math.max(area.min.x, area.max.x),
         Math.max(area.min.y, area.max.y)
       );
-
       return (
         minArea.x <= max.x &&
         maxArea.x >= min.x &&
@@ -355,6 +428,7 @@ export default {
       const found = this.intersect(clickMouse);
       if (found.length > 0) {
         // But only taking into account the selectedArea (see metadata above, userData.draggable)
+        // console.log(found)
         if (found[0].object.userData.draggable) {
           draggable = found[0].object
           console.log(`found draggable ${draggable.userData.name}`)
@@ -387,6 +461,202 @@ export default {
 
         }
       });
+    },
+    loadWmsData(view, extent) {
+      // Add a WMS imagery source
+      var wmsImagerySource = new itowns.WMSSource({
+          extent: extent,
+          name: 'Ortho2009_vue_ensemble_16cm_CC46',
+          url: 'https://download.data.grandlyon.com/wms/grandlyon',
+          version: '1.3.0',
+          crs: 'EPSG:3946',
+          format: 'image/jpeg',
+      });
+
+      // Add a WMS imagery layer
+      var wmsImageryLayer = new itowns.ColorLayer('wms_imagery', {
+          updateStrategy: {
+              type: itowns.STRATEGY_DICHOTOMY,
+              options: {},
+          },
+          source: wmsImagerySource,
+      });
+
+      view.addLayer(wmsImageryLayer);
+
+      // Add a WMS elevation source
+      var wmsElevationSource = new itowns.WMSSource({
+          extent: extent,
+          url: 'https://download.data.grandlyon.com/wms/grandlyon',
+          name: 'MNT2012_Altitude_10m_CC46',
+          crs: 'EPSG:3946',
+          width: 256,
+          format: 'image/jpeg',
+      });
+
+      // // Add a WMS elevation layer
+      var wmsElevationLayer = new itowns.ElevationLayer('wms_elevation', {
+          useColorTextureElevation: true,
+          colorTextureElevationMinZ: 144,
+          colorTextureElevationMaxZ: 622,
+          source: wmsElevationSource,
+      });
+
+      view.addLayer(wmsElevationLayer);
+
+      var wfsCartoSource = new itowns.WFSSource({
+          url: 'https://wxs.ign.fr/cartovecto/geoportail/wfs?',
+          version: '2.0.0',
+          typeName: 'BDCARTO_BDD_WLD_WGS84G:zone_habitat_mairie',
+          crs: 'EPSG:3946',
+          ipr: 'IGN',
+          format: 'application/json',
+      });
+
+      var wfsCartoStyle = new itowns.Style({
+          zoom: { min: 0, max: 20 },
+          text: {
+              field: '{toponyme}',
+              color: 'white',
+              transform: 'uppercase',
+              size: 15,
+              haloColor: 'rgba(20,20,20, 0.8)',
+              haloWidth: 3,
+          },
+      });
+
+      var wfsCartoLayer = new itowns.LabelLayer('wfsCarto', {
+          source: wfsCartoSource,
+          style: wfsCartoStyle,
+      });
+
+      view.addLayer(wfsCartoLayer);
+    },
+    add3DTilesFromUDVizData(view) {
+      const layers = [
+        {
+          'id': 'Lyon-1',
+          'url': 'https://dataset-dl.liris.cnrs.fr/three-d-tiles-lyon-metropolis/2015/Lyon-1_2015/tileset.json',
+          'color': '0xFFFFFF'
+        },
+        {
+          'id': 'Lyon-2',
+          'url': 'https://dataset-dl.liris.cnrs.fr/three-d-tiles-lyon-metropolis/2015/Lyon-2_2015/tileset.json',
+          'color': '0xFFFFFF'
+        },
+        {
+          'id': 'Lyon-3',
+          'url': 'https://dataset-dl.liris.cnrs.fr/three-d-tiles-lyon-metropolis/2015/Lyon-3_2015/tileset.json',
+          'color': '0xFFFFFF'
+        },
+        {
+          'id': 'Lyon-4',
+          'url': 'https://dataset-dl.liris.cnrs.fr/three-d-tiles-lyon-metropolis/2015/Lyon-4_2015/tileset.json',
+          'color': '0xFFFFFF'
+        },
+        {
+          'id': 'Lyon-5',
+          'url': 'https://dataset-dl.liris.cnrs.fr/three-d-tiles-lyon-metropolis/2015/Lyon-5_2015/tileset.json',
+          'color': '0xFFFFFF'
+        },
+        {
+          'id': 'Lyon-6',
+          'url': 'https://dataset-dl.liris.cnrs.fr/three-d-tiles-lyon-metropolis/2015/Lyon-6_2015/tileset.json',
+          'color': '0xFFFFFF'
+        },
+        {
+          'id': 'Lyon-7',
+          'url': 'https://dataset-dl.liris.cnrs.fr/three-d-tiles-lyon-metropolis/2015/Lyon-7_2015/tileset.json',
+          'color': '0xFFFFFF'
+        },
+        {
+          'id': 'Lyon-8',
+          'url': 'https://dataset-dl.liris.cnrs.fr/three-d-tiles-lyon-metropolis/2015/Lyon-8_2015/tileset.json',
+          'color': '0xFFFFFF'
+        }
+      ]
+    for (const layer of layers) {
+      const $3dTilesLayer = new itowns.C3DTilesLayer(
+        layer['id'],
+        {
+          name: layer['id'],
+          source: new itowns.C3DTilesSource({
+            url: layer['url'],
+          }),
+          style: {
+            fill: {
+              color: 0xFFFFFF
+            },
+          },
+        },
+        view
+      );
+      // console.log($3dTilesLayer)
+      itowns.View.prototype.addLayer.call(view, $3dTilesLayer);
+      }
+
+      // Create a new 3d-tiles layer from a web server
+      // const l3dt = new C3DTilesLayer('3dtiles', {
+      //     name: '3dtl',
+      //     source: new C3DTilesSource({
+      //           url: 'https://tileset.json'
+      //     })
+      // }, view);
+      // View.prototype.addLayer.call(view, l3dt);
+
+      // // Create a new 3d-tiles layer from a Cesium ion server
+    },
+    add3DTilesFromLiris2018(view) {
+      const layers = [
+        {
+        'id': 'Lyon-Buildings',
+        'url': 'https://dataset-dl.liris.cnrs.fr/three-d-tiles-lyon-metropolis/2018/Lyon_2018/tileset.json',
+        'color': '0xFFFFFF'
+        },
+        {
+        'id': 'Villeurbanne-Buildings',
+        'url': 'https://dataset-dl.liris.cnrs.fr/three-d-tiles-lyon-metropolis/Villeurbanne_2018_TileSet/tileset.json',
+        'color': '0xFFFFFF'
+        },
+      ];
+
+      for (const layer of layers) {
+        const $3dTilesLayer = new itowns.C3DTilesLayer(
+          layer['id'],
+          {
+            name: layer['id'],
+            source: new itowns.C3DTilesSource({
+              url: layer['url'],
+            }),
+            style: {
+              fill: {
+                color: 'white'
+              },
+            },
+          },
+          view
+        );
+        // console.log($3dTilesLayer)
+        itowns.View.prototype.addLayer.call(view, $3dTilesLayer);
+      }
+
+        // Create a new 3d-tiles layer from a web server
+        // const l3dt = new C3DTilesLayer('3dtiles', {
+        //     name: '3dtl',
+        //     source: new C3DTilesSource({
+        //           url: 'https://tileset.json'
+        //     })
+        // }, view);
+        // View.prototype.addLayer.call(view, l3dt);
+
+        // // Create a new 3d-tiles layer from a Cesium ion server
+    },
+    addScaleWidget(view) {
+      const scale = new itowns_widgets.Scale(view, {
+                position: 'bottom-right',
+                translate: { x: -70 },
+            });
+      return scale;
     },
     loadFdpData() {
       // Init Data and add layer to iTowns
@@ -472,7 +742,7 @@ export default {
           })
       })
       // ! Add to local variable ???
-      wfsMeshes = meshes
+      // wfsMeshes = meshes
 
       view.addLayer(wfsBuildingLayer)
     },
@@ -557,7 +827,7 @@ export default {
       
       this.removeSelectedArea();
 
-      const target = new itowns.Coordinates('EPSG:4978', 0, 0, 0);
+      const target = new itowns.Coordinates('EPSG:3946', 0, 0, 0);
       const result = view.pickCoordinates(event, target);
 
       const geometry = new itowns.THREE.BoxGeometry(200, 300, 100);
@@ -565,7 +835,7 @@ export default {
 
       selectedArea = new itowns.THREE.Mesh(geometry, material);
       selectedArea.position.set(result.x, result.y, result.z + 50)
-      selectedArea.rotation.set(Math.PI/1, Math.PI / 4, Math.PI / 1)
+      selectedArea.rotation.set(Math.PI/1, Math.PI / 1, Math.PI / 1)
       this.selectedArea = selectedArea;
 
       // Filling the selectedArea's metadata (used to get the selectedArea with raycaster)
