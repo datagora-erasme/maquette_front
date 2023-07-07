@@ -27,6 +27,8 @@ var lyonPlacement
 var coordMouse
 var selectedArea
 var draggable
+
+
 // var wfsMeshes
 const raycaster = new itowns.THREE.Raycaster(); // create once
 const clickMouse = new itowns.THREE.Vector2();  // create once
@@ -137,8 +139,8 @@ export default {
       let geometry;
       if (selectedArea) {
         // geometry = this.regroupGeometriesFromWFSData(selectedArea, wfsMeshes)
-        // geometry = this.extractBuildingsFromTileLayersData(selectedArea, view)
-        geometry = this.extractBuildingsFromTileLayersDataUsingPositions(selectedArea, view)
+        geometry = this.extractBuildingsFromTileLayersData(selectedArea, view)
+        // geometry = this.extractBuildingsFromTileLayersDataUsingPositions(selectedArea, view)
       }
 
       if (geometry) {
@@ -202,36 +204,10 @@ export default {
         combinedGeometry = mergeBufferGeometries(geometries);
       return combinedGeometry;
     },
-    // extractBuildingsFromTileLayersData(selectedArea, view) {
-    //   const geometries = []
-    //   let selectedAreaBoundingBox;
-
-    //   selectedAreaBoundingBox  = new itowns.THREE.Box3().setFromObject(selectedArea);
-    //   // Iterate through each object
-    //   console.log('selectedArea', selectedArea)
-    //   console.log(view)
-    //   const lyonBuildings = view.scene.children[1]
-    //   const arrayOfZones = lyonBuildings.children[0].children
-    //   for (const zone of arrayOfZones) {
-    //     let meshBoundingBox;
-    //     let zoneMesh = zone.children[0].children[0]
-    //     // let zoneMesh = zone.content.children[0]
-    //     if (zoneMesh) {
-    //       meshBoundingBox = new itowns.THREE.Box3().setFromObject(zoneMesh);
-    //     }
-    //     if (meshBoundingBox && this.intersectArea(selectedAreaBoundingBox, meshBoundingBox.min, meshBoundingBox.max)) {
-    //       zoneMesh.position.copy(zone.children[0].position);
-    //       // zoneMesh.quaternion.copy(zone.children[0].quaternion);
-    //       geometries.push(zoneMesh.geometry)
-    //       // this.exportGeometry(zoneMesh.geometry)
-    //     }
-    //   }
-    //   let combinedGeometry
-    //   if (geometries.length)
-    //     combinedGeometry = mergeBufferGeometries(geometries);
-    //   return combinedGeometry;
-    // },
-    extractBuildingsFromTileLayersDataUsingPositions(selectedArea, view) {
+    /**
+     * Extracts the whole "zone" that intersects w/ the selectedArea.
+     */
+    extractBuildingsFromTileLayersData(selectedArea, view) {
       const geometries = []
       let selectedAreaBoundingBox;
 
@@ -241,21 +217,56 @@ export default {
       console.log(view)
       const lyonBuildings = view.scene.children[1]
       const arrayOfZones = lyonBuildings.children[0].children
-      // const subsetPositionAttribute = new itowns.THREE.BufferAttribute(new Float32Array(zoneMeshPositions), 3);
-      // const subsetNormalAttribute = new itowns.THREE.BufferAttribute(new Float32Array(zoneMeshNormals), 3);
+      for (const zone of arrayOfZones) {
+        let meshBoundingBox;
+        let zoneMesh = zone.children[0].children[0]
+        // let zoneMesh = zone.content.children[0]
+        if (zoneMesh) {
+          meshBoundingBox = new itowns.THREE.Box3().setFromObject(zoneMesh);
+        }
+        if (meshBoundingBox && this.intersectArea(selectedAreaBoundingBox, meshBoundingBox.min, meshBoundingBox.max)) {
+          zoneMesh.position.copy(zone.children[0].position);
+          // zoneMesh.quaternion.copy(zone.children[0].quaternion);
+          geometries.push(zoneMesh.geometry)
+          // this.exportGeometry(zoneMesh.geometry)
+        }
+      }
+      let combinedGeometry
+      if (geometries.length)
+        combinedGeometry = mergeBufferGeometries(geometries);
+      return combinedGeometry;
+    },
+    /**
+     * Supposed to extract exactly the vertices intersecting with the selectedArea.
+     */
+    extractBuildingsFromTileLayersDataUsingPositions(selectedArea, view) {
+      let selectedAreaBoundingBox;
+
+      selectedAreaBoundingBox  = new itowns.THREE.Box3().setFromObject(selectedArea);
+      // Iterate through each object
+      console.log('selectedArea', selectedArea)
+      console.log(view)
+      const lyonBuildings = view.scene.children[1] // Layer
+      const arrayOfZones = lyonBuildings.children[0].children // Contains multiple zones
+      // 1 zone = 1 Group(Object3D) with a child (who has a child, and so on...). Each zone's last child contains the mesh of the zone.
+      // Arrays that'll be filled with the positions & normals of the vertices inside the cube.
       const subsetPositionAttributeArray = []
       const subsetNormalAttributeArray = []
+      // Variablers that we'll use to create Buffer Attributes later
       let subsetPositionAttribute;
       let subsetNormalAttribute;
       for (const zone of arrayOfZones) {
+        // We get the zone's mesh (final child)
         let zoneMesh = zone.children[0].children[0]
-        // On met la position du groupe dans les enfants et on update la matrixworld pour avoir les bonnes coords dans geometry
+        // We copy the group's position into the mesh's attributes
         zoneMesh.position.copy(zone.children[0].position);
-        zoneMesh.geometry.applyMatrix4(zoneMesh.matrixWorld);
+        // A copy of the geometry is created because for some reason, 
+        // .applyMatrixWorld() makes the mesh disappear on the map.
+        const zoneMeshGeometry = zoneMesh.geometry.clone();
+        zoneMeshGeometry.applyMatrix4(zoneMesh.matrixWorld);
         // On récupère ces positions-là
-        const zoneMeshPositions = zoneMesh.geometry.attributes.position.array;
-        const zoneMeshNormals = zoneMesh.geometry.attributes.normal.array;
-        // Arrays qui vont être remplis et servir de new position de la géométrie finale
+        const zoneMeshPositions = zoneMeshGeometry.attributes.position.array;
+        const zoneMeshNormals = zoneMeshGeometry.attributes.normal.array;
         for (let i = 0; i < zoneMeshPositions.length; i += 3) {
           const x = zoneMeshPositions[i];
           const y = zoneMeshPositions[i + 1];
@@ -263,6 +274,7 @@ export default {
           const x_normal = zoneMeshNormals[i]
           const y_normal = zoneMeshNormals[i + 1];
           const z_normal = zoneMeshNormals[i + 2];
+          // The same point is used for intersectArea(-, min, max) because we're locating single vertices and not meshes.
           if (this.intersectArea(selectedAreaBoundingBox, { x, y }, { x, y })) {
             subsetPositionAttributeArray.push(x)
             subsetPositionAttributeArray.push(y)
@@ -272,19 +284,14 @@ export default {
             subsetNormalAttributeArray.push(z_normal)
           }
         }
-        // newGeometry.computeVertexNormals()
-        // geometries.push(newGeometry)
       }
-        subsetPositionAttribute = new itowns.THREE.BufferAttribute(new Float32Array(subsetPositionAttributeArray), 3);
-        subsetNormalAttribute = new itowns.THREE.BufferAttribute(new Float32Array(subsetNormalAttributeArray), 3);
-      // let combinedGeometry
-      // if (geometries.length)
-      //   combinedGeometry = mergeBufferGeometries(geometries);
-      // return combinedGeometry;
+      subsetPositionAttribute = new itowns.THREE.BufferAttribute(new Float32Array(subsetPositionAttributeArray), 3);
+      subsetNormalAttribute = new itowns.THREE.BufferAttribute(new Float32Array(subsetNormalAttributeArray), 3);
+      // One unique geometry is created, the bounding box is computed to "create" its values.
       const newGeometry = new itowns.THREE.BufferGeometry();
       newGeometry.setAttribute('position', subsetPositionAttribute);
       newGeometry.setAttribute('normal', subsetNormalAttribute);
-      newGeometry.computeFaceNormals()
+      newGeometry.computeBoundingBox()
       console.log(newGeometry)
       return newGeometry
     },
@@ -353,6 +360,10 @@ export default {
       const material = new itowns.THREE.MeshNormalMaterial({ color: 0xffffff });
       const mesh = new itowns.THREE.Mesh(geometry, material);
       console.log(mesh)
+      for (let i=0; i<mesh.geometry.attributes.position.length; i++) {
+        if (mesh.geometry.attributes.position[i] === undefined)
+          console.log('UNDEFINED VALUES')
+      }
       const options = { binary: false };
       const exporter = new STLExporter();
       const result = exporter.parse(mesh, options);
@@ -801,7 +812,7 @@ export default {
       const target = new itowns.Coordinates('EPSG:3946', 0, 0, 0);
       const result = view.pickCoordinates(event, target);
 
-      const geometry = new itowns.THREE.BoxGeometry(1000, 1000, 150);
+      const geometry = new itowns.THREE.BoxGeometry(500, 500, 150);
       const material = new itowns.THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.4, transparent: true });
 
       selectedArea = new itowns.THREE.Mesh(geometry, material);
