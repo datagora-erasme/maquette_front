@@ -13,7 +13,7 @@
 <script>
 import * as itowns from '@/node_modules/itowns/dist/itowns'
 import * as itowns_widgets from '@/node_modules/itowns/dist/itowns_widgets'
-import { OBJExporter } from 'three/examples/jsm/exporters/OBJExporter.js';
+import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
 // import { PLYExporter } from 'three/addons/exporters/PLYExporter.js';
 import { mergeBufferGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { gsap, Power2 } from 'gsap'
@@ -202,7 +202,6 @@ export default {
         combinedGeometry = mergeBufferGeometries(geometries);
       return combinedGeometry;
     },
-    // ? See extractBuildingsFromTileLayersDataUsingPositions()
     // extractBuildingsFromTileLayersData(selectedArea, view) {
     //   const geometries = []
     //   let selectedAreaBoundingBox;
@@ -242,80 +241,52 @@ export default {
       console.log(view)
       const lyonBuildings = view.scene.children[1]
       const arrayOfZones = lyonBuildings.children[0].children
+      // const subsetPositionAttribute = new itowns.THREE.BufferAttribute(new Float32Array(zoneMeshPositions), 3);
+      // const subsetNormalAttribute = new itowns.THREE.BufferAttribute(new Float32Array(zoneMeshNormals), 3);
+      const subsetPositionAttributeArray = []
+      const subsetNormalAttributeArray = []
+      let subsetPositionAttribute;
+      let subsetNormalAttribute;
       for (const zone of arrayOfZones) {
         let zoneMesh = zone.children[0].children[0]
+        // On met la position du groupe dans les enfants et on update la matrixworld pour avoir les bonnes coords dans geometry
+        zoneMesh.position.copy(zone.children[0].position);
+        zoneMesh.geometry.applyMatrix4(zoneMesh.matrixWorld);
+        // On récupère ces positions-là
         const zoneMeshPositions = zoneMesh.geometry.attributes.position.array;
-        const newPositions = []
-          zoneMesh.position.copy(zone.children[0].position);
-          zoneMesh.geometry.applyMatrix4(zoneMesh.matrixWorld);
-        // console.log(newPositions)
+        const zoneMeshNormals = zoneMesh.geometry.attributes.normal.array;
+        // Arrays qui vont être remplis et servir de new position de la géométrie finale
         for (let i = 0; i < zoneMeshPositions.length; i += 3) {
           const x = zoneMeshPositions[i];
           const y = zoneMeshPositions[i + 1];
           const z = zoneMeshPositions[i + 2];
-          // Step 3: Check if the vertex is inside the cube's bounding box
-          const vertex = new itowns.THREE.Vector3(x, y, z);
-          if (this.intersectArea(selectedAreaBoundingBox, { x: vertex.x, y: vertex.y }, { x: vertex.x, y: vertex.y })) {
-            // Step 4: Add the position to the new positions array
-            newPositions.push(x, y, z);
+          const x_normal = zoneMeshNormals[i]
+          const y_normal = zoneMeshNormals[i + 1];
+          const z_normal = zoneMeshNormals[i + 2];
+          if (this.intersectArea(selectedAreaBoundingBox, { x, y }, { x, y })) {
+            subsetPositionAttributeArray.push(x)
+            subsetPositionAttributeArray.push(y)
+            subsetPositionAttributeArray.push(z)
+            subsetNormalAttributeArray.push(x_normal)
+            subsetNormalAttributeArray.push(y_normal)
+            subsetNormalAttributeArray.push(z_normal)
           }
         }
-        // console.log(newPositions)
-
-        const newGeometry = new itowns.THREE.BufferGeometry();
-        newGeometry.setAttribute('position', new itowns.THREE.Float32BufferAttribute( newPositions, 3 ) );
-        newGeometry.computeVertexNormals()
-        geometries.push(newGeometry)
+        // newGeometry.computeVertexNormals()
+        // geometries.push(newGeometry)
       }
-      let combinedGeometry
-      if (geometries.length)
-        combinedGeometry = mergeBufferGeometries(geometries);
-      return combinedGeometry;
-    },
-    exportVerticesAndNormals(mesh) {
-      // Exporting Geo Data
-      const geo = mesh.geometry;
-      const positions = geo.attributes.position.array;
-
-      // Get the vertex normals from the geometry (if available)
-      const normals = geo.attributes.normal ? geo.attributes.normal.array : null;
-
-      // Get the UV coordinates from the geometry (if available)
-      const uvs = geo.attributes.uv ? geo.attributes.uv.array : null;
-
-      // Get the triangle indices from the geometry
-      const indices = geo.index ? geo.index.array : null;
-
-      // Convert the vertex positions to a nested array of [x, y, z] coordinates
-      const vertices = [];
-      for (var i = 0; i < positions.length; i += 3) {
-        vertices.push([positions[i], positions[i + 1], positions[i + 2]]);
-      }
-
-      // Convert the vertex normals to a nested array of [x, y, z] coordinates (if available)
-      const normalsArray = [];
-      if (normals) {
-        for (var i = 0; i < normals.length; i += 3) {
-          normalsArray.push([normals[i], normals[i + 1], normals[i + 2]]);
-        }
-      }
-
-      // Convert the UV coordinates to a nested array of [u, v] coordinates (if available)
-      const uvsArray = [];
-      if (uvs) {
-        for (var i = 0; i < uvs.length; i += 2) {
-          uvsArray.push([uvs[i], uvs[i + 1]]);
-        }
-      }
-
-      // Convert the triangle indices to a nested array of triangle indices (if available)
-      const triangles = [];
-      if (indices) {
-        for (var i = 0; i < indices.length; i += 3) {
-          triangles.push([indices[i], indices[i + 1], indices[i + 2]]);
-        }
-      }
-      return { vertices, normalsArray, uvsArray, triangles }
+        subsetPositionAttribute = new itowns.THREE.BufferAttribute(new Float32Array(subsetPositionAttributeArray), 3);
+        subsetNormalAttribute = new itowns.THREE.BufferAttribute(new Float32Array(subsetNormalAttributeArray), 3);
+      // let combinedGeometry
+      // if (geometries.length)
+      //   combinedGeometry = mergeBufferGeometries(geometries);
+      // return combinedGeometry;
+      const newGeometry = new itowns.THREE.BufferGeometry();
+      newGeometry.setAttribute('position', subsetPositionAttribute);
+      newGeometry.setAttribute('normal', subsetNormalAttribute);
+      newGeometry.computeFaceNormals()
+      console.log(newGeometry)
+      return newGeometry
     },
     /**
      * Exports a mesh as GeoJSON and downloads the file.
@@ -383,10 +354,10 @@ export default {
       const mesh = new itowns.THREE.Mesh(geometry, material);
       console.log(mesh)
       const options = { binary: false };
-      const exporter = new OBJExporter();
+      const exporter = new STLExporter();
       const result = exporter.parse(mesh, options);
       
-      const filename = 'result.obj';
+      const filename = 'result.stl';
       const element = document.createElement('a');
       element.setAttribute(
       'href',
@@ -830,7 +801,7 @@ export default {
       const target = new itowns.Coordinates('EPSG:3946', 0, 0, 0);
       const result = view.pickCoordinates(event, target);
 
-      const geometry = new itowns.THREE.BoxGeometry(200, 300, 100);
+      const geometry = new itowns.THREE.BoxGeometry(1000, 1000, 150);
       const material = new itowns.THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.4, transparent: true });
 
       selectedArea = new itowns.THREE.Mesh(geometry, material);
