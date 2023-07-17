@@ -65,6 +65,8 @@ export default {
     // ===== Init View =====
     view = new itowns.GlobeView(viewerDiv, lyonPlacement)
   
+    // ===== Add other projections to iTowns =====
+    this.addCustomProjections()
     // ===== Init Data and add layer to iTowns =====
     this.loadFdpData(view)
     // ===== Init Navigation Widgets =====
@@ -107,18 +109,32 @@ export default {
         console.log(layer.id, layer.crs, layer)
       })
     },
+    addCustomProjections() {
+      // Define crs projection that we will use (taken from https://epsg.io/2154, Proj4js section)
+      itowns.proj4.defs('EPSG:2154', '+proj=lcc +lat_0=46.5 +lon_0=3 +lat_1=49 +lat_2=44 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs')
+    },
     handleMouseMove(event) {
+      // DEBUG
+      // console.log(event)
+
       // Define mouse coord
       coordMouse = new itowns.THREE.Vector2();
       coordMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
       coordMouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-      const target = new itowns.Coordinates('EPSG:4978', 0, 0, 0);
+      const target = new itowns.Coordinates('EPSG:2154', 0, 0, 0);
       const result = view.pickCoordinates(event, target);
-      // ! Print mouse coords in debug div
-      this.debugInfos = 'Mouse coord : ' + JSON.stringify(coordMouse) + '<br> Map coord: ' + JSON.stringify({ x: result.x, y: result.y, z: result.z })
       // ! Print Zoom level in debug div
-      this.debugInfos += '<br> Zoom : ' + JSON.stringify(view.controls.getZoom())
+      this.debugInfos = 'Zoom level : ' + JSON.stringify(view.controls.getZoom())
+      // ! Print mouse coords in debug div
+      this.debugInfos += '<br> Mouse (window) coord : <br>' + JSON.stringify(coordMouse)
+      this.debugInfos += '<br> Map coord (2154) : ' + JSON.stringify({ x: result.x, y: result.y, z: result.z })
+      // ! Reproj with Coordinates
+      let convertCoord = new itowns.Coordinates('EPSG:2154', result).as('EPSG:4326')
+      this.debugInfos += '<br> Test convert 2154 to 4326 : ' + JSON.stringify({ x: convertCoord.x, y: convertCoord.y, z: convertCoord.z })
+      // ! Reproj with itowns.proj4 (z ignored)
+      let convertProjCoord = itowns.proj4('EPSG:2154','EPSG:4326',{ x:result.x, y:result.y })
+      this.debugInfos += '<br> Test proj convert 2154 to 4326 : ' + JSON.stringify(convertProjCoord)
     },
     handleClick(event) {
       // Ensures that the selectedArea is only added when alt is pressed.
@@ -390,6 +406,8 @@ export default {
     },
     loadFdpData() {
       // Init Data and add layer to iTowns
+
+      // Ortho layer
       itowns.Fetcher.json('http://www.itowns-project.org/itowns/examples/layers/JSONLayers/Ortho.json')
         .then(ortho => {
           var orthoSource = new itowns.WMTSSource(ortho.source)
@@ -399,6 +417,7 @@ export default {
           view.addLayer(orthoLayer)
         })
 
+      // MNT layer
       itowns.Fetcher.json('http://www.itowns-project.org/itowns/examples/layers/JSONLayers/IGN_MNT.json')
         .then(mnt => {
           var mntSource = new itowns.WMTSSource(mnt.source)
@@ -409,6 +428,72 @@ export default {
         })
     },
     addBuildingLayer() {
+      var color = new itowns.THREE.Color()
+      var meshes = []
+
+      function colorBuildings(properties) {
+        if (properties.usage_1 === 'Résidentiel') {
+            return color.set(0xFDFDFF)
+        } else if (properties.usage_1 === 'Annexe') {
+            return color.set(0xC6C5B9)
+        } else if (properties.usage_1 === 'Commercial et services') {
+            return color.set(0x62929E)
+        } else if (properties.usage_1 === 'Religieux') {
+            return color.set(0x393D3F)
+        } else if (properties.usage_1 === 'Sportif') {
+            return color.set(0x546A7B)
+        }
+        return color.set(0x555555)
+      }
+      function acceptFeature(properties) {
+        return !!properties.hauteur
+      }
+      function altitudeBuildings(properties) {
+        return parseFloat(properties.altitude_minimale_sol)
+      }
+      function extrudeBuildings(properties) {
+        return parseFloat(properties.hauteur)
+      }
+
+      // DB IGN Building on Exo-Dev Server (217.182.138.216:8080) - Only dep 69 in France
+      var wfsBuildingSource = new itowns.WFSSource({
+        protocol: 'wfs',
+        url: 'http://217.182.138.216:8080/geoserver/Metropole/ows?',
+        version: '1.0.0',
+        typeName: 'Metropole:bati',
+        crs: 'EPSG:4326',
+        format: 'application/json',
+        maxFeatures: 1
+      })
+
+      // Create layer on wfs building source
+      var wfsBuildingLayer = new itowns.FeatureGeometryLayer('WFS Building',{
+          batchId: function(property, featureId) { return featureId },
+          accurate: true,
+          onMeshCreated: function scaleZ(mesh) {
+              mesh.children.forEach(c => {
+                  c.scale.z = 0.01
+                  meshes.push(c)
+              })
+          },
+          filter: acceptFeature,
+          source: wfsBuildingSource,
+          zoom: { min: 17 }, //14
+          style: new itowns.Style({
+              fill: {
+                  color: colorBuildings,
+                  base_altitude: altitudeBuildings,
+                  extrusion_height: extrudeBuildings,
+              }
+          })
+      })
+      // TODO: Add to local variable ???
+      // wfsMeshes = meshes
+
+      // Finally add layer
+      view.addLayer(wfsBuildingLayer)
+    },
+    addIGNBuildingLayer() {
       var color = new itowns.THREE.Color()
       var meshes = []
 
@@ -451,13 +536,14 @@ export default {
           north: 46.03,
         },
       })
+
+      // Create layer on wfs building source
       var wfsBuildingLayer = new itowns.FeatureGeometryLayer('WFS Building',{
-          batchId: function(property, featureId) { /*console.log(property, featureId);*/ return featureId },
+          batchId: function(property, featureId) { return featureId },
           accurate: true,
           onMeshCreated: function scaleZ(mesh) {
               mesh.children.forEach(c => {
                   c.scale.z = 0.01
-                  //TODO : Génerer sol ici ???
                   meshes.push(c)
               })
           },
@@ -472,9 +558,10 @@ export default {
               }
           })
       })
-      // ! Add to local variable ???
-      wfsMeshes = meshes
+      // TODO: Add to local variable ???
+      // wfsMeshes = meshes
 
+      // Finally add layer
       view.addLayer(wfsBuildingLayer)
     },
     lookAtCoordinate(coordinates) {

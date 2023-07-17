@@ -12,6 +12,16 @@ export default {
   var wireframeMaterial = new itowns.THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true }) //{ color: 0x00ff00, wireframe: true })
   var exampleMaterial = new itowns.THREE.MeshBasicMaterial({ color: 0x00ff00 }) //{ color: 0x00ff00, wireframe: true })
 
+  // Links
+  //==WMS==
+  //http://217.182.138.216:8080/geoserver/Metropole/wms?service=WMS&version=1.1.0&request=GetMap&layers=Metropole%3Abati&bbox=791003.625%2C6480095.5%2C873372.5625%2C6585209.5&width=601&height=768&srs=EPSG%3A404000&styles=&format=application/openlayers
+  //https://geoserver-planta.exo-dev.fr/geoserver/Metropole/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Metropole%3Abati&maxFeatures=50&outputFormat=application%2Fjson
+
+  //==WFS==
+  //http://217.182.138.216:8080/geoserver/Metropole/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Metropole%3Abati&maxFeatures=50&outputFormat=application%2Fjson
+  //http://217.182.138.216:8080/geoserver/Metropole/ows?SERVICE=WFS&REQUEST=GetFeature&typeName=Metropole:bati&VERSION=1.0.0&SRSNAME=EPSG:4326&outputFormat=application/json
+  // EPSG:4326
+
   // ! Useless ?
     // Define crs projection that we will use (taken from https://epsg.io/3946, Proj4js section)
     // itowns.proj4.defs('EPSG:3946', '+proj=lcc +lat_1=45.25 +lat_2=46.75 +lat_0=46 +lon_0=3 +x_0=1700000 +y_0=5200000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs')
