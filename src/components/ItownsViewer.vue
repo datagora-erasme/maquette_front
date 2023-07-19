@@ -13,9 +13,6 @@
 <script>
 import * as itowns from '@/node_modules/itowns/dist/itowns'
 import * as itowns_widgets from '@/node_modules/itowns/dist/itowns_widgets'
-import { OBJExporter } from 'three/examples/jsm/exporters/OBJExporter.js';
-// import { PLYExporter } from 'three/addons/exporters/PLYExporter.js';
-import { mergeBufferGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { gsap, Power2 } from 'gsap'
 
 // TODO : Remove draggable variable
@@ -27,7 +24,6 @@ var lyonPlacement
 var coordMouse
 var selectedArea
 var draggable
-var wfsMeshes
 const raycaster = new itowns.THREE.Raycaster(); // create once
 const clickMouse = new itowns.THREE.Vector2();  // create once
 
@@ -143,204 +139,19 @@ export default {
         return;
       }
 
-      let geometry;
       if (selectedArea) {
-        // 
-        geometry = this.regroupGeometriesFromWFSData(selectedArea, wfsMeshes)
-      }
+        const clonedGeometry = selectedArea.geometry.clone();
+        clonedGeometry.computeBoundingBox()
+        const bbMin = clonedGeometry.boundingBox.min.clone().applyMatrix4(selectedArea.matrixWorld)
+        const bbMax = clonedGeometry.boundingBox.max.clone().applyMatrix4(selectedArea.matrixWorld)
 
-      if (geometry) {
-          this.exportGeometry(geometry)
+        const coordsMin = new itowns.Coordinates('EPSG:4978', bbMin).as('EPSG:2154')
+        const coordsMax = new itowns.Coordinates('EPSG:4978', bbMax).as('EPSG:2154')
+        console.log('Bounding Box : ', coordsMin.x, coordsMax.y, coordsMax.x, coordsMin.y)
       }
 
       // Trying to detect the selectedArea
       this.raycast(event)
-    },
-    /**
-     * Returns the combined geometries of the wfsMeshes intersecting with the selectedArea.
-     * @param {Array<itowns.THREE.Group>} wfsMeshes : Array of THREE.Group generated from a WFS source.
-     * @param {itowns.THREE.Mesh} selectedArea: THREE.Mesh.
-     * @return {itowns.THREE.BufferGeometry}
-     */
-    regroupGeometriesFromWFSData(selectedArea, wfsMeshes) {
-      const geometries = []
-      let selectedAreaBoundingBox;
-
-      selectedAreaBoundingBox  = new itowns.THREE.Box3().setFromObject(selectedArea);
-      // Iterate through each object
-      console.log('wfsMeshes', wfsMeshes)
-      for (const groupOfMeshes of wfsMeshes) {
-        let meshBoundingBox;
-        let mesh = groupOfMeshes.children[0].children[0].children[0]
-        // groupOfMeshes.children[0].position contains the position of the group
-        // groupOfMeshes.children[0].quaternion contains the quaternion of the group
-        // groupOfMeshes.children[0].children[0].children[0] is the final mesh we need and want to export
-          
-        // mesh.geometry.computeBoundingBox()
-        if (mesh) {
-          meshBoundingBox = new itowns.THREE.Box3().setFromObject(mesh);
-        }
-        if (meshBoundingBox && this.intersectArea(selectedAreaBoundingBox, meshBoundingBox.min, meshBoundingBox.max)) {
-          console.log(mesh)
-          mesh.position.copy(groupOfMeshes.children[0].position);
-          mesh.quaternion.copy(groupOfMeshes.children[0].quaternion);
-          // mesh.updateMatrix()
-          // mesh.updateMatrixWorld()
-          mesh.geometry.applyMatrix4(mesh.matrixWorld);
-          geometries.push(mesh.geometry)
-          // this.exportMeshAsGeoJSON(mesh)
-
-          // const material = new itowns.THREE.MeshBasicMaterial({ color: 0xffffff, side: itowns.THREE.DoubleSide });
-          // const mesh = new itowns.THREE.Mesh(object3D.children[0].children[0].children[0].geometry, material);
-          // const bottomGeometry = new itowns.THREE.BoxGeometry(2, 2, 100);
-          // const bottomMaterial = new itowns.THREE.MeshBasicMaterial({ color: 0xff0000 });
-          // const bottomMesh = new itowns.THREE.Mesh(bottomGeometry, bottomMaterial);
-          // bottomMesh.rotation.x = -Math.PI / 2; // Rotate the bottom face to face upwards
-          // bottomMesh.position.copy(mesh.position); // Position the bottom face at the same position as the main mesh
-          // const morphPosition = new THREE.BufferAttribute(bottomMesh.position.array.slice(), 3);
-
-          // // console.log(bottomMesh)
-          // geometries.push(bottomMesh.geometry)
-          // console.log(geometries)
-          // scene.add(bottomMesh);
-
-        }
-      }
-      // console.log('geometries.length', geometries.length)
-      // console.log(geometries)
-      let combinedGeometry
-      if (geometries.length)
-        combinedGeometry = mergeBufferGeometries(geometries);
-      return combinedGeometry;
-    },
-    exportVerticesAndNormals(mesh) {
-      // Exporting Geo Data
-      const geo = mesh.geometry;
-      const positions = geo.attributes.position.array;
-
-      // Get the vertex normals from the geometry (if available)
-      const normals = geo.attributes.normal ? geo.attributes.normal.array : null;
-
-      // Get the UV coordinates from the geometry (if available)
-      const uvs = geo.attributes.uv ? geo.attributes.uv.array : null;
-
-      // Get the triangle indices from the geometry
-      const indices = geo.index ? geo.index.array : null;
-
-      // Convert the vertex positions to a nested array of [x, y, z] coordinates
-      const vertices = [];
-      for (var i = 0; i < positions.length; i += 3) {
-        vertices.push([positions[i], positions[i + 1], positions[i + 2]]);
-      }
-
-      // Convert the vertex normals to a nested array of [x, y, z] coordinates (if available)
-      const normalsArray = [];
-      if (normals) {
-        for (var i = 0; i < normals.length; i += 3) {
-          normalsArray.push([normals[i], normals[i + 1], normals[i + 2]]);
-        }
-      }
-
-      // Convert the UV coordinates to a nested array of [u, v] coordinates (if available)
-      const uvsArray = [];
-      if (uvs) {
-        for (var i = 0; i < uvs.length; i += 2) {
-          uvsArray.push([uvs[i], uvs[i + 1]]);
-        }
-      }
-
-      // Convert the triangle indices to a nested array of triangle indices (if available)
-      const triangles = [];
-      if (indices) {
-        for (var i = 0; i < indices.length; i += 3) {
-          triangles.push([indices[i], indices[i + 1], indices[i + 2]]);
-        }
-      }
-      return { vertices, normalsArray, uvsArray, triangles }
-    },
-    /**
-     * Exports a mesh as GeoJSON and downloads the file.
-     * @param {itowns.THREE.Mesh} mesh 
-     */
-    exportMeshAsGeoJSON(mesh) {
-      // Assuming you have a Three.js mesh called "mesh"
-
-      // Extract the geometry from the mesh
-      const geometry = mesh.geometry;
-
-      // Extract the vertices and faces from the geometry
-      const vertices = geometry.attributes.position.array;
-      const faces = geometry.index.array;
-
-      // Create an empty GeoJSON object
-      const geojson = {
-        type: 'FeatureCollection',
-        features: [
-          {
-            type: 'Feature',
-            geometry: {
-              type: 'Polygon',
-              coordinates: []
-            },
-            properties: {}
-          }
-        ]
-      };
-
-      // Convert the vertices and faces into GeoJSON coordinates
-      const coordinates = [];
-      for (let i = 0; i < faces.length; i += 3) {
-        const face = [
-          [vertices[3 * faces[i]], vertices[3 * faces[i] + 1], vertices[3 * faces[i] + 2]],
-          [vertices[3 * faces[i + 1]], vertices[3 * faces[i + 1] + 1], vertices[3 * faces[i + 1] + 2]],
-          [vertices[3 * faces[i + 2]], vertices[3 * faces[i + 2] + 1], vertices[3 * faces[i + 2] + 2]]
-        ];
-        coordinates.push(face);
-      }
-
-      // Set the coordinates in the GeoJSON object
-      geojson.features[0].geometry.coordinates = coordinates;
-
-      // Convert the GeoJSON object to a JSON string
-      const geojsonString = JSON.stringify(geojson);
-
-      const blob = new Blob([geojsonString], { type: 'application/json' });
-      const downloadUrl = URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = 'mesh.geojson';
-
-      link.click();
-
-    },
-    /**
-     * Creates a Mesh based on the given geometry, exports 
-     * the file and downloads it in the browser.
-     * @param {itowns.THREE.BufferGeometry} geometry
-     */
-    exportGeometry(geometry) {
-      const material = new itowns.THREE.MeshBasicMaterial({ color: 0xffffff });
-      const mesh = new itowns.THREE.Mesh(geometry, material);
-      const options = { binary: false };
-      const exporter = new OBJExporter();
-      const result = exporter.parse(mesh, options);
-      
-      const filename = 'result.obj';
-      const element = document.createElement('a');
-      element.setAttribute(
-      'href',
-      'data:text/plain;charset=utf-8,' + encodeURIComponent(result)
-      );
-      element.setAttribute('download', filename);
-
-      element.style.display = 'none';
-      document.body.appendChild(element);
-
-      element.click();
-
-      document.body.removeChild(element);
-      console.log(result)
     },
     intersectArea(areaSelected, min, max) {
       const area = areaSelected;
@@ -398,6 +209,7 @@ export default {
         ease: easing,
         onUpdate: () => {
           view.camera.camera3D.lookAt(targetPosition);
+          console.log('')
         },
         onComplete: () => {
 
@@ -463,7 +275,7 @@ export default {
         typeName: 'Metropole:bati',
         crs: 'EPSG:4326',
         format: 'application/json',
-        maxFeatures: 1
+        maxFeatures: 50
       })
 
       // Create layer on wfs building source
@@ -648,19 +460,19 @@ export default {
       const target = new itowns.Coordinates('EPSG:4978', 0, 0, 0);
       const result = view.pickCoordinates(event, target);
 
-      const geometry = new itowns.THREE.BoxGeometry(200, 300, 100);
+      const geometry = new itowns.THREE.BoxGeometry(400, 600, 400);
       const material = new itowns.THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.4, transparent: true });
 
+      
       selectedArea = new itowns.THREE.Mesh(geometry, material);
-      selectedArea.position.set(result.x, result.y, result.z + 50)
+      selectedArea.position.set(result.x, result.y, result.z + 100)
       selectedArea.rotation.set(Math.PI/1, Math.PI / 4, Math.PI / 1)
       this.selectedArea = selectedArea;
 
       // Filling the selectedArea's metadata (used to get the selectedArea with raycaster)
       selectedArea.userData = { draggable: true, name: 'CUBE' }
-      selectedArea.updateMatrixWorld(); // Used to force the re-rendering ?
       view.scene.add(selectedArea);
-
+      selectedArea.updateMatrixWorld(); // Used to force the re-rendering ?
       view.notifyChange(true);
     }
   }
