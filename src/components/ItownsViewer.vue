@@ -5,7 +5,7 @@
     <div id="info-div">
       DEBUG :
       <br>
-      <div v-html="debugInfos" />
+      <div class="debugInfos" v-html="debugInfos" />
     </div>
   </div>
 </template>
@@ -74,6 +74,9 @@ export default {
 
     // Finally...
     view.notifyChange()
+    // this.$axios.get('posts/1').then((res) => {
+    //   console.log('RESDATA', res.data)
+    // })
 
     // Global init Event
     view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function m() {
@@ -147,6 +150,12 @@ export default {
 
         const coordsMin = new itowns.Coordinates('EPSG:4978', bbMin).as('EPSG:2154')
         const coordsMax = new itowns.Coordinates('EPSG:4978', bbMax).as('EPSG:2154')
+        const bbox = coordsMin.x.toString() + ', ' + coordsMax.y.toString() + ', ' + coordsMax.x.toString() + ', ' + coordsMin.y.toString();
+        this.$axios.post('http://localhost:5107/api/dataprocess/bbox', {
+          bbox,
+          ratio: 5
+        })
+        console.log(bbox)
         console.log('Bounding Box : ', coordsMin.x, coordsMax.y, coordsMax.x, coordsMin.y)
       }
 
@@ -490,6 +499,9 @@ export default {
   width: 100%;
 }
 
+.debugInfos {
+}
+
 #info-div {
   display: flex;
   flex-direction: column;
@@ -497,8 +509,8 @@ export default {
   align-items: flex-start;
   text-align: left;
   position: absolute;
-  top: 20px;
-  left: 20px;
+  top: 40%;
+  right: 20px;
   height: 200px;
   width: 550px;
   padding: 10px;
