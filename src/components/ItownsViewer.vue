@@ -1,13 +1,69 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
-  <div id="wrapper-div">
-    <div id="viewerDiv" class="viewer" />
-    <div id="info-div">
-      DEBUG :
-      <br>
-      <div class="debugInfos" v-html="debugInfos" />
-    </div>
-  </div>
+  <v-container id="wrapper-div" fluid>
+    <v-row>
+      <v-col class="navbar-container" :style="{ 'max-width': 40 + 'px' }">
+        <v-card>
+          <v-layout>
+            <v-navigation-drawer
+              v-model="drawer"
+              :rail="true"
+              permanent
+            >
+              <v-list-item
+                prepend-avatar="https://randomuser.me/api/portraits/men/85.jpg"
+                title="John Leider"
+                nav
+              />
+
+              <v-divider />
+
+              <v-list density="compact" nav>
+                <v-list-item
+                  prepend-icon="mdi-domain"
+                  title="Sélectionner une emprise"
+                  value="1"
+                  @click="clickOnNavbarItem(1)"
+                /> 
+                <v-list-item
+                  prepend-icon="mdi-account"
+                  title="Afficher la voxelisation"
+                  value="2"
+                  @click="clickOnNavbarItem(2)"
+                />
+                <v-list-item
+                  prepend-icon="mdi-account-group-outline"
+                  title="Générer le guide de montage"
+                  value="3"
+                  @click="clickOnNavbarItem(3)"
+                />
+              </v-list>
+            </v-navigation-drawer>
+          </v-layout>
+        </v-card>
+      </v-col>
+      <v-col v-if="currentTabValue !== null" style="max-width: 300px">
+        <v-card v-if="currentTabValue == 1">
+          aaa
+        </v-card>
+        <v-card v-if="currentTabValue == 2">
+          bbb
+        </v-card>
+        <v-card v-if="currentTabValue == 3">
+          ccc
+        </v-card>
+      </v-col>
+      <v-col class="viewerDiv-container" :style="{ width: viewerDivWidth + 'px' }">
+        <div id="viewerDiv" class="viewer" />
+      </v-col>
+      
+      <div id="info-div">
+        DEBUG :
+        <br>
+        <div class="debugInfos" v-html="debugInfos" />
+      </div>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
@@ -32,7 +88,13 @@ export default {
   data() {
     return {
       debugInfos: null,
-      selectedArea: null
+      selectedArea: null,
+      drawer: true,
+      rail: true,
+      viewerDivWidth: window.innerWidth - 40,
+      navbarWidth: 40,
+      navbarColumnWidth: 300,
+      currentTabValue: null,
     }
   },
   computed: {
@@ -95,6 +157,18 @@ export default {
     viewerDiv.addEventListener('click', this.handleClick)
   },
   methods: {
+    clickOnNavbarItem(value) {
+      if (value == this.currentTabValue) {
+        console.log('closing')
+        this.currentTabValue = null
+        this.viewerDivWidth = window.innerWidth - this.navbarWidth
+      }
+      else {
+        this.currentTabValue = value
+        console.log(value)
+        this.viewerDivWidth = window.innerWidth - this.navbarColumnWidth - this.navbarWidth
+      }
+    },
     showDebugInfos() {
       console.log('Root layer', view)
       console.log('== itowns DEBUG ==', itowns)
@@ -150,7 +224,7 @@ export default {
 
         const coordsMin = new itowns.Coordinates('EPSG:4978', bbMin).as('EPSG:2154')
         const coordsMax = new itowns.Coordinates('EPSG:4978', bbMax).as('EPSG:2154')
-        const bbox = coordsMin.x.toString() + ', ' + coordsMax.y.toString() + ', ' + coordsMax.x.toString() + ', ' + coordsMin.y.toString();
+        const bbox = coordsMin.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMax.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
         this.$axios.post('http://localhost:5107/api/dataprocess/bbox', {
           bbox,
           ratio: 5
@@ -492,11 +566,21 @@ export default {
 #wrapper-div {
   height: 100vh;
   width: 100%;
+  overflow: hidden;
 }
 
 .viewer {
   height: 100vh;
   width: 100%;
+}
+
+.navbar-container {
+  /* max-width: 300px !important; */
+  display: inline-block;
+}
+
+.viewerDiv-container {
+
 }
 
 .debugInfos {
@@ -511,7 +595,7 @@ export default {
   position: absolute;
   top: 40%;
   right: 20px;
-  height: 200px;
+  height: 250px;
   width: 550px;
   padding: 10px;
   background: #0000005e;
