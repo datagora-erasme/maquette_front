@@ -2,7 +2,7 @@
 <template>
   <v-container id="wrapper-div" fluid>
     <v-row>
-      <v-col class="navbar-container" :style="{ 'max-width': 40 + 'px' }">
+      <v-col class="navbar-container pa-0" :style="{ 'max-width': navbarWidth + 'px' }">
         <v-card>
           <v-layout>
             <v-navigation-drawer
@@ -42,9 +42,44 @@
           </v-layout>
         </v-card>
       </v-col>
-      <v-col v-if="currentTabValue !== null" style="max-width: 300px">
-        <v-card v-if="currentTabValue == 1">
-          aaa
+      <v-col v-if="currentTabValue !== null" style="max-width: 300px" class="pa-0">
+        <v-card v-if="currentTabValue == 1" class="mockup-creation-card pa-3">
+          <v-row>
+            <h2> Création d'une maquette </h2>
+          </v-row>
+          <v-row>
+            <!-- <v-stepper
+              alt-labels
+              class="mt-12"
+            >
+              <v-stepper-header>
+                <v-stepper-step step="1">
+                  Ad unit details
+                </v-stepper-step>
+
+                <v-divider />
+
+                <v-stepper-step step="2">
+                  Ad sizes
+                  <small>Optional</small>
+                </v-stepper-step>
+
+                <v-divider />
+
+                <v-stepper-step step="3">
+                  Ad templates
+                </v-stepper-step>
+              </v-stepper-header>
+            </v-stepper> -->
+          </v-row>
+          <v-row class="steps-container d-flex flex-column pa-3">
+            <v-row class="step1">
+              <div class="step1Title">
+                Click et tout
+              </div>
+              Veuillez sélectionner une emprise
+            </v-row>
+          </v-row>
         </v-card>
         <v-card v-if="currentTabValue == 2">
           bbb
@@ -53,7 +88,7 @@
           ccc
         </v-card>
       </v-col>
-      <v-col class="viewerDiv-container" :style="{ width: viewerDivWidth + 'px' }">
+      <v-col class="viewerDiv-container pa-0" :style="{ width: viewerDivWidth + 'px' }">
         <div id="viewerDiv" class="viewer" />
       </v-col>
       
@@ -91,9 +126,9 @@ export default {
       selectedArea: null,
       drawer: true,
       rail: true,
-      viewerDivWidth: window.innerWidth - 40,
-      navbarWidth: 40,
-      navbarColumnWidth: 300,
+      viewerDivWidth: window.innerWidth - 50,
+      navbarWidth: 50,
+      navbarColumnWidth: 350,
       currentTabValue: null,
     }
   },
@@ -577,10 +612,16 @@ export default {
 .navbar-container {
   /* max-width: 300px !important; */
   display: inline-block;
+  padding: 0px;
 }
 
 .viewerDiv-container {
+  padding: 0px;
+}
 
+.mockup-creation-card {
+  width: 100%;
+  height: 100%;
 }
 
 .debugInfos {
