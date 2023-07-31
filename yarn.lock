@@ -2042,6 +2042,10 @@ autoprefixer@^10.2.4:
     picocolors "^1.0.0"
     postcss-value-parser "^4.2.0"
 
+awesome-notifications@^3.1.3:
+  version "3.1.3"
+  resolved "https://registry.yarnpkg.com/awesome-notifications/-/awesome-notifications-3.1.3.tgz#d81897ea08cade5266f53e6eb0a749a4a9438d2d"
+
 axios@^1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/axios/-/axios-1.4.0.tgz#38a7bf1224cd308de271146038b551d725f0be1f"

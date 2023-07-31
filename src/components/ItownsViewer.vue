@@ -1,6 +1,9 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
   <v-container id="wrapper-div" fluid>
+    <v-dialog v-model="isPreviewActive" class="preview-container">
+      <preview-component />
+    </v-dialog>
     <v-row>
       <v-col class="navbar-container pa-0" :style="{ 'max-width': navbarWidth + 'px' }">
         <v-card>
@@ -42,52 +45,16 @@
           </v-layout>
         </v-card>
       </v-col>
-      <v-col v-if="currentTabValue !== null" style="max-width: 300px" class="pa-0">
-        <v-card v-if="currentTabValue == 1" class="mockup-creation-card pa-3">
-          <v-row>
-            <h2> Création d'une maquette </h2>
-          </v-row>
-          <v-row>
-            <!-- <v-stepper
-              alt-labels
-              class="mt-12"
-            >
-              <v-stepper-header>
-                <v-stepper-step step="1">
-                  Ad unit details
-                </v-stepper-step>
-
-                <v-divider />
-
-                <v-stepper-step step="2">
-                  Ad sizes
-                  <small>Optional</small>
-                </v-stepper-step>
-
-                <v-divider />
-
-                <v-stepper-step step="3">
-                  Ad templates
-                </v-stepper-step>
-              </v-stepper-header>
-            </v-stepper> -->
-          </v-row>
-          <v-row class="steps-container d-flex flex-column pa-3">
-            <v-row class="step1">
-              <div class="step1Title">
-                Click et tout
-              </div>
-              Veuillez sélectionner une emprise
-            </v-row>
-          </v-row>
-        </v-card>
-        <v-card v-if="currentTabValue == 2">
-          bbb
-        </v-card>
-        <v-card v-if="currentTabValue == 3">
-          ccc
-        </v-card>
-      </v-col>
+      <sidebar-component
+        ref="sidebarComponent"
+        :current-tab-value="currentTabValue"
+        :selected-area="selectedArea"
+        :width="sidebarWidth"
+        @onRemoveSelectedArea="removeSelectedArea()"
+        @onTravelToSelectedArea="travelToSelectedArea()"
+        @onPlatesSelected="onPlatesSelected"
+        @onStep1="voxelize"
+      />
       <v-col class="viewerDiv-container pa-0" :style="{ width: viewerDivWidth + 'px' }">
         <div id="viewerDiv" class="viewer" />
       </v-col>
@@ -105,7 +72,8 @@
 import * as itowns from '@/node_modules/itowns/dist/itowns'
 import * as itowns_widgets from '@/node_modules/itowns/dist/itowns_widgets'
 import { gsap, Power2 } from 'gsap'
-
+import SidebarComponent from './SidebarComponent.vue'
+import PreviewComponent from './PreviewComponent.vue'
 // TODO : Remove draggable variable
 
 // Global vars...
@@ -114,22 +82,24 @@ var viewerDiv
 var lyonPlacement
 var coordMouse
 var selectedArea
-var draggable
 const raycaster = new itowns.THREE.Raycaster(); // create once
 const clickMouse = new itowns.THREE.Vector2();  // create once
 
 export default {
   name: 'ItownsViewer',
+  components: { SidebarComponent, PreviewComponent },
   data() {
     return {
       debugInfos: null,
-      selectedArea: null,
       drawer: true,
       rail: true,
       viewerDivWidth: window.innerWidth - 50,
       navbarWidth: 50,
-      navbarColumnWidth: 350,
+      sidebarWidth: 400,
       currentTabValue: null,
+      nbPlatesHorizontal: null,
+      nbPlatesVertical: null,
+      isPreviewActive: true
     }
   },
   computed: {
@@ -139,12 +109,21 @@ export default {
       } else {
         return null
       }
-    }
+    },
+    // currentStep() {
+    //   return this.$refs.sidebarComponent ? this.$refs.sidebarComponent.currentStep : 0
+    // }
   },
   watch: {
     currentZoomLevel() {
       console.log(this.currentZoomLevel)
-    }
+    },
+    // currentStep() {
+    //   console.log(this.currentStep)
+    //   if (this.currentStep === 1) {
+    //     this.voxelize()
+    //   }
+    // },
   },
   mounted() {
     // ===== Init iTowns vars =====
@@ -192,17 +171,40 @@ export default {
     viewerDiv.addEventListener('click', this.handleClick)
   },
   methods: {
+    async voxelize() {
+      if (selectedArea) {
+        const clonedGeometry = selectedArea.geometry.clone();
+        clonedGeometry.computeBoundingBox()
+        const bbMin = clonedGeometry.boundingBox.min.clone().applyMatrix4(selectedArea.matrixWorld)
+        const bbMax = clonedGeometry.boundingBox.max.clone().applyMatrix4(selectedArea.matrixWorld)
+
+        const coordsMin = new itowns.Coordinates('EPSG:4978', bbMin).as('EPSG:2154')
+        const coordsMax = new itowns.Coordinates('EPSG:4978', bbMax).as('EPSG:2154')
+        const bbox = coordsMin.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMax.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
+        await this.$axios.post('http://localhost:5107/api/dataprocess/bbox', {
+          bbox,
+          ratio: 5
+        }).then((response) => {
+          this.$refs.sidebarComponent.endVoxelisation();
+          console.log(response.data)
+        })
+        console.log(bbox)
+        console.log('Bounding Box : ', coordsMin.x, coordsMax.y, coordsMax.x, coordsMin.y)
+      }
+    },
     clickOnNavbarItem(value) {
       if (value == this.currentTabValue) {
-        console.log('closing')
         this.currentTabValue = null
         this.viewerDivWidth = window.innerWidth - this.navbarWidth
       }
       else {
         this.currentTabValue = value
-        console.log(value)
-        this.viewerDivWidth = window.innerWidth - this.navbarColumnWidth - this.navbarWidth
+        this.viewerDivWidth = window.innerWidth - this.sidebarWidth - this.navbarWidth
       }
+    },
+    onPlatesSelected(plates) {
+      this.nbPlatesHorizontal = plates.horizontal;
+      this.nbPlatesVertical = plates.vertical
     },
     showDebugInfos() {
       console.log('Root layer', view)
@@ -246,26 +248,9 @@ export default {
     },
     handleClick(event) {
       // Ensures that the selectedArea is only added when alt is pressed.
-      if(event.altKey) {
+      if(this.$refs.sidebarComponent.isAreaSelectionActive) {
         this.selectArea(event);
         return;
-      }
-
-      if (selectedArea) {
-        const clonedGeometry = selectedArea.geometry.clone();
-        clonedGeometry.computeBoundingBox()
-        const bbMin = clonedGeometry.boundingBox.min.clone().applyMatrix4(selectedArea.matrixWorld)
-        const bbMax = clonedGeometry.boundingBox.max.clone().applyMatrix4(selectedArea.matrixWorld)
-
-        const coordsMin = new itowns.Coordinates('EPSG:4978', bbMin).as('EPSG:2154')
-        const coordsMax = new itowns.Coordinates('EPSG:4978', bbMax).as('EPSG:2154')
-        const bbox = coordsMin.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMax.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
-        this.$axios.post('http://localhost:5107/api/dataprocess/bbox', {
-          bbox,
-          ratio: 5
-        })
-        console.log(bbox)
-        console.log('Bounding Box : ', coordsMin.x, coordsMax.y, coordsMax.x, coordsMin.y)
       }
 
       // Trying to detect the selectedArea
@@ -301,10 +286,6 @@ export default {
       if (found.length > 0) {
         // But only taking into account the selectedArea (see metadata above, userData.draggable)
         if (found[0].object.userData.draggable) {
-          draggable = found[0].object
-          console.log(`found draggable ${draggable.userData.name}`)
-          console.log(draggable)
-          this.travelToCube();
           view.notifyChange(true);
         }
     }
@@ -313,7 +294,9 @@ export default {
       raycaster.setFromCamera(pos, view.camera.camera3D);
       return raycaster.intersectObjects(view.scene.children, true);
     },
-    travelToCube() {
+    travelToSelectedArea() {
+      if (!selectedArea)
+        return;
       const targetPosition = selectedArea.position.clone()
       const duration = 2; // Animation duration in seconds
       const easing = Power2.easeInOut; // Easing function
@@ -327,7 +310,7 @@ export default {
         ease: easing,
         onUpdate: () => {
           view.camera.camera3D.lookAt(targetPosition);
-          console.log('')
+          view.notifyChange(true);
         },
         onComplete: () => {
 
@@ -564,12 +547,12 @@ export default {
       })
     },
     removeSelectedArea() {
-      if (!selectedArea)
-        return;
-      view.scene.remove(selectedArea);
-      this.selectedArea.updateMatrixWorld(); // Used to force the re-rendering ?
-      this.selectedArea = null; 
-      view.notifyChange(true);
+      if (selectedArea) {
+        view.scene.remove(selectedArea);
+        selectedArea.updateMatrixWorld(); // Used to force the re-rendering ?
+        selectedArea = undefined; 
+        view.notifyChange(true);
+      }
     },
     selectArea(event){
       
@@ -578,7 +561,7 @@ export default {
       const target = new itowns.Coordinates('EPSG:4978', 0, 0, 0);
       const result = view.pickCoordinates(event, target);
 
-      const geometry = new itowns.THREE.BoxGeometry(400, 600, 400);
+      const geometry = new itowns.THREE.BoxGeometry(250, this.nbPlatesHorizontal * 100, this.nbPlatesVertical * 100);
       const material = new itowns.THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.4, transparent: true });
 
       
@@ -646,5 +629,7 @@ export default {
 /* Override Itowns CSS */
 #widgets-searchbar form > input::placeholder {
     color: #e6e6e6 !important;
+}
+.preview-container {
 }
 </style>
