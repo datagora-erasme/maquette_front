@@ -363,7 +363,7 @@ export default {
       // Init Data and add layer to iTowns
 
       // Ortho layer
-      itowns.Fetcher.json('http://www.itowns-project.org/itowns/examples/layers/JSONLayers/Ortho.json')
+      itowns.Fetcher.json('https://www.itowns-project.org/itowns/examples/layers/JSONLayers/Ortho.json')
         .then(ortho => {
           var orthoSource = new itowns.WMTSSource(ortho.source)
           var orthoLayer = new itowns.ColorLayer('Ortho', {
@@ -373,7 +373,7 @@ export default {
         })
 
       // MNT layer
-      itowns.Fetcher.json('http://www.itowns-project.org/itowns/examples/layers/JSONLayers/IGN_MNT.json')
+      itowns.Fetcher.json('https://www.itowns-project.org/itowns/examples/layers/JSONLayers/IGN_MNT.json')
         .then(mnt => {
           var mntSource = new itowns.WMTSSource(mnt.source)
           var mntLayer = new itowns.ElevationLayer('IGN_MNT', {
@@ -410,10 +410,10 @@ export default {
         return parseFloat(properties.hauteur)
       }
 
-      // DB IGN Building on Exo-Dev Server (217.182.138.216:8080) -  ly dep 69 in France
+      // DB IGN Building on Exo-Dev Server (https://geoserver-planta.exo-dev.fr/geoserver/) - Only dep 69 in France
       var wfsBuildingSource = new itowns.WFSSource({
         protocol: 'wfs',
-        url: 'http://217.182.138.216:8080/geoserver/Metropole/ows?',
+        url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/ows?',
         version: '1.0.0',
         typeName: 'Metropole:bati',
         crs: 'EPSG:4326',
@@ -565,7 +565,7 @@ export default {
               'https://wxs.ign.fr/ayxvok72rcocdyn8xyvy32og/ols/apis/completion?text=&type=StreetAddress,' +
               'PositionOfInterest',
           ),
-          // As precised in the doc (http://www.itowns-project.org/itowns/docs/#api/Widgets/Searchbar), the parser
+          // As precised in the doc (https://www.itowns-project.org/itowns/docs/#api/Widgets/Searchbar), the parser
           // method must parse the geocoding service response into a Map object. For each item of this Map, the
           // key is a string that is displayed in the suggestions bellow the searchbar, and the value is whatever
           // the user wants. The value is the parameter that is passed to the `onSelected` method when a

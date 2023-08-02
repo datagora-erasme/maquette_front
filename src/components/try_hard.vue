@@ -14,12 +14,12 @@ export default {
 
   // Links
   //==WMS==
-  //http://217.182.138.216:8080/geoserver/Metropole/wms?service=WMS&version=1.1.0&request=GetMap&layers=Metropole%3Abati&bbox=791003.625%2C6480095.5%2C873372.5625%2C6585209.5&width=601&height=768&srs=EPSG%3A404000&styles=&format=application/openlayers
+  //https://geoserver-planta.exo-dev.fr/geoserver/Metropole/wms?service=WMS&version=1.1.0&request=GetMap&layers=Metropole%3Abati&bbox=791003.625%2C6480095.5%2C873372.5625%2C6585209.5&width=601&height=768&srs=EPSG%3A404000&styles=&format=application/openlayers
   //https://geoserver-planta.exo-dev.fr/geoserver/Metropole/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Metropole%3Abati&maxFeatures=50&outputFormat=application%2Fjson
 
   //==WFS==
-  //http://217.182.138.216:8080/geoserver/Metropole/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Metropole%3Abati&maxFeatures=50&outputFormat=application%2Fjson
-  //http://217.182.138.216:8080/geoserver/Metropole/ows?SERVICE=WFS&REQUEST=GetFeature&typeName=Metropole:bati&VERSION=1.0.0&SRSNAME=EPSG:4326&outputFormat=application/json
+  //https://geoserver-planta.exo-dev.fr/geoserver/Metropole/ows?SERVICE=WFS&REQUEST=GetFeature&typeName=Metropole:bati&VERSION=1.0.0&SRSNAME=EPSG:4326&outputFormat=application/json
+  //https://geoserver-planta.exo-dev.fr/geoserver/Metropole/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Metropole%3Abati&maxFeatures=50&outputFormat=application%2Fjson
   // EPSG:4326
 
   // ! Useless ?
