@@ -2,7 +2,7 @@
 <template>
   <v-container id="wrapper-div" fluid>
     <v-dialog v-model="isPreviewActive" class="preview-container">
-      <preview-component />
+      <preview-component :selected-area-voxelized="selectedAreaVoxelized" />
     </v-dialog>
     <v-row>
       <v-col class="navbar-container pa-0" :style="{ 'max-width': navbarWidth + 'px' }">
@@ -50,16 +50,20 @@
         :current-tab-value="currentTabValue"
         :selected-area="selectedArea"
         :width="sidebarWidth"
+        :ongoing-travel="ongoingTravel"
         @onRemoveSelectedArea="removeSelectedArea()"
         @onTravelToSelectedArea="travelToSelectedArea()"
         @onPlatesSelected="onPlatesSelected"
         @onStep1="voxelize"
+        @onShowPreview="showPreview"
+        @onHidePreview="hidePreview"
+        @onDownloadArea="downloadArea"
       />
       <v-col class="viewerDiv-container pa-0" :style="{ width: viewerDivWidth + 'px' }">
         <div id="viewerDiv" class="viewer" />
       </v-col>
       
-      <div id="info-div">
+      <div v-if="showDebug" id="info-div">
         DEBUG :
         <br>
         <div class="debugInfos" v-html="debugInfos" />
@@ -99,7 +103,11 @@ export default {
       currentTabValue: null,
       nbPlatesHorizontal: null,
       nbPlatesVertical: null,
-      isPreviewActive: true
+      isPreviewActive: false,
+      selectedAreaVoxelized: null,
+      showDebug: true,
+      selectedBbox: null,
+      ongoingTravel: false,
     }
   },
   computed: {
@@ -110,9 +118,6 @@ export default {
         return null
       }
     },
-    // currentStep() {
-    //   return this.$refs.sidebarComponent ? this.$refs.sidebarComponent.currentStep : 0
-    // }
   },
   watch: {
     currentZoomLevel() {
@@ -161,16 +166,46 @@ export default {
         this.showDebugInfos()
         // ===== Show All Layers =====
         this.showAllLayers()
+        // Add Mouse move Event listener
+        viewerDiv.addEventListener('mousemove', this.handleMouseMove);
+        // Add Wheel Event listener
+        viewerDiv.addEventListener('wheel', this.handleMouseMove)
+        // Add Click Event listener
+        viewerDiv.addEventListener('click', this.handleClick)
     }.bind(this))
 
-    // Add Mouse move Event listener
-    window.addEventListener('mousemove', this.handleMouseMove);
-    // Add Wheel Event listener
-    window.addEventListener('wheel', this.handleMouseMove)
-    // Add Click Event listener
-    viewerDiv.addEventListener('click', this.handleClick)
   },
   methods: {
+    async downloadArea() {
+      if (this.selectedBbox) {
+        await this.$axios.get('https://geoserver-planta.exo-dev.fr/geoserver/Metropole/ows', {
+          params: {
+            service: 'WFS',
+            version: '1.0.0',
+            request: 'GetFeature',
+            typeName: 'Metropole:bati',
+            outputFormat: 'json',
+            srsName: 'EPSG:2154',
+            bbox: this.selectedBbox,
+            startIndex: 0,
+          }
+        }).then((response) => {
+          console.log(response)
+          // const blob = new Blob([atob(response.data.data)], { type: 'text/plain' });
+          // const downloadUrl = URL.createObjectURL(blob);
+          // const downloadLink = document.createElement('a');
+          // downloadLink.href = downloadUrl;
+          // downloadLink.download = 'myfile.obj'; // Change the file name as desired
+          // downloadLink.click();
+        })
+      }
+    },
+    showPreview() {
+      this.isPreviewActive = true;
+    },
+    hidePreview() {
+      this.isPreviewActive = false;
+    },
     async voxelize() {
       if (selectedArea) {
         const clonedGeometry = selectedArea.geometry.clone();
@@ -180,15 +215,21 @@ export default {
 
         const coordsMin = new itowns.Coordinates('EPSG:4978', bbMin).as('EPSG:2154')
         const coordsMax = new itowns.Coordinates('EPSG:4978', bbMax).as('EPSG:2154')
-        const bbox = coordsMin.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMax.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
+        this.selectedBbox = coordsMin.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMax.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
         await this.$axios.post('http://localhost:5107/api/dataprocess/bbox', {
-          bbox,
+          bbox: this.selectedBbox,
           ratio: 5
         }).then((response) => {
           this.$refs.sidebarComponent.endVoxelisation();
-          console.log(response.data)
+          this.selectedAreaVoxelized = atob(response.data.data)
+          const blob = new Blob([atob(response.data.data)], { type: 'text/plain' });
+          const downloadUrl = URL.createObjectURL(blob);
+          const downloadLink = document.createElement('a');
+          downloadLink.href = downloadUrl;
+          downloadLink.download = 'myfile.obj'; // Change the file name as desired
+          downloadLink.click();
         })
-        console.log(bbox)
+        console.log(this.selectedBbox)
         console.log('Bounding Box : ', coordsMin.x, coordsMax.y, coordsMax.x, coordsMin.y)
       }
     },
@@ -297,11 +338,12 @@ export default {
     travelToSelectedArea() {
       if (!selectedArea)
         return;
+      this.ongoingTravel = true;
       const targetPosition = selectedArea.position.clone()
       const duration = 2; // Animation duration in seconds
       const easing = Power2.easeInOut; // Easing function
 
-      const offset = 600 // variable used to set the camera position above the selectedArea
+      const offset = 1000 // variable used to set the camera position above the selectedArea
       gsap.to(view.camera.camera3D.position, {
         x: targetPosition.x + offset,
         y: targetPosition.y + offset/11.8,
@@ -313,7 +355,7 @@ export default {
           view.notifyChange(true);
         },
         onComplete: () => {
-
+          this.ongoingTravel = false;
         }
       });
     },
@@ -368,7 +410,7 @@ export default {
         return parseFloat(properties.hauteur)
       }
 
-      // DB IGN Building on Exo-Dev Server (217.182.138.216:8080) - Only dep 69 in France
+      // DB IGN Building on Exo-Dev Server (217.182.138.216:8080) -  ly dep 69 in France
       var wfsBuildingSource = new itowns.WFSSource({
         protocol: 'wfs',
         url: 'http://217.182.138.216:8080/geoserver/Metropole/ows?',
@@ -391,7 +433,7 @@ export default {
           },
           filter: acceptFeature,
           source: wfsBuildingSource,
-          zoom: { min: 17 }, //14
+          zoom: { min: 15 }, //14
           style: new itowns.Style({
               fill: {
                   color: colorBuildings,
@@ -573,6 +615,7 @@ export default {
       // Filling the selectedArea's metadata (used to get the selectedArea with raycaster)
       selectedArea.userData = { draggable: true, name: 'CUBE' }
       view.scene.add(selectedArea);
+      console.log(selectedArea)
       selectedArea.updateMatrixWorld(); // Used to force the re-rendering ?
       view.notifyChange(true);
     }

@@ -1,21 +1,23 @@
 <template>
   <v-col v-if="currentTabValue !== null" :style="'max-width: ' + width + 'px'" class="pa-0">
-    <v-card v-if="currentTabValue == 1" class="mockup-creation-card pa-3">
+    <v-card v-if="currentTabValue == 1" class="mockup-creation-card py-5 px-8">
       <v-row class="d-flex justify-center">
-        <h3> Parcours de création d'une maquette </h3>
+        <h3 class="sidebar-title py-2">
+          Parcours de création d'une maquette
+        </h3>
       </v-row>
-      <v-row class="py-3 px-2">
+      <v-row class="py-5">
         <stepper-component :steps="stepperSteps" :current-step="currentStep" />
       </v-row>
-      <v-row class="steps-container pa-3">
+      <v-row class="steps-container">
         <v-row v-if="currentStep == 0" class="step1 d-flex flex-column">
-          <row class="step1Title">
+          <h3 class="step1Title pa-3">
             Panel de sélection d'une emprise
-          </row>
+          </h3>
           <row>
-            Veuillez indiquer le nombre de plaques horizontales et verticales de lego que vous souhaitez utiliser <br><br>
+            Veuillez indiquer le nombre de plaques horizontales et verticales de lego que vous souhaitez utiliser
           </row>
-          <v-row class="d-flex justify-space-evenly">
+          <v-row class="d-flex justify-space-evenly pt-6 pb-3">
             <v-responsive min-width="140" max-width="140">
               <v-text-field
                 v-model="nbPlatesHorizontal"
@@ -37,7 +39,7 @@
               />
             </v-responsive>
           </v-row>
-          <v-row class="d-flex justify-center">
+          <v-row class="d-flex justify-center pb-6">
             <v-btn
               v-if="!isPlatesSelected"
               density="comfortable"
@@ -54,13 +56,13 @@
               color="#A18276"
               min-width="230"
               style="color: white"
+              :disabled="ongoingTravel"
               @click="clearPlatesNumber()"
             >
               Redéfinir plaques
             </v-btn>
-            <br><br>
           </v-row>
-          <v-row class="pa-3">
+          <v-row class="pb-6">
             Après avoir sélectionné le nombre de plaques souhaité, cliquez sur "Sélectionnez la zone" puis cliquez sur la carte pour choisir une zone.
           </v-row>
           <v-row class="d-flex justify-center">
@@ -76,16 +78,6 @@
               Sélectionner la zone
             </v-btn>
             <v-btn
-              v-if="isAreaSelectionActive"
-              density="comfortable"
-              color="#3F0D12"
-              min-width="230"
-              style="color: white"
-              @click="cancelSelection()"
-            >
-              Annuler la sélection
-            </v-btn>
-            <v-btn
               v-if="!isAreaSelectionActive && isAreaSelected"
               density="comfortable"
               color="#A18276"
@@ -95,20 +87,34 @@
             >
               Modifier la sélection
             </v-btn>
-            <br><br>
-            <v-btn
-              v-if="isAreaSelectionActive"
-              density="comfortable"
-              color="#1B5E20"
-              min-width="230"
-              style="color: white"
-              @click="endSelection()"
-            >
-              Valider la sélection
-            </v-btn>
+            <div v-if="isAreaSelectionActive">
+              <v-btn
+                density="comfortable"
+                color="#3F0D12"
+                min-width="230"
+                style="color: white"
+                :disabled="ongoingTravel"
+                @click="cancelSelection()"
+              >
+                Annuler la sélection
+              </v-btn>
+              <br><br>
+              <v-btn
+                :loading="ongoingTravel"
+                density="comfortable"
+                color="#1B5E20"
+                min-width="230"
+                style="color: white"
+                @click="endSelection()"
+              >
+                Valider la sélection
+              </v-btn>
+            </div>
           </v-row>
-          <v-row v-if="isAreaSelected && !isAreaSelectionActive" class="pa-3 d-flex justify-center">
-            Si la sélection vous convient, cliquez sur "Étape suivante" pour lancer la voxelisation. <br><br>
+          <v-row v-if="isAreaSelected && !isAreaSelectionActive" class="d-flex justify-center pa-6">
+            <div class="pb-6">
+              Si la sélection vous convient, cliquez sur "Étape suivante" pour lancer la voxelisation.
+            </div>
             <v-btn
               stacked
               color="#1B5E20"
@@ -136,31 +142,28 @@
         </v-row>
         <v-row v-if="currentStep === 2" class="step3 w-100 d-flex justify-center" style="height: calc(100vh - 124.38px)">
           <div class="title-buttons-container w-100 d-flex flex-column align-center justify-space-around">
-            <h2 class="">
+            <h2 class="mockup-ready-title">
               La maquette est prête !
             </h2>
             <v-card class="buttons-card d-flex flex-column align-center justify-space-around">
               <v-btn
                 color="#A18276"
-                min-width="230"
-                style="color: white"
-                @click="a"
+                class="last-step-buttons"
+                @click="showMockup"
               >
                 Afficher maquette
               </v-btn>
               <v-btn
                 color="#A18276"
-                min-width="230"
-                style="color: white"
+                class="last-step-buttons"
                 disabled
               >
                 Télécharger le CSV
               </v-btn>
               <v-btn
                 color="#A18276"
-                min-width="230"
-                style="color: white"
-                disabled
+                class="last-step-buttons"
+                @click="downloadArea"
               >
                 Télécharger l'emprise
               </v-btn>
@@ -201,6 +204,10 @@ export default {
       type: Object,
       required: true
     },
+    ongoingTravel: {
+      type: Boolean,
+      required: true,
+    }
   },
   data() {
     return {
@@ -209,11 +216,11 @@ export default {
       isPlatesSelected: false,
       isAreaSelectionActive: false,
       isAreaSelected: false,
-      currentStep: 2,
+      currentStep: 0,
       isLoading: false,
       dotsCount: 3,
       dotsVisible: 0,
-      stepperSteps: ['Emprise', 'Voxelisation', 'Finalisation']
+      stepperSteps: ['Emprise', 'Voxelisation', 'Finalisation'],
     }
   },
   computed: {
@@ -227,6 +234,11 @@ export default {
     },
   },
   watch: {
+    ongoingTravel() {
+      if (this.ongoingTravel === false) {
+        this.isAreaSelectionActive = false
+      }
+    },
     currentStep() {
       if (this.currentStep === 1) {
         this.isLoading = true;
@@ -238,6 +250,9 @@ export default {
     this.animateDots();
   },
   methods: {
+    downloadArea() {
+      this.$emit('onDownloadArea')
+    },
     animateDots() {
       setTimeout(() => {
         this.dotsVisible = (this.dotsVisible + 1) % (this.dotsCount + 1);
@@ -251,6 +266,12 @@ export default {
     goToNextStep() {
       this.currentStep++;
     },
+    showMockup() {
+      this.$emit('onShowPreview')
+    },
+    hideMockup() {
+      this.$emit('onHidePreview')
+    },
     checkPlatesNumber() {
       if (!this.nbPlatesHorizontal || !this.nbPlatesVertical) {
           // this.$awn.warning("Veuillez d'abord sélectionner le nombre de plaques", {})
@@ -262,6 +283,11 @@ export default {
         console.log('Veuillez sélectionner au plus 5 plaques horizontales et 3 plaques verticales')
         return;
       }
+      // if ((parseInt(this.nbPlatesHorizontal) != Number) || (parseInt(this.nbPlatesVertical) != Number)) {
+      //   console.log('Veuillez indiquer des valeurs numériques')
+      //   console.log(typeof parseInt(this.nbPlatesVertical))
+      //   return;
+      // }
       this.isPlatesSelected = true
       this.$emit('onPlatesSelected', { horizontal: this.nbPlatesHorizontal, vertical: this.nbPlatesVertical })
     },
@@ -279,7 +305,6 @@ export default {
       this.isAreaSelectionActive = true
     },
     endSelection() {
-      this.isAreaSelectionActive = false
       this.isAreaSelected = !!this.selectedArea
       if (this.isAreaSelected) {
         this.$emit('onTravelToSelectedArea')
@@ -306,12 +331,24 @@ export default {
 </script>
 
 <style>
-
+.mockup-ready-title {
+  color: #414288;
+}
+.sidebar-title {
+  color: #A18276;
+}
+.step1Title {
+  color: #414288;
+}
 .title-buttons-container {
-  height: 500px;
+  height: 550px;
 }
 .buttons-card {
   width: 70%;
   height: 35%;
+}
+.last-step-buttons {
+  color: white !important; 
+  width: 90%;
 }
 </style>
