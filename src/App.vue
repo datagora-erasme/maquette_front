@@ -1,18 +1,34 @@
 <template>
   <!-- <img alt="Vue logo" src="./assets/logo.png"> -->
-  <itowns-viewer class="itowns-viewer" />
+  <div class="app-container d-flex flex-row justify-center align-center">
+    <div v-if="!isLoggedIn" class="login-page d-flex flex-column">
+      <v-card class="form-container pa-7" elevation="3">
+        <sign-in />
+      </v-card>
+    </div>
+    <itowns-viewer v-if="isLoggedIn" class="itowns-viewer" />
+  </div>
 </template>
 
 <script>
 import ItownsViewer from './components/ItownsViewer.vue'
+import SignIn from './components/SignIn.vue'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'App',
   components: {
-    ItownsViewer
+    ItownsViewer,
+    SignIn
+  },
+  computed: {
+    isLoggedIn() {
+      return this.$store.getters.getIsUserLoggedIn;
+    },
   },
   mounted() {
-  }
+    console.log(this.$store)
+  },
 }
 </script>
 
@@ -28,6 +44,21 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
+}
+
+.app-container {
+  width: 100vw;
+  height: 100vh;
+}
+
+.login-page {
+  max-width: 50vw;
+  max-height: 50vh;
+}
+
+.form-container {
+  width: 40vw;
+  height: 50vh;
 }
 
 .itowns-viewer {

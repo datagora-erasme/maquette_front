@@ -12,6 +12,7 @@ import * as directives from 'vuetify/directives';
 import { aliases, mdi } from 'vuetify/iconsets/mdi';
 import '@mdi/font/css/materialdesignicons.css';
 import 'vuetify/dist/vuetify.min.css';
+import store from './store';
 
 // Import CSS
 import '@/node_modules/itowns/examples/css/widgets.css'
@@ -34,10 +35,11 @@ const axiosInstance = axios.create({
   baseURL: process.env.API_URL,
 });
 // Use module
+app.config.globalProperties.$axios = axiosInstance;
 app.use(Itowns)
 app.use(THREE)
 app.use(vuetify)
-app.config.globalProperties.$axios = axiosInstance;
+app.use(store)
 console.log(process.env) 
 
 // Mount

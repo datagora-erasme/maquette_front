@@ -4,6 +4,11 @@
     <v-dialog v-model="isPreviewActive" class="preview-container">
       <preview-component :selected-area-voxelized="selectedAreaVoxelized" />
     </v-dialog>
+    <v-dialog v-model="isUserInfoActive" class="user-info-dialog">
+      <v-card class="user-info-card">
+        aaa
+      </v-card>
+    </v-dialog>
     <v-row>
       <v-col class="navbar-container pa-0" :style="{ 'max-width': navbarWidth + 'px' }">
         <v-card>
@@ -39,6 +44,13 @@
                   title="Générer le guide de montage"
                   value="3"
                   @click="clickOnNavbarItem(3)"
+                />
+                <v-list-item
+                  prepend-icon="mdi-account"
+                  title="Générer le guide de montage"
+                  value="3"
+                  style="transform: scaleX(-1)"
+                  @click="openUserInfo"
                 />
               </v-list>
             </v-navigation-drawer>
@@ -108,6 +120,7 @@ export default {
       showDebug: true,
       selectedBbox: null,
       ongoingTravel: false,
+      isUserInfoActive: false,
     }
   },
   computed: {
@@ -176,6 +189,9 @@ export default {
 
   },
   methods: {
+    openUserInfo() {
+      this.isUserInfoActive = true;
+    },
     async downloadArea() {
       if (this.selectedBbox) {
         await this.$axios.get('https://geoserver-planta.exo-dev.fr/geoserver/Metropole/ows', {
@@ -216,7 +232,7 @@ export default {
         const coordsMin = new itowns.Coordinates('EPSG:4978', bbMin).as('EPSG:2154')
         const coordsMax = new itowns.Coordinates('EPSG:4978', bbMax).as('EPSG:2154')
         this.selectedBbox = coordsMin.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMax.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
-        await this.$axios.post('http://localhost:5107/api/dataprocess/bbox', {
+        await this.$axios.post('https://dev-maquette.exo-dev.fr//api/dataprocess/bbox', {
           bbox: this.selectedBbox,
           ratio: 5
         }).then((response) => {
@@ -674,5 +690,18 @@ export default {
     color: #e6e6e6 !important;
 }
 .preview-container {
+}
+
+.user-info-card {
+  width: 50vw;
+  height: 50vh;
+}
+
+.user-info-dialog {
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-content: center !important; 
 }
 </style>
