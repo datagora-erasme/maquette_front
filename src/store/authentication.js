@@ -1,4 +1,7 @@
 import axios from 'axios';
+import Cookies from 'universal-cookie';
+
+const cookies = new Cookies();
 
 const authentication = {
   state: () => ({
@@ -6,6 +9,7 @@ const authentication = {
     loggedUser: {
       firstname: null,
       lastname: null,
+      email: null,
     },
   }),
   mutations: {
@@ -20,12 +24,31 @@ const authentication = {
     },
     postLogin({ commit }, formLogin) {
       return axios
-        .post('https://dev-maquette.exo-dev.fr//api/auth/login', formLogin)
+        .post('https://dev-maquette.exo-dev.fr/api/auth/login', formLogin)
         .then((response) => {
           return Promise.resolve(response);
         })
         .catch((e) => {
           return Promise.reject(e);
+        });
+    },
+    fetchUserInfo({ commit }) {
+      return axios
+        .get('https://dev-maquette.exo-dev.fr/api/auth/user', {
+          headers: { Authorization: `Bearer ${cookies.get('token')}` },
+        })
+        .then((response) => {
+          const userInfos = response.data.user
+
+          commit('SET_LOGGED_USER', {
+            firstname: userInfos.firstname,
+            lastname: userInfos.lastname,
+            email: userInfos.email
+          });
+          return Promise.resolve(response);
+        })
+        .catch((error) => {
+          return Promise.reject(error);
         });
     },
   },

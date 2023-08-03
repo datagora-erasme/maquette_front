@@ -5,9 +5,7 @@
       <preview-component :selected-area-voxelized="selectedAreaVoxelized" />
     </v-dialog>
     <v-dialog v-model="isUserInfoActive" class="user-info-dialog">
-      <v-card class="user-info-card">
-        aaa
-      </v-card>
+      <user-info @onCloseUserInfo="closeUserInfo" />
     </v-dialog>
     <v-row>
       <v-col class="navbar-container pa-0" :style="{ 'max-width': navbarWidth + 'px' }">
@@ -90,6 +88,7 @@ import * as itowns_widgets from '@/node_modules/itowns/dist/itowns_widgets'
 import { gsap, Power2 } from 'gsap'
 import SidebarComponent from './SidebarComponent.vue'
 import PreviewComponent from './PreviewComponent.vue'
+import UserInfo from './UserInfo.vue'
 // TODO : Remove draggable variable
 
 // Global vars...
@@ -103,7 +102,7 @@ const clickMouse = new itowns.THREE.Vector2();  // create once
 
 export default {
   name: 'ItownsViewer',
-  components: { SidebarComponent, PreviewComponent },
+  components: { SidebarComponent, PreviewComponent, UserInfo },
   data() {
     return {
       debugInfos: null,
@@ -191,6 +190,10 @@ export default {
   methods: {
     openUserInfo() {
       this.isUserInfoActive = true;
+    },
+    closeUserInfo() {
+      this.isUserInfoActive = false;
+      console.log('AA')
     },
     async downloadArea() {
       if (this.selectedBbox) {
@@ -690,11 +693,6 @@ export default {
     color: #e6e6e6 !important;
 }
 .preview-container {
-}
-
-.user-info-card {
-  width: 50vw;
-  height: 50vh;
 }
 
 .user-info-dialog {

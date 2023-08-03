@@ -14,6 +14,9 @@
 import ItownsViewer from './components/ItownsViewer.vue'
 import SignIn from './components/SignIn.vue'
 import { mapGetters } from 'vuex'
+import Cookies from 'universal-cookie';
+
+const cookies = new Cookies();
 
 export default {
   name: 'App',
@@ -23,7 +26,7 @@ export default {
   },
   computed: {
     isLoggedIn() {
-      return this.$store.getters.getIsUserLoggedIn;
+      return cookies.get('token') ? true : false
     },
   },
   mounted() {
