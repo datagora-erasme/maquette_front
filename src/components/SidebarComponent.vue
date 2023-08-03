@@ -216,7 +216,7 @@ export default {
       isPlatesSelected: false,
       isAreaSelectionActive: false,
       isAreaSelected: false,
-      currentStep: 0,
+      currentStep: 2,
       isLoading: false,
       dotsCount: 3,
       dotsVisible: 0,

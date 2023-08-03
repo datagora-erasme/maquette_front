@@ -1,11 +1,16 @@
 <template>
-  <v-card class="modal">
-    <div id="previewDiv" class="w-100 h-100" />
+  <v-card class="modal ma-auto">
+    <v-card-title>Apercu de la maquette Lego</v-card-title>
+    <v-card-text class="pa-0">
+      <div id="previewDiv" class="w-100 h-100" />
+    </v-card-text>
   </v-card>
 </template>
 
 <script>
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+
 var previewDiv;
 var scene;
 var camera;
@@ -33,18 +38,20 @@ export default {
     previewDiv = document.getElementById('previewDiv')
     
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera( 75, 1200 / 600 );
+    camera = new THREE.PerspectiveCamera( 75, 800 / 500 );
     
     renderer = new THREE.WebGLRenderer( { antialias: true } );
-    // camera.position.set( 15, 20, 30 );
+    camera.position.set( 2, 2, 2 );
     // renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( 1200, 600 );
+    renderer.setSize( 800, 500 );
     previewDiv.appendChild( renderer.domElement );
 
     scene.add( camera );
 
+    new OrbitControls(camera, renderer.domElement)
+
     const geometry = new THREE.BoxGeometry();
-    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
     const cube = new THREE.Mesh(geometry, material);
     scene.add(cube);
 
@@ -52,6 +59,10 @@ export default {
 
     function animate() {
       requestAnimationFrame(animate);
+
+      // cube.rotation.x += 0.01
+      // cube.rotation.y += 0.01
+
       render();
     }
     function render() {
@@ -73,7 +84,7 @@ export default {
 
 <style>
 .modal {
-  height: 600px;
-  width: 1200px;
+  height: 548px;
+  width: 800px;
 }
 </style>
