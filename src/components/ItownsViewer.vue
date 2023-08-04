@@ -135,12 +135,6 @@ export default {
     currentZoomLevel() {
       console.log(this.currentZoomLevel)
     },
-    // currentStep() {
-    //   console.log(this.currentStep)
-    //   if (this.currentStep === 1) {
-    //     this.voxelize()
-    //   }
-    // },
   },
   mounted() {
     // ===== Init iTowns vars =====
@@ -246,7 +240,7 @@ export default {
           const downloadLink = document.createElement('a');
           downloadLink.href = downloadUrl;
           downloadLink.download = 'myfile.obj'; // Change the file name as desired
-          downloadLink.click();
+          this.$store.dispatch('setCurrentMockup', downloadLink);
         })
         console.log(this.selectedBbox)
         console.log('Bounding Box : ', coordsMin.x, coordsMax.y, coordsMax.x, coordsMin.y)

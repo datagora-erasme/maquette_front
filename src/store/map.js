@@ -1,20 +1,20 @@
 const map = {
   state: () => ({
-    test: false,
+    currentMockup: null,
   }),
   mutations: {
-    SET_TEST(state, test) {
-      state.test = test;
+    SET_CURRENT_MOCKUP(state, currentMockup) {
+      state.currentMockup = currentMockup;
     },
   },
   actions: {
-    setEmail({ commit }, test) {
-      commit('SET_TEST', test);
+    setCurrentMockup({ commit }, currentMockup) {
+      commit('SET_CURRENT_MOCKUP', currentMockup);
     },
   },
   getters: {
-    getTest(state) {
-      return state.test;
+    getCurrentMockup(state) {
+      return state.currentMockup;
     },
   },
 };

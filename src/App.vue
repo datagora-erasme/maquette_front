@@ -26,7 +26,7 @@ export default {
   },
   computed: {
     isLoggedIn() {
-      return cookies.get('token') ? true : false
+      return !!cookies.get('token') || this.$store.getters.getIsUserLoggedIn
     },
   },
   mounted() {

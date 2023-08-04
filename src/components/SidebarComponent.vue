@@ -163,6 +163,7 @@
               <v-btn
                 color="#A18276"
                 class="last-step-buttons"
+                disabled
                 @click="downloadArea"
               >
                 Télécharger l'emprise
@@ -216,7 +217,7 @@ export default {
       isPlatesSelected: false,
       isAreaSelectionActive: false,
       isAreaSelected: false,
-      currentStep: 2,
+      currentStep: 0,
       isLoading: false,
       dotsCount: 3,
       dotsVisible: 0,
