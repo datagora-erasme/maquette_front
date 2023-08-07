@@ -272,7 +272,11 @@ export default {
     },
     checkPlatesNumber() {
       if (!this.nbPlatesHorizontal || !this.nbPlatesVertical) {
-          this.$awn.success('Your custom message')
+          this.$notify({
+            title: 'Nombre de plaques non saisi',
+            text: "Veuillez d'abord sélectionner le nombre de plaques !",
+            type: 'info'
+          });
 
           console.log("Veuillez d'abord sélectionner le nombre de plaques")
           return;
@@ -306,6 +310,12 @@ export default {
       this.isAreaSelected = !!this.selectedArea
       if (this.isAreaSelected) {
         this.$emit('onTravelToSelectedArea')
+      } else {
+        this.$notify({
+          title: 'Zone non sélectionnée',
+          text: "Veuillez d'abord sélectionner une zone en cliquant sur la carte",
+          type: 'info'
+        });
       }
     },
     cancelSelection() {

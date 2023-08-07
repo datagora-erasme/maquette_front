@@ -13,6 +13,7 @@ import { aliases, mdi } from 'vuetify/iconsets/mdi';
 import '@mdi/font/css/materialdesignicons.css';
 import 'vuetify/dist/vuetify.min.css';
 import store from './store';
+import Notifications from '@kyvg/vue3-notification';
 
 // Import CSS
 import '@/node_modules/itowns/examples/css/widgets.css'
@@ -39,6 +40,7 @@ app.config.globalProperties.$axios = axiosInstance;
 app.use(Itowns)
 app.use(THREE)
 app.use(vuetify)
+app.use(Notifications);
 app.use(store)
 console.log(process.env) 
 

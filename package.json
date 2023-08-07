@@ -8,6 +8,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@kyvg/vue3-notification": "^2.9.1",
     "@mdi/font": "^7.2.96",
     "axios": "^1.4.0",
     "core-js": "^3.8.3",
@@ -18,7 +19,6 @@
     "three": "0.146.0",
     "universal-cookie": "^4.0.4",
     "vue": "^3.2.13",
-    "vue-awesome-notifications": "^3.1.1",
     "vuetify": "^3.3.9",
     "vuex": "^4.0.2"
   },

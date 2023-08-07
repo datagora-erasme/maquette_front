@@ -674,7 +674,7 @@ export default {
   text-align: left;
   position: absolute;
   top: 40%;
-  right: 20px;
+  right: -2000px;  /* //! Temporary value to remove debug from screen without causing bugs */
   height: 250px;
   width: 550px;
   padding: 10px;
