@@ -42,7 +42,6 @@ app.use(THREE)
 app.use(vuetify)
 app.use(Notifications);
 app.use(store)
-console.log(process.env) 
 
 // Mount
 app.mount('#app')

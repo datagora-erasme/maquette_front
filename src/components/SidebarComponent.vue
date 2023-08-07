@@ -169,6 +169,14 @@
                 Télécharger l'emprise
               </v-btn>
             </v-card>
+            <v-btn
+              color="#414288"
+              class="last-step-buttons"
+              prepend-icon="mdi-arrow-left"
+              @click="resetMockupSelection"
+            >
+              Créer une nouvelle maquette
+            </v-btn>
           </div>
         </v-row>
       </v-row>
@@ -248,6 +256,11 @@ export default {
     this.animateDots();
   },
   methods: {
+    resetMockupSelection() {
+      this.currentStep = 0;
+      this.$emit('onResetMockupSelection')
+      this.clearPlatesNumber()
+    },
     downloadArea() {
       this.$emit('onDownloadArea')
     },
@@ -277,12 +290,14 @@ export default {
             text: "Veuillez d'abord sélectionner le nombre de plaques !",
             type: 'info'
           });
-
-          console.log("Veuillez d'abord sélectionner le nombre de plaques")
           return;
       }
       if (this.nbPlatesHorizontal > 5 || this.nbPlatesVertical > 3) {
-        console.log('Veuillez sélectionner au plus 5 plaques horizontales et 3 plaques verticales')
+        this.$notify({
+            title: 'Nombre de plaques incorrect',
+            text: 'Veuillez sélectionner au plus 5 plaques horizontales et 3 plaques verticales',
+            type: 'info'
+          });
         return;
       }
       // if ((parseInt(this.nbPlatesHorizontal) != Number) || (parseInt(this.nbPlatesVertical) != Number)) {

@@ -34,6 +34,7 @@
             size="small"
             color="#A18276"
             style="color: white;"
+            disabled
             @click="isInfoUpdateActive = true"
           >
             Modifier mes informations
@@ -108,6 +109,7 @@
             size="small"
             color="#A18276"
             style="color: white;"
+            disabled
             @click="isPasswordUpdateActive = true"
           >
             Modifier mon mot de passe
@@ -188,23 +190,24 @@ export default {
     },
   },
   mounted() {
-    this.$store.dispatch('fetchUserInfo').then((res) => {
-      console.log(res)
+    this.$store.dispatch('fetchUserInfo').then(() => {
+      // console.log(res)
     })
   },
   methods: {
     handleLogout() {
-      console.log('Logout')
+      this.$store.dispatch('logout')
+      window.location.reload();
     },
     handleCloseUserInfo() {
       this.$emit('onCloseUserInfo')
     },
     submitNewInfo() {
-      console.log('Info changed')
+      // console.log('Info changed')
       this.isInfoUpdateActive = false;
     },
     submitNewPassword() {
-      console.log('Password changed')
+      // console.log('Password changed')
       this.isPasswordUpdateActive = false;
     },
   },

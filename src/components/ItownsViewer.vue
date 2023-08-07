@@ -17,7 +17,7 @@
               permanent
             >
               <v-list-item
-                prepend-avatar="https://randomuser.me/api/portraits/men/85.jpg"
+                :prepend-avatar="require('../assets/logo_metropole_favicon.jpg')"
                 title="John Leider"
                 nav
               />
@@ -32,12 +32,15 @@
                   @click="clickOnNavbarItem(1)"
                 /> 
                 <v-list-item
-                  prepend-icon="mdi-account"
+                  disabled
+                
+                  prepend-icon="mdi-map-legend"
                   title="Afficher la voxelisation"
                   value="2"
                   @click="clickOnNavbarItem(2)"
                 />
                 <v-list-item
+                  disabled
                   prepend-icon="mdi-account-group-outline"
                   title="Générer le guide de montage"
                   value="3"
@@ -61,6 +64,7 @@
         :selected-area="selectedArea"
         :width="sidebarWidth"
         :ongoing-travel="ongoingTravel"
+        @onResetMockupSelection="resetMockupSelection"
         @onRemoveSelectedArea="removeSelectedArea()"
         @onTravelToSelectedArea="travelToSelectedArea()"
         @onPlatesSelected="onPlatesSelected"
@@ -133,7 +137,7 @@ export default {
   },
   watch: {
     currentZoomLevel() {
-      console.log(this.currentZoomLevel)
+      // console.log(this.currentZoomLevel)
     },
   },
   mounted() {
@@ -182,12 +186,14 @@ export default {
 
   },
   methods: {
+    resetMockupSelection() {
+      this.removeSelectedArea()
+    },
     openUserInfo() {
       this.isUserInfoActive = true;
     },
     closeUserInfo() {
       this.isUserInfoActive = false;
-      console.log('AA')
     },
     async downloadArea() {
       if (this.selectedBbox) {
@@ -202,8 +208,7 @@ export default {
             bbox: this.selectedBbox,
             startIndex: 0,
           }
-        }).then((response) => {
-          console.log(response)
+        }).then(() => {
           // const blob = new Blob([atob(response.data.data)], { type: 'text/plain' });
           // const downloadUrl = URL.createObjectURL(blob);
           // const downloadLink = document.createElement('a');
@@ -242,8 +247,8 @@ export default {
           downloadLink.download = 'myfile.obj'; // Change the file name as desired
           this.$store.dispatch('setCurrentMockup', downloadLink);
         })
-        console.log(this.selectedBbox)
-        console.log('Bounding Box : ', coordsMin.x, coordsMax.y, coordsMax.x, coordsMin.y)
+        // console.log(this.selectedBbox)
+        // console.log('Bounding Box : ', coordsMin.x, coordsMax.y, coordsMax.x, coordsMin.y)
       }
     },
     clickOnNavbarItem(value) {
@@ -628,7 +633,7 @@ export default {
       // Filling the selectedArea's metadata (used to get the selectedArea with raycaster)
       selectedArea.userData = { draggable: true, name: 'CUBE' }
       view.scene.add(selectedArea);
-      console.log(selectedArea)
+      // console.log(selectedArea)
       selectedArea.updateMatrixWorld(); // Used to force the re-rendering ?
       view.notifyChange(true);
     }

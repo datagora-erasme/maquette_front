@@ -58,7 +58,6 @@ var controls;
 var spotLight;
 var pointLight;
 var voxelized3dModel;
-var texture;
 var currentMockupFile;
 
 export default {
@@ -81,6 +80,7 @@ export default {
   mounted() {
     currentMockupFile = this.$store.getters.getCurrentMockup;
     previewDiv = document.getElementById('previewDiv')
+
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera( 75, 800 / 500 );
     renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -89,8 +89,9 @@ export default {
     pointLight = new THREE.PointLight( 0xffffff  );
     camera.add( pointLight );
     
+    // Camera position set to see the mockup from the right side
+    // Position obtained by logging the camera position while going through the map
     camera.position.set( 19.681337335336853, -88.17110542513275, 209.6151261927511 );
-    // renderer.setPixelRatio( window.devicePixelRatio );
 
     const loadModel = () =>  {
       const geometries = []
@@ -98,9 +99,6 @@ export default {
       voxelized3dModel.traverse( function( child ) {
         if ( child.isMesh ) {
           geometries.push(child.geometry);
-          
-          // // 1. Regroup geometries & create 1 mesh
-          // // 2. Center camera around mesgh
         } 
         if (geometries.length)
         combinedGeometry = mergeBufferGeometries(geometries);
@@ -144,38 +142,21 @@ export default {
     spotLight.shadow.mapSize.width = 1024;
     spotLight.shadow.mapSize.height = 1024;
 
-    // const dirLight = new THREE.DirectionalLight( 0xffffff, 1.5 );
-    // dirLight.position.set( 0, 2, 0 );
-    // dirLight.castShadow = true;
-    // dirLight.shadow.camera.near = 1;
-    // dirLight.shadow.camera.far = 10;
-
-    // dirLight.shadow.camera.right = 1;
-    // dirLight.shadow.camera.left = - 1;
-    // dirLight.shadow.camera.top	= 1;
-    // dirLight.shadow.camera.bottom = - 1;
-
-    // dirLight.shadow.mapSize.width = 1024;
-    // dirLight.shadow.mapSize.height = 1024;
-    // scene.add( dirLight );
-
-
     loader.load(
       currentMockupFile,
-      function( object ) {
-
+      (object) => {
         voxelized3dModel = object
-
       },
-      function( xhr ) {
-        
-        console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-
+      () => {
+        // console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
       },
-      function( error ) {
-        
-        console.log( 'An error happened' );
-
+      (error) => {
+        console.log(error);
+        this.$notify({
+          title: 'Erreur lors du rendu 3D',
+          text: "Une erreur s'est produite lors de l'affichage de la maquette 3D",
+          type: 'error'
+        });
       }
     );
     

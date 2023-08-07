@@ -17,10 +17,18 @@ const authentication = {
       state.loggedUser = loggedUser;
       state.isUserLoggedIn = true;
     },
+    LOGOUT_APP(state) {
+      state.loggedUser = { firstname: null, lastname: null, email: null };
+      state.isUserLoggedIn = false;
+    },
   },
   actions: {
     setLoggedUser({ commit }, loggedUser) {
       commit('SET_LOGGED_USER', loggedUser);
+    },
+    logout({ commit }) {
+      cookies.remove('token');
+      commit('LOGOUT_APP');
     },
     postLogin({ commit }, formLogin) {
       return axios
