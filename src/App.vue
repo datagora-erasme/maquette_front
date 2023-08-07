@@ -60,8 +60,8 @@ body {
 }
 
 .form-container {
-  width: 40vw;
-  height: 50vh;
+  min-width: 521px;
+  min-height: 420px;
 }
 
 .itowns-viewer {

@@ -1,22 +1,44 @@
 <template>
   <v-card class="modal ma-auto">
-    <v-card-title>
+    <v-card-title class="py-1">
       <div class="d-flex flex-row justify-space-between align-center">
         <h4 style="color: #414288">
           Apercu de la maquette Lego
         </h4>
-        <v-btn
-          density="comfortable"
-          color="#A18276"
-          style="color: white"
-          @click="download3DModel"
-        >
-          Télécharger le modèle 3D
-        </v-btn>
+        <div class="d-flex flex-row align-center">
+          <v-btn
+            density="comfortable"
+            color="#A18276"
+            style="color: white"
+            @click="download3DModel"
+          >
+            Télécharger le modèle 3D
+          </v-btn>
+          <v-btn
+            class="user-info-close-icon ml-2"
+            icon="mdi-close"
+            elevation="0"
+            @click="handleHidePreview"
+          />
+        </div>
       </div>
     </v-card-title>
-    <v-card-text class="pa-0">
-      <div id="previewDiv" class="w-100 h-100" />
+    <v-card-text class="pa-0 d-flex justify-center align-center">
+      <div>
+        <div v-if="isLoading" class="d-flex flex-column justify-center align-center">
+          <!-- <v-icon icon="mdi-video-3d" size="x-large" /> -->
+          <v-icon icon="mdi-domain" size="x-large" />
+          <div class="pt-2">
+            Veuillez patienter pendant le chargement de la maquette...
+          </div>
+        </div>
+        <div
+          v-show="!isLoading"
+          id="previewDiv"
+          v-card-text 
+          class="w-100 h-100"
+        />
+      </div>
     </v-card-text>
   </v-card>
 </template>
@@ -49,6 +71,7 @@ export default {
   },
   data() {
     return {
+      isLoading: true,
     }
   },
   computed: {
@@ -102,6 +125,7 @@ export default {
       mesh.position.add(offset);
       scene.add( mesh );
 
+      if (this.isLoading) this.isLoading = false;
       render();
 
     }
@@ -178,14 +202,22 @@ export default {
   methods: {
     download3DModel() {
       currentMockupFile.click()
-    }
+    },
+    handleHidePreview() {
+      this.$emit('onHidePreview')
+    },
   },
 }
 </script>
 
 <style>
 .modal {
-  height: 548px;
+  height: 556px;
   width: 800px;
+}
+
+.icon-3d {
+  height: 150px;
+  width: 150px;
 }
 </style>

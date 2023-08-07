@@ -2,7 +2,7 @@
 <template>
   <v-container id="wrapper-div" fluid>
     <v-dialog v-model="isPreviewActive" class="preview-container">
-      <preview-component :selected-area-voxelized="selectedAreaVoxelized" />
+      <preview-component :selected-area-voxelized="selectedAreaVoxelized" @onHidePreview="hidePreview" />
     </v-dialog>
     <v-dialog v-model="isUserInfoActive" class="user-info-dialog">
       <user-info @onCloseUserInfo="closeUserInfo" />

@@ -62,7 +62,7 @@
               Redéfinir plaques
             </v-btn>
           </v-row>
-          <v-row class="pb-6">
+          <v-row class="pb-6 px-1">
             Après avoir sélectionné le nombre de plaques souhaité, cliquez sur "Sélectionnez la zone" puis cliquez sur la carte pour choisir une zone.
           </v-row>
           <v-row class="d-flex justify-center">
@@ -184,10 +184,7 @@
 
 <script>
 import StepperComponent from './StepperComponent.vue'
-import AWN from 'awesome-notifications'
 
-// Initialize instance of AWN
-let notifier = new AWN({})
 
 export default {
   name: 'SidebarComponent',
@@ -275,8 +272,8 @@ export default {
     },
     checkPlatesNumber() {
       if (!this.nbPlatesHorizontal || !this.nbPlatesVertical) {
-          // this.$awn.warning("Veuillez d'abord sélectionner le nombre de plaques", {})
-          notifier.warning('Your custom message')
+          this.$awn.success('Your custom message')
+
           console.log("Veuillez d'abord sélectionner le nombre de plaques")
           return;
       }

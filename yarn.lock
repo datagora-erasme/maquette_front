@@ -2050,7 +2050,7 @@ autoprefixer@^10.2.4:
     picocolors "^1.0.0"
     postcss-value-parser "^4.2.0"
 
-awesome-notifications@^3.1.3:
+awesome-notifications@^3.1.1:
   version "3.1.3"
   resolved "https://registry.yarnpkg.com/awesome-notifications/-/awesome-notifications-3.1.3.tgz#d81897ea08cade5266f53e6eb0a749a4a9438d2d"
 
@@ -6193,6 +6193,12 @@ validate-npm-package-license@^3.0.1:
 vary@~1.1.2:
   version "1.1.2"
   resolved "https://registry.npmmirror.com/vary/-/vary-1.1.2.tgz#2299f02c6ded30d4a5961b0b9f74524a18f634fc"
+
+vue-awesome-notifications@^3.1.1:
+  version "3.1.1"
+  resolved "https://registry.yarnpkg.com/vue-awesome-notifications/-/vue-awesome-notifications-3.1.1.tgz#6bd77dfe6d2f93fe65a2dfb8f64ccc7f8e33fd26"
+  dependencies:
+    awesome-notifications "^3.1.1"
 
 vue-eslint-parser@^8.0.1:
   version "8.3.0"
