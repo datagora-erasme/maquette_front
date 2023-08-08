@@ -4,8 +4,8 @@ import App from './App.vue'
 // import Itowns from 'itowns'
 import * as Itowns from 'itowns'
 import * as THREE from 'three'
-import axios from 'axios';
 import 'vuetify/styles';
+import { axiosInstance as axios }  from './axios';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
@@ -32,11 +32,8 @@ const vuetify = createVuetify({
 
 // Create app
 const app = createApp(App)
-const axiosInstance = axios.create({
-  baseURL: process.env.API_URL,
-});
 // Use module
-app.config.globalProperties.$axios = axiosInstance;
+app.config.globalProperties.$axios = axios;
 app.use(Itowns)
 app.use(THREE)
 app.use(vuetify)

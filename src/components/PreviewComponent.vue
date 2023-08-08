@@ -44,6 +44,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
@@ -74,11 +75,14 @@ export default {
     }
   },
   computed: {
+    ...mapGetters({
+      getCurrentMockupDownloadLink: 'map/getCurrentMockupDownloadLink'
+    }),
   },
   watch: {
   },
   mounted() {
-    currentMockupFile = this.$store.getters.getCurrentMockup;
+    currentMockupFile = this.getCurrentMockupDownloadLink
     previewDiv = document.getElementById('previewDiv')
 
     scene = new THREE.Scene();

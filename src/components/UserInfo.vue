@@ -171,9 +171,7 @@
 </template>
 
 <script>
-import Cookies from 'universal-cookie';
-
-const cookies = new Cookies();
+import { mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'UserInfo',
@@ -185,19 +183,20 @@ export default {
     }
   },
   computed: {
-    userInfo() {
-      return this.$store.getters.getLoggedUser;
-    },
+    ...mapGetters({
+      userInfo: 'authentication/getLoggedUser'
+    }),
   },
   mounted() {
-    this.$store.dispatch('fetchUserInfo').then(() => {
-      // console.log(res)
-    })
+    this.fetchUserInfo();
   },
   methods: {
+    ...mapActions({
+      logout: 'authentication/logout',
+      fetchUserInfo: 'authentication/fetchUserInfo'
+    }),
     handleLogout() {
-      this.$store.dispatch('logout')
-      window.location.reload();
+      this.logout();
     },
     handleCloseUserInfo() {
       this.$emit('onCloseUserInfo')

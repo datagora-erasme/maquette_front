@@ -87,6 +87,7 @@
 </template>
 
 <script>
+import { mapActions } from 'vuex'
 import * as itowns from '@/node_modules/itowns/dist/itowns'
 import * as itowns_widgets from '@/node_modules/itowns/dist/itowns_widgets'
 import { gsap, Power2 } from 'gsap'
@@ -165,9 +166,6 @@ export default {
 
     // Finally...
     view.notifyChange()
-    // this.$axios.get('posts/1').then((res) => {
-    //   console.log('RESDATA', res.data)
-    // })
 
     // Global init Event
     view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function m() {
@@ -186,6 +184,9 @@ export default {
 
   },
   methods: {
+    ...mapActions({
+      setCurrentMockupDownloadLink: 'map/setCurrentMockupDownloadLink'
+    }),
     resetMockupSelection() {
       this.removeSelectedArea()
     },
@@ -234,7 +235,7 @@ export default {
         const coordsMin = new itowns.Coordinates('EPSG:4978', bbMin).as('EPSG:2154')
         const coordsMax = new itowns.Coordinates('EPSG:4978', bbMax).as('EPSG:2154')
         this.selectedBbox = coordsMin.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMax.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
-        await this.$axios.post('https://dev-maquette.exo-dev.fr//api/dataprocess/bbox', {
+        await this.$axios.post('/dataprocess/bbox', {
           bbox: this.selectedBbox,
           ratio: 5
         }).then((response) => {
@@ -245,7 +246,7 @@ export default {
           const downloadLink = document.createElement('a');
           downloadLink.href = downloadUrl;
           downloadLink.download = 'myfile.obj'; // Change the file name as desired
-          this.$store.dispatch('setCurrentMockup', downloadLink);
+          this.setCurrentMockupDownloadLink(downloadLink);
         })
         // console.log(this.selectedBbox)
         // console.log('Bounding Box : ', coordsMin.x, coordsMax.y, coordsMax.x, coordsMin.y)

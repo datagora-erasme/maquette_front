@@ -1,7 +1,7 @@
 <template>
   <!-- <img alt="Vue logo" src="./assets/logo.png"> -->
   <div class="app-container d-flex flex-row justify-center align-center">
-    <div v-if="!isLoggedIn" class="login-page d-flex flex-column">
+    <div v-if="isLoggedIn === false" class="login-page d-flex flex-column">
       <v-card class="form-container pa-7" elevation="3">
         <sign-in />
       </v-card>
@@ -14,10 +14,7 @@
 <script>
 import ItownsViewer from './components/ItownsViewer.vue'
 import SignIn from './components/SignIn.vue'
-import { mapGetters } from 'vuex'
-import Cookies from 'universal-cookie';
-
-const cookies = new Cookies();
+import { mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'App',
@@ -26,11 +23,20 @@ export default {
     SignIn
   },
   computed: {
+    ...mapGetters({
+      isUserLoggedIn: 'authentication/getIsUserLoggedIn'
+    }),
     isLoggedIn() {
-      return !!cookies.get('token') || this.$store.getters.getIsUserLoggedIn
+      return this.isUserLoggedIn
     },
   },
   mounted() {
+    this.verifySession();
+  },
+  methods: {
+    ...mapActions({
+      verifySession: 'authentication/verifySession'
+    }),
   },
 }
 </script>

@@ -1,9 +1,8 @@
-import axios from 'axios';
-import Cookies from 'universal-cookie';
-
-const cookies = new Cookies();
+import { axiosInstance as axios, setToken as setAxiosToken, removeToken as removeAxiosToken } from '../axios';
+import { cookies } from '../utils/cookies';
 
 const authentication = {
+  namespaced: true,
   state: () => ({
     isUserLoggedIn: false,
     loggedUser: {
@@ -17,22 +16,64 @@ const authentication = {
       state.loggedUser = loggedUser;
       state.isUserLoggedIn = true;
     },
-    LOGOUT_APP(state) {
+    LOGOUT(state) {
       state.loggedUser = { firstname: null, lastname: null, email: null };
       state.isUserLoggedIn = false;
     },
   },
   actions: {
-    setLoggedUser({ commit }, loggedUser) {
-      commit('SET_LOGGED_USER', loggedUser);
+    verifySession({ dispatch, commit }) {
+      const cookiesToken = cookies.get('token');
+      if (!cookiesToken) {
+        cookies.remove('token'); // just in case
+        removeAxiosToken();
+        commit('LOGOUT');
+        console.log('TOKEN NOT IN COOKIES')
+        return;
+      }
+      dispatch('verifyToken', cookiesToken)
+        .then(() => {
+          // The token is valid : add it again to axios config just in case
+          setAxiosToken(cookiesToken);
+          dispatch('fetchUserInfo');
+          console.log('TOKEN IN COOKIES IS VALID');
+        })
+        .catch(() => {
+          // If not valid, logout
+          console.log('TOKEN IN COOKIES IS NOT VALID');
+          cookies.remove('token'); // just in case
+          removeAxiosToken();
+          commit('LOGOUT');
+        });
+    },
+    verifyToken({}, token) {
+      return axios
+        .get('/auth/token', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((response) => {
+          return Promise.resolve(response);
+        })
+        .catch((e) => {
+          return Promise.reject(e);
+        });
+    },
+    // data: { firstname: string, lastname: string, token: string }
+    setLoggedUser({ commit }, data) {
+      cookies.set('token', data.token, { path: '/' });
+      setAxiosToken(data.token);
+      commit('SET_LOGGED_USER', { firstname: data.firstname, lastname: data.lastname });
     },
     logout({ commit }) {
       cookies.remove('token');
-      commit('LOGOUT_APP');
+      removeAxiosToken();
+      commit('LOGOUT');
     },
-    postLogin({ commit }, formLogin) {
+    postLogin({}, formLogin) {
       return axios
-        .post('https://dev-maquette.exo-dev.fr/api/auth/login', formLogin)
+        .post('/auth/login', formLogin)
         .then((response) => {
           return Promise.resolve(response);
         })
@@ -42,16 +83,15 @@ const authentication = {
     },
     fetchUserInfo({ commit }) {
       return axios
-        .get('https://dev-maquette.exo-dev.fr/api/auth/user', {
-          headers: { Authorization: `Bearer ${cookies.get('token')}` },
+        .get('/auth/user', {
+          // headers: { Authorization: `Bearer ${cookies.get('token')}` },
         })
         .then((response) => {
-          const userInfos = response.data.user
-
+          const userInfos = response.data.user;
           commit('SET_LOGGED_USER', {
             firstname: userInfos.firstname,
             lastname: userInfos.lastname,
-            email: userInfos.email
+            email: userInfos.email,
           });
           return Promise.resolve(response);
         })

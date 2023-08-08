@@ -1,20 +1,22 @@
+
 const map = {
+  namespaced: true,
   state: () => ({
-    currentMockup: null,
+    currentMockupUrl: null,
   }),
   mutations: {
-    SET_CURRENT_MOCKUP(state, currentMockup) {
-      state.currentMockup = currentMockup;
+    SET_CURRENT_MOCKUP_URL(state, url) {
+      state.currentMockupUrl = url;
     },
   },
   actions: {
-    setCurrentMockup({ commit }, currentMockup) {
-      commit('SET_CURRENT_MOCKUP', currentMockup);
+    setCurrentMockupDownloadLink({ commit }, url) {
+      commit('SET_CURRENT_MOCKUP_URL', url);
     },
   },
   getters: {
-    getCurrentMockup(state) {
-      return state.currentMockup;
+    getCurrentMockupDownloadLink(state) {
+      return state.currentMockupUrl;
     },
   },
 };
