@@ -1,184 +1,205 @@
 <template>
   <v-col v-if="currentTabValue !== null" :style="'max-width: ' + width + 'px'" class="pa-0">
-    <v-card v-if="currentTabValue == 1" class="mockup-creation-card py-5 px-8">
+    <v-card v-if="currentTabValue == 1" class="mockup-creation-card py-5 px-7">
       <v-row class="d-flex justify-center">
-        <h3 class="sidebar-title py-2">
-          Parcours de création d'une maquette
-        </h3>
+        <v-col class="pa-0">
+          <div class="sidebar-title text-h6 font-weight-medium py-2">
+            Parcours de création d'une maquette
+          </div>
+        </v-col>
       </v-row>
       <v-row class="py-5">
-        <stepper-component :steps="stepperSteps" :current-step="currentStep" />
+        <v-col class="pa-0">
+          <stepper-component :steps="stepperSteps" :current-step="currentStep" />
+        </v-col>
       </v-row>
       <v-row class="steps-container">
-        <v-row v-if="currentStep == 0" class="step1 d-flex flex-column">
-          <h3 class="step1Title pa-3">
-            Panel de sélection d'une emprise
-          </h3>
-          <row>
-            Veuillez indiquer le nombre de plaques horizontales et verticales de lego que vous souhaitez utiliser
-          </row>
-          <v-row class="d-flex justify-space-evenly pt-6 pb-3">
-            <v-responsive min-width="140" max-width="140">
-              <v-text-field
-                v-model="nbPlatesHorizontal"
-                variant="solo-filled"
-                clearable
-                :disabled="isPlatesSelected" 
-                label="Horizontal" 
-                :rules="[onlyNumbers, rangeValidationHorizontal]"
+        <v-col class="pa-0">
+          <v-row v-if="currentStep == 0" class="step1 d-flex flex-column">
+            <v-col class="pa-0">
+              <div class="step1Title pa-3 text-h6 font-weight-bold">
+                Panel de sélection d'une emprise
+              </div>
+              <v-row class="d-flex justify-center">
+                <v-col class="pa-0" :class="$vuetify.display.height > 722 ? 'text-subtitle-1' : 'text-subtitle-2'" cols="11">
+                  Veuillez indiquer le nombre de plaques horizontales et verticales de lego que vous souhaitez utiliser
+                </v-col>
+              </v-row>
+              <v-row class="d-flex justify-space-evenly pt-6 pb-3">
+                <v-col class="pa-0" cols="5">
+                  <v-text-field
+                    v-model="nbPlatesHorizontal"
+                    variant="solo-filled"
+                    clearable
+                    :density="$vuetify.display.height > 722 ? 'default' : 'compact'"
+                    :disabled="isPlatesSelected" 
+                    label="Horizontal" 
+                    :rules="[onlyNumbers, rangeValidationHorizontal]"
+                  />
+                </v-col>
+                <v-col class="pa-0" cols="5">
+                  <v-text-field
+                    v-model="nbPlatesVertical"
+                    variant="solo-filled"
+                    clearable
+                    :density="$vuetify.display.height > 722 ? 'default' : 'compact'"
+                    :disabled="isPlatesSelected" 
+                    label="Vertical" 
+                    :rules="[onlyNumbers, rangeValidationVertical]"
+                  />
+                </v-col>
+              </v-row>
+              <v-row class="d-flex justify-center mt-0">
+                <v-btn
+                  v-if="!isPlatesSelected"
+                  density="comfortable"
+                  color="#414288"
+                  min-width="230"
+                  style="color: white"
+                  @click="checkPlatesNumber()"
+                >
+                  Valider plaques
+                </v-btn>
+                <v-btn
+                  v-if="isPlatesSelected"
+                  density="comfortable"
+                  color="#A18276"
+                  min-width="230"
+                  style="color: white"
+                  :disabled="ongoingTravel"
+                  @click="clearPlatesNumber()"
+                >
+                  Redéfinir plaques
+                </v-btn>
+              </v-row>
+              <v-row>
+                <v-col :class="$vuetify.display.height > 722 ? 'text-subtitle-1' : 'text-subtitle-2'"> 
+                  Après avoir sélectionné le nombre de plaques souhaité, cliquez sur "Sélectionnez la zone" puis cliquez sur la carte pour choisir une zone.
+                </v-col>
+              </v-row>
+              <v-row class="d-flex justify-center">
+                <v-btn
+                  v-if="!isAreaSelectionActive && !isAreaSelected"
+                  density="comfortable"
+                  :disabled="!isPlatesSelected"
+                  color="#414288"
+                  min-width="230"
+                  style="color: white"
+                  @click="startSelection()"
+                >
+                  Sélectionner la zone
+                </v-btn>
+                <v-btn
+                  v-if="!isAreaSelectionActive && isAreaSelected"
+                  density="comfortable"
+                  color="#A18276"
+                  min-width="230"
+                  style="color: white"
+                  @click="startSelection()"
+                >
+                  Modifier la sélection
+                </v-btn>
+                <div v-if="isAreaSelectionActive">
+                  <v-btn
+                    density="comfortable"
+                    color="#3F0D12"
+                    min-width="230"
+                    style="color: white"
+                    :disabled="ongoingTravel"
+                    @click="cancelSelection()"
+                  >
+                    Annuler la sélection
+                  </v-btn>
+                  <br><br>
+                  <v-btn
+                    :loading="ongoingTravel"
+                    density="comfortable"
+                    color="#1B5E20"
+                    min-width="230"
+                    style="color: white"
+                    @click="endSelection()"
+                  >
+                    Valider la sélection
+                  </v-btn>
+                </div>
+              </v-row>
+              <v-row v-if="isAreaSelected && !isAreaSelectionActive" class="d-flex justify-center">
+                <v-col>
+                  <div :class="$vuetify.display.height > 722 ? 'text-subtitle-1' : 'text-subtitle-2'">
+                    Si la sélection vous convient, cliquez sur "Étape suivante" pour lancer la voxelisation.
+                  </div>
+                  <v-btn
+                    :stacked="$vuetify.display.height > 722"
+                    :class="$vuetify.display.height > 722 ? 'mt-2' : 'mt-4'"
+                    color="#1B5E20"
+                    min-width="230"
+                    style="color: white"
+                    @click="goToNextStep"
+                  >
+                    Étape suivante
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </v-col>
+          </v-row>
+          <v-row v-if="currentStep === 1" class="step2 w-100 d-flex justify-center align-center" style="height: calc(100vh - 200.38px)">
+            <div class="d-flex flex-column justify-center align-center">
+              <v-progress-circular
+                v-if="isLoading"
+                color="#414288"
+                indeterminate
+                :size="128"
+                :width="5"
               />
-            </v-responsive>
-            <v-responsive min-width="140" max-width="140">
-              <v-text-field
-                v-model="nbPlatesVertical"
-                variant="solo-filled"
-                clearable
-                :disabled="isPlatesSelected" 
-                label="Vertical" 
-                :rules="[onlyNumbers, rangeValidationVertical]"
-              />
-            </v-responsive>
-          </v-row>
-          <v-row class="d-flex justify-center pb-6">
-            <v-btn
-              v-if="!isPlatesSelected"
-              density="comfortable"
-              color="#414288"
-              min-width="230"
-              style="color: white"
-              @click="checkPlatesNumber()"
-            >
-              Valider plaques
-            </v-btn>
-            <v-btn
-              v-if="isPlatesSelected"
-              density="comfortable"
-              color="#A18276"
-              min-width="230"
-              style="color: white"
-              :disabled="ongoingTravel"
-              @click="clearPlatesNumber()"
-            >
-              Redéfinir plaques
-            </v-btn>
-          </v-row>
-          <v-row class="pb-6 px-1">
-            Après avoir sélectionné le nombre de plaques souhaité, cliquez sur "Sélectionnez la zone" puis cliquez sur la carte pour choisir une zone.
-          </v-row>
-          <v-row class="d-flex justify-center">
-            <v-btn
-              v-if="!isAreaSelectionActive && !isAreaSelected"
-              density="comfortable"
-              :disabled="!isPlatesSelected"
-              color="#414288"
-              min-width="230"
-              style="color: white"
-              @click="startSelection()"
-            >
-              Sélectionner la zone
-            </v-btn>
-            <v-btn
-              v-if="!isAreaSelectionActive && isAreaSelected"
-              density="comfortable"
-              color="#A18276"
-              min-width="230"
-              style="color: white"
-              @click="startSelection()"
-            >
-              Modifier la sélection
-            </v-btn>
-            <div v-if="isAreaSelectionActive">
-              <v-btn
-                density="comfortable"
-                color="#3F0D12"
-                min-width="230"
-                style="color: white"
-                :disabled="ongoingTravel"
-                @click="cancelSelection()"
-              >
-                Annuler la sélection
-              </v-btn>
-              <br><br>
-              <v-btn
-                :loading="ongoingTravel"
-                density="comfortable"
-                color="#1B5E20"
-                min-width="230"
-                style="color: white"
-                @click="endSelection()"
-              >
-                Valider la sélection
-              </v-btn>
+              <div class="pt-2">
+                Veuillez patienter pendant la voxelisation{{ dots }}
+              </div>
             </div>
           </v-row>
-          <v-row v-if="isAreaSelected && !isAreaSelectionActive" class="d-flex justify-center pa-6">
-            <div class="pb-6">
-              Si la sélection vous convient, cliquez sur "Étape suivante" pour lancer la voxelisation.
-            </div>
-            <v-btn
-              stacked
-              color="#1B5E20"
-              min-width="230"
-              style="color: white"
-              @click="goToNextStep"
-            >
-              Étape suivante
-            </v-btn>
+          <v-row v-if="currentStep === 2" class="step3 w-100 d-flex justify-center" style="height: calc(100vh - 124.38px)">
+            <v-col class="title-buttons-container w-100 d-flex flex-column align-center justify-space-around">
+              <h2 class="mockup-ready-title">
+                La maquette est prête !
+              </h2>
+              <v-card class="buttons-card pa-0 d-flex flex-column justif-center">
+                <v-row class="h-100 pa-0">
+                  <v-col class="py-0 px-1 d-flex flex-column justify-space-evenly align-center">
+                    <v-btn
+                      color="#A18276"
+                      class="last-step-buttons"
+                      @click="showMockup"
+                    >
+                      Afficher maquette
+                    </v-btn>
+                    <v-btn
+                      color="#A18276"
+                      class="last-step-buttons"
+                      disabled
+                    >
+                      Télécharger le CSV
+                    </v-btn>
+                    <v-btn
+                      color="#A18276"
+                      class="last-step-buttons"
+                      disabled
+                      @click="downloadArea"
+                    >
+                      Télécharger l'emprise
+                    </v-btn>
+                  </v-col>
+                </v-row>
+              </v-card>
+              <v-btn
+                color="#414288"
+                class="new-mockup-button"
+                prepend-icon="mdi-arrow-left"
+                @click="resetMockupSelection"
+              >
+                Créer une nouvelle maquette
+              </v-btn>
+            </v-col>
           </v-row>
-        </v-row>
-        <v-row v-if="currentStep === 1" class="step2 w-100 d-flex justify-center align-center" style="height: calc(100vh - 200.38px)">
-          <div class="d-flex flex-column justify-center align-center">
-            <v-progress-circular
-              v-if="isLoading"
-              color="#414288"
-              indeterminate
-              :size="128"
-              :width="5"
-            />
-            <div class="pt-2">
-              Veuillez patienter pendant la voxelisation{{ dots }}
-            </div>
-          </div>
-        </v-row>
-        <v-row v-if="currentStep === 2" class="step3 w-100 d-flex justify-center" style="height: calc(100vh - 124.38px)">
-          <div class="title-buttons-container w-100 d-flex flex-column align-center justify-space-around">
-            <h2 class="mockup-ready-title">
-              La maquette est prête !
-            </h2>
-            <v-card class="buttons-card d-flex flex-column align-center justify-space-around">
-              <v-btn
-                color="#A18276"
-                class="last-step-buttons"
-                @click="showMockup"
-              >
-                Afficher maquette
-              </v-btn>
-              <v-btn
-                color="#A18276"
-                class="last-step-buttons"
-                disabled
-              >
-                Télécharger le CSV
-              </v-btn>
-              <v-btn
-                color="#A18276"
-                class="last-step-buttons"
-                disabled
-                @click="downloadArea"
-              >
-                Télécharger l'emprise
-              </v-btn>
-            </v-card>
-            <v-btn
-              color="#414288"
-              class="last-step-buttons"
-              prepend-icon="mdi-arrow-left"
-              @click="resetMockupSelection"
-            >
-              Créer une nouvelle maquette
-            </v-btn>
-          </div>
-        </v-row>
+        </v-col>
       </v-row>
     </v-card>
     <v-card v-if="currentTabValue == 2">
@@ -364,7 +385,7 @@ export default {
   color: #414288;
 }
 .title-buttons-container {
-  height: 550px;
+  height: 75vh;
 }
 .buttons-card {
   width: 70%;
@@ -373,5 +394,9 @@ export default {
 .last-step-buttons {
   color: white !important; 
   width: 90%;
+}
+.new-mockup-button {
+  color: white !important; 
+  width: 100%;
 }
 </style>
