@@ -87,13 +87,14 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 import * as itowns from '@/node_modules/itowns/dist/itowns'
 import * as itowns_widgets from '@/node_modules/itowns/dist/itowns_widgets'
 import { gsap, Power2 } from 'gsap'
 import SidebarComponent from './SidebarComponent.vue'
 import PreviewComponent from './PreviewComponent.vue'
 import UserInfo from './UserInfo.vue'
+import { objDownloadUrlToMesh, createHeightMapFromMesh, generateCSVwithHeightMap, createHeightMapFromMeshUsingWorkers } from '../utils/threeUtils'
 // TODO : Remove draggable variable
 
 // Global vars...
@@ -128,6 +129,10 @@ export default {
     }
   },
   computed: {
+    ...mapGetters({
+      voxelizedMesh: 'map/getVoxelizedSingleMesh',
+      selectedPlates: 'map/getPlates',
+    }),
     currentZoomLevel() {
       if (view && view.controls) {
         return view.controls.getZoom()
@@ -185,7 +190,7 @@ export default {
   },
   methods: {
     ...mapActions({
-      setCurrentMockupDownloadLink: 'map/setCurrentMockupDownloadLink'
+      setCurrentMockupDownloadLink: 'map/setCurrentMockupDownloadLink',
     }),
     resetMockupSelection() {
       this.removeSelectedArea()
@@ -247,6 +252,12 @@ export default {
           downloadLink.href = downloadUrl;
           downloadLink.download = 'myfile.obj'; // Change the file name as desired
           this.setCurrentMockupDownloadLink(downloadLink);
+          objDownloadUrlToMesh(downloadLink).then((mesh) => {
+            console.log(mesh)
+            console.log(this.selectedPlates);
+            const heightMap = createHeightMapFromMeshUsingWorkers(mesh, this.selectedPlates.x, this.selectedPlates.y);
+            // generateCSVwithHeightMap(heightMap, 'CSV_OMG');
+          });
         })
         // console.log(this.selectedBbox)
         // console.log('Bounding Box : ', coordsMin.x, coordsMax.y, coordsMax.x, coordsMin.y)

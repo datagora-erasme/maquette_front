@@ -213,6 +213,7 @@
 
 <script>
 import StepperComponent from './StepperComponent.vue'
+import { mapActions } from 'vuex'
 
 
 export default {
@@ -277,6 +278,9 @@ export default {
     this.animateDots();
   },
   methods: {
+    ...mapActions({
+      setPlates: 'map/setPlates'
+    }),
     resetMockupSelection() {
       this.currentStep = 0;
       this.$emit('onResetMockupSelection')
@@ -297,6 +301,8 @@ export default {
     },
     goToNextStep() {
       this.currentStep++;
+      console.log(this.nbPlatesHorizontal, this.nbPlatesVertical)
+      this.setPlates({ x: this.nbPlatesHorizontal, y: this.nbPlatesVertical })
     },
     showMockup() {
       this.$emit('onShowPreview')
