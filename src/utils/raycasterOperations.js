@@ -1,5 +1,10 @@
-self.onmessage = (data) => {
+import * as THREE from 'three';
+
+self.onmessage = (messageEvent) => {
+  const { data } = messageEvent;
+  // console.log(data);
   setTimeout(() => {
-    self.postMessage({ text: 'RECIEVED msg from worker' + data.worker });
-  }, 1000);
-}
+    // console.log('Message recieved from worker ' + data.worker)
+    self.postMessage({ pos: data.index, value: 1, worker: data.worker });
+  }, Math.random() * 350)
+};
