@@ -130,8 +130,9 @@ export default {
   },
   computed: {
     ...mapGetters({
-      voxelizedMesh: 'map/getVoxelizedSingleMesh',
+      // voxelizedMesh: 'map/getVoxelizedSingleMesh',
       selectedPlates: 'map/getPlates',
+      getBaseLayers: 'map/getBaseLayers'
     }),
     currentZoomLevel() {
       if (view && view.controls) {
@@ -140,6 +141,9 @@ export default {
         return null
       }
     },
+    baseLayers() {
+      return this.getBaseLayers
+    }
   },
   watch: {
     currentZoomLevel() {
@@ -191,6 +195,7 @@ export default {
   methods: {
     ...mapActions({
       setCurrentMockupDownloadLink: 'map/setCurrentMockupDownloadLink',
+      setBaseLayers: 'map/setBaseLayers'
     }),
     resetMockupSelection() {
       this.removeSelectedArea()
@@ -250,7 +255,7 @@ export default {
           const downloadUrl = URL.createObjectURL(blob);
           const downloadLink = document.createElement('a');
           downloadLink.href = downloadUrl;
-          downloadLink.download = 'myfile.obj'; // Change the file name as desired
+          downloadLink.download = 'myfile.obj'; // TODO: Change the file name with maquette project name choose by user
           this.setCurrentMockupDownloadLink(downloadLink);
           objDownloadUrlToMesh(downloadLink).then((mesh) => {
             console.log(mesh)
@@ -286,6 +291,8 @@ export default {
       // DEBUG Show layers
       console.log('== allViewLayers DEBUG ==')
       var allViewLayers = view.getLayers()
+      this.setBaseLayers(allViewLayers)
+
       allViewLayers.forEach(layer => {
         console.log(layer.id, layer.crs, layer)
       })
@@ -560,7 +567,7 @@ export default {
       navigationWidgets.addButton(
           'rotate-up',
           '<p style="font-size: 20px">&#8595</p>',
-          'rotate camera up',
+          'Pivoter vers le haut',
           () => {
               view.controls.lookAtCoordinate({
                   tilt: view.controls.getTilt() - 10,
@@ -572,7 +579,7 @@ export default {
       navigationWidgets.addButton(
           'rotate-down',
           '<p style="font-size: 20px">&#8593</p>',
-          'rotate camera down',
+          'Pivoter vers le bas',
           () => {
               view.controls.lookAtCoordinate({
                   tilt: view.controls.getTilt() + 10,
@@ -584,7 +591,7 @@ export default {
       navigationWidgets.addButton(
           'reset-position',
           '&#8634',
-          'reset position',
+          'Réinitialiser la position',
           () => { view.controls.lookAtCoordinate(lyonPlacement) },
       )
     },
@@ -613,7 +620,7 @@ export default {
       // eslint-disable-next-line no-unused-vars
       var searchbarWidget = new itowns_widgets.Searchbar(view, geocodingOptions, {
           maxSuggestionNumber: 5,
-          position: 'top-right',
+          position: 'top',
           width: '320',
           placeholder: 'Cherchez un emplacement en France 🔎',
       })
@@ -654,6 +661,10 @@ export default {
 </script>
 
 <style>
+html, body {
+  overflow: hidden !important;
+}
+
 #wrapper-div {
   height: 100vh;
   width: 100%;
@@ -680,9 +691,6 @@ export default {
   height: 100%;
 }
 
-.debugInfos {
-}
-
 #info-div {
   display: flex;
   flex-direction: column;
@@ -701,13 +709,13 @@ export default {
 
 /* Override Itowns CSS */
 #widgets-searchbar form > input::placeholder {
-    color: #e6e6e6 !important;
+  color: #e6e6e6 !important;
 }
-.preview-container {
+#widgets-navigation #zoom-out-logo {
+  background-position: bottom !important;
 }
 
 .user-info-dialog {
-
   display: flex;
   flex-direction: column;
   justify-content: center;

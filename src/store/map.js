@@ -10,7 +10,22 @@ const map = {
     currentMockupUrl: null,
     currentMockupObjFile: null, //Blob containing the obj file's content. Downloadable with a .obj extension.
     // voxelizedSingleMesh: null,
+    baseLayers: []
   }),
+  getters: {
+    getCurrentMockupDownloadLink(state) {
+      return state.currentMockupUrl;
+    },
+    getPlates(state) {
+      return { x: state.platesX, y: state.platesY };
+    },
+    // getVoxelizedSingleMesh(state) {
+    //   return state.voxelizedSingleMesh;
+    // },
+    getBaseLayers(state) {
+      return state.baseLayers
+    }
+  },
   mutations: {
     SET_CURRENT_MOCKUP_URL(state, url) {
       state.currentMockupUrl = url;
@@ -24,6 +39,9 @@ const map = {
     SET_PLATES_Y(state, platesY) {
       state.platesY = platesY;
     },
+    SET_BASE_LAYERS(state, newLayers) {
+      state.baseLayers = newLayers
+    }
   },
   actions: {
     setPlates({ commit }, plates) {
@@ -36,17 +54,9 @@ const map = {
     setCurrentMockupObjFile({ commit }, blob) {
       commit('SET_CURRENT_MOCKUP_OBJ', blob);
     },
-  },
-  getters: {
-    getCurrentMockupDownloadLink(state) {
-      return state.currentMockupUrl;
-    },
-    getPlates(state) {
-      return { x: state.platesX, y: state.platesY };
-    },
-    // getVoxelizedSingleMesh(state) {
-    //   return state.voxelizedSingleMesh;
-    // },
+    setBaseLayers({ commit }, newLayers) {
+      commit('SET_BASE_LAYERS', newLayers)
+    }
   },
 };
 

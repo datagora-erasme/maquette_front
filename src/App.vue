@@ -7,12 +7,16 @@
       </v-card>
     </div>
     <itowns-viewer v-if="isLoggedIn" class="itowns-viewer" />
-    <notifications position="bottom right" />
+    <Aside />
+    <AsideBtn />
+    <Notifications position="bottom right" />
   </div>
 </template>
 
 <script>
 import ItownsViewer from './components/ItownsViewer.vue'
+import AsideBtn from './components/AsideBtn.vue'
+import Aside from './components/Aside.vue'
 import SignIn from './components/SignIn.vue'
 import { mapGetters, mapActions } from 'vuex'
 
@@ -20,15 +24,21 @@ export default {
   name: 'App',
   components: {
     ItownsViewer,
+    AsideBtn,
+    Aside,
     SignIn
   },
   computed: {
     ...mapGetters({
-      isUserLoggedIn: 'authentication/getIsUserLoggedIn'
+      isUserLoggedIn: 'authentication/getIsUserLoggedIn',
+      getAsideStatus: 'aside/getAsideStatus'
     }),
     isLoggedIn() {
       return this.isUserLoggedIn
     },
+    asideStatus() {
+      return this.getAsideStatus
+    }
   },
   mounted() {
     this.verifySession();
