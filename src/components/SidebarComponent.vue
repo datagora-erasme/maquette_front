@@ -301,7 +301,6 @@ export default {
     },
     goToNextStep() {
       this.currentStep++;
-      console.log(this.nbPlatesHorizontal, this.nbPlatesVertical)
       this.setPlates({ x: this.nbPlatesHorizontal, y: this.nbPlatesVertical })
     },
     showMockup() {

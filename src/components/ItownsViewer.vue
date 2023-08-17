@@ -94,7 +94,7 @@ import { gsap, Power2 } from 'gsap'
 import SidebarComponent from './SidebarComponent.vue'
 import PreviewComponent from './PreviewComponent.vue'
 import UserInfo from './UserInfo.vue'
-import { objDownloadUrlToMesh, createHeightMapFromMesh, generateCSVwithHeightMap, createHeightMapFromMeshUsingWorkers } from '../utils/threeUtils'
+import { objDownloadUrlToMesh, createHeightMapFromMeshFirstVersion, generateCSVwithHeightMapV2, createHeightMapFromMeshUsingWorkers } from '../utils/threeUtils'
 // TODO : Remove draggable variable
 
 // Global vars...
@@ -252,10 +252,14 @@ export default {
           downloadLink.href = downloadUrl;
           downloadLink.download = 'myfile.obj'; // Change the file name as desired
           this.setCurrentMockupDownloadLink(downloadLink);
+          console.time('Operation');
           objDownloadUrlToMesh(downloadLink).then((mesh) => {
-            console.log(mesh)
-            console.log(this.selectedPlates);
-            const heightMap = createHeightMapFromMeshUsingWorkers(mesh, this.selectedPlates.x, this.selectedPlates.y);
+            console.timeEnd('Operation');
+            // const heightMap = createHeightMapFromMeshFirstVersion(mesh, this.selectedPlates.x, this.selectedPlates.y);
+            createHeightMapFromMeshUsingWorkers(mesh, this.selectedPlates.x, this.selectedPlates.y).then((heightMap) => {
+              // console.log(heightMap)
+              generateCSVwithHeightMapV2(heightMap, 'CSV_LEGO', this.selectedPlates.x, this.selectedPlates.y)
+            });
             // generateCSVwithHeightMap(heightMap, 'CSV_OMG');
           });
         })
