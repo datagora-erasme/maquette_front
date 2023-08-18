@@ -339,7 +339,6 @@ export default {
 
       if (!area.min || !area.max) return false;
 
-      // TODO could be optimize if not compute at each intersect
       const minArea = new itowns.THREE.Vector2(
         Math.min(area.min.x, area.max.x),
         Math.min(area.min.y, area.max.y)
@@ -550,8 +549,6 @@ export default {
               }
           })
       })
-      // TODO: Add to local variable ???
-      // wfsMeshes = meshes
 
       // Finally add layer
       view.addLayer(wfsBuildingLayer)
