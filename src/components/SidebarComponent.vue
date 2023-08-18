@@ -174,9 +174,9 @@
                     <v-btn
                       color="#A18276"
                       class="last-step-buttons"
-                      disabled
+                      @click="generateAndDownloadCSV"
                     >
-                      Télécharger le CSV
+                      Générer le CSV
                     </v-btn>
                     <v-btn
                       color="#A18276"
@@ -213,7 +213,7 @@
 
 <script>
 import StepperComponent from './StepperComponent.vue'
-import { mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 
 
 export default {
@@ -252,6 +252,10 @@ export default {
     }
   },
   computed: {
+    ...mapGetters({
+      voxelizedMesh: 'map/getVoxelizedMesh',
+      plates: 'map/getPlates',
+    }),
     // Added here because props.selectedArea isn't a vue data() object, thus its value 
     // doesn't get updated here when it is updated in the parent component
     localSelectedArea() {
@@ -279,8 +283,18 @@ export default {
   },
   methods: {
     ...mapActions({
-      setPlates: 'map/setPlates'
+      setPlates: 'map/setPlates',
+      generateHeightMap: 'map/generateHeightMap',
+      generateCSVString: 'map/generateCSVString',
+      downloadCSV: 'map/downloadCSV',
     }),
+    generateAndDownloadCSV() {
+      this.generateHeightMap({ mesh: this.voxelizedMesh, platesX: this.plates.x, platesY: this.plates.y }).then((heightMap) => {
+        this.generateCSVString({ heightMap, platesX: this.plates.x }).then((csvString) => {
+          this.downloadCSV({ csvString, name: 'Lego' });
+        });
+      });
+    },
     resetMockupSelection() {
       this.currentStep = 0;
       this.$emit('onResetMockupSelection')

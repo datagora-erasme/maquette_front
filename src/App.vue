@@ -3,10 +3,14 @@
   <div class="app-container d-flex flex-row justify-center align-center">
     <div v-if="isLoggedIn === false" class="login-page d-flex flex-column">
       <v-card class="form-container pa-7" elevation="3">
-        <sign-in />
+        <SignIn />
       </v-card>
     </div>
     <itowns-viewer v-if="isLoggedIn" class="itowns-viewer" />
+    <v-dialog v-model="localIsCSVGenerationOngoing" class="csv-loading-screen-dialog">
+      <CSVLoadingScreen v-show="isCSVGenerationOngoing" />
+    </v-dialog>
+    <!-- <csv-loading-screen @onHidePreview="hidePreview" /> -->
     <notifications position="bottom right" />
   </div>
 </template>
@@ -14,21 +18,35 @@
 <script>
 import ItownsViewer from './components/ItownsViewer.vue'
 import SignIn from './components/SignIn.vue'
+import CSVLoadingScreen from './components/CSVLoadingScreen.vue'
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'App',
   components: {
     ItownsViewer,
-    SignIn
+    SignIn,
+    CSVLoadingScreen
+  },
+  data() {
+    return {
+      localIsCSVGenerationOngoing: false,
+    }
   },
   computed: {
     ...mapGetters({
-      isUserLoggedIn: 'authentication/getIsUserLoggedIn'
+      isUserLoggedIn: 'authentication/getIsUserLoggedIn',
+      isCSVGenerationOngoing: 'map/getIsCSVGenerationOngoing',
     }),
     isLoggedIn() {
       return this.isUserLoggedIn
     },
+    
+  },
+  watch: {
+    isCSVGenerationOngoing() {
+      this.localIsCSVGenerationOngoing = this.isCSVGenerationOngoing
+    }
   },
   mounted() {
     this.verifySession();
@@ -73,5 +91,11 @@ body {
 .itowns-viewer {
   height: 100vh;
   width: 100vw;
+}
+.csv-loading-screen-dialog {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-content: center !important; 
 }
 </style>

@@ -2,7 +2,7 @@
 <template>
   <v-container id="wrapper-div" fluid>
     <v-dialog v-model="isPreviewActive" class="preview-container">
-      <preview-component :selected-area-voxelized="selectedAreaVoxelized" @onHidePreview="hidePreview" />
+      <preview-component @onHidePreview="hidePreview" />
     </v-dialog>
     <v-dialog v-model="isUserInfoActive" class="user-info-dialog">
       <user-info @onCloseUserInfo="closeUserInfo" />
@@ -94,7 +94,7 @@ import { gsap, Power2 } from 'gsap'
 import SidebarComponent from './SidebarComponent.vue'
 import PreviewComponent from './PreviewComponent.vue'
 import UserInfo from './UserInfo.vue'
-import { objDownloadUrlToMesh, createHeightMapFromMeshFirstVersion, generateCSVwithHeightMapV2, createHeightMapFromMeshUsingWorkers } from '../utils/threeUtils'
+import { objToMesh } from '../utils/threeUtils'
 // TODO : Remove draggable variable
 
 // Global vars...
@@ -121,7 +121,7 @@ export default {
       nbPlatesHorizontal: null,
       nbPlatesVertical: null,
       isPreviewActive: false,
-      selectedAreaVoxelized: null,
+      voxelizedMeshObjContent: null,
       showDebug: true,
       selectedBbox: null,
       ongoingTravel: false,
@@ -131,6 +131,7 @@ export default {
   computed: {
     ...mapGetters({
       voxelizedMesh: 'map/getVoxelizedSingleMesh',
+      voxelizedMeshObjContent: 'map/getVoxelizedMeshObjContent',
       selectedPlates: 'map/getPlates',
     }),
     currentZoomLevel() {
@@ -190,7 +191,10 @@ export default {
   },
   methods: {
     ...mapActions({
-      setCurrentMockupDownloadLink: 'map/setCurrentMockupDownloadLink',
+      setCurrentMockupHTMLAnchorElement: 'map/setCurrentMockupHTMLAnchorElement',
+      setVoxelizedMesh: 'map/setVoxelizedMesh',
+      setVoxelizedMeshObjContent: 'map/setVoxelizedMeshObjContent',
+      voxelizeBbox: 'map/voxelizeBbox',
     }),
     resetMockupSelection() {
       this.removeSelectedArea()
@@ -240,29 +244,28 @@ export default {
         const coordsMin = new itowns.Coordinates('EPSG:4978', bbMin).as('EPSG:2154')
         const coordsMax = new itowns.Coordinates('EPSG:4978', bbMax).as('EPSG:2154')
         this.selectedBbox = coordsMin.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMax.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
-        await this.$axios.post('/dataprocess/bbox', {
-          bbox: this.selectedBbox,
-          ratio: 5
-        }).then((response) => {
-          this.$refs.sidebarComponent.endVoxelisation();
-          this.selectedAreaVoxelized = atob(response.data.data)
-          const blob = new Blob([atob(response.data.data)], { type: 'text/plain' });
-          const downloadUrl = URL.createObjectURL(blob);
-          const downloadLink = document.createElement('a');
-          downloadLink.href = downloadUrl;
-          downloadLink.download = 'myfile.obj'; // Change the file name as desired
-          this.setCurrentMockupDownloadLink(downloadLink);
-          console.time('Operation');
-          objDownloadUrlToMesh(downloadLink).then((mesh) => {
-            console.timeEnd('Operation');
-            // const heightMap = createHeightMapFromMeshFirstVersion(mesh, this.selectedPlates.x, this.selectedPlates.y);
-            createHeightMapFromMeshUsingWorkers(mesh, this.selectedPlates.x, this.selectedPlates.y).then((heightMap) => {
-              // console.log(heightMap)
-              generateCSVwithHeightMapV2(heightMap, 'CSV_LEGO', this.selectedPlates.x, this.selectedPlates.y)
-            });
-            // generateCSVwithHeightMap(heightMap, 'CSV_OMG');
+        this.voxelizeBbox(this.selectedBbox).then((objContent) =>  {
+          objToMesh(objContent).then((mesh) => {
+            this.setVoxelizedMesh(mesh);
+            this.$refs.sidebarComponent.endVoxelisation();
           });
-        })
+        });
+        // await this.$axios.post('/dataprocess/bbox', {
+        //   bbox: this.selectedBbox,
+        //   ratio: 5
+        // }).then((response) => {
+        //   this.$refs.sidebarComponent.endVoxelisation();
+        //   this.setVoxelizedMeshObjContent(atob(response.data.data))
+        //   objToMesh(atob(response.data.data)).then((mesh) => {
+        //     this.setVoxelizedMesh(mesh);
+        //     console.log(mesh);
+        //     // this.generateHeightMap({ mesh, platesX: this.selectedPlates.x, platesY: this.selectedPlates.y }).then((heightMap) => {
+        //     //   this.generateCSVString({ heightMap,platesX: this.selectedPlates.x }).then((csvString) => {
+        //     //     this.downloadCSV({ csvString, name: 'CSV_FINAL' });
+        //     //   });
+        //     // });
+        //   });
+        // })
         // console.log(this.selectedBbox)
         // console.log('Bounding Box : ', coordsMin.x, coordsMax.y, coordsMax.x, coordsMin.y)
       }

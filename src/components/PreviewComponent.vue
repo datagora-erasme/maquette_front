@@ -44,12 +44,10 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
-import { mergeBufferGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-
+import { toRaw } from 'vue';
 
 var previewDiv;
 var scene;
@@ -58,17 +56,10 @@ var renderer;
 var controls;
 var spotLight;
 var pointLight;
-var voxelized3dModel;
-var currentMockupFile;
+var requestId;
 
 export default {
   name: 'PreviewComponent',
-  props: {
-    selectedAreaVoxelized: {
-      type: String,
-      required: true,
-    },
-  },
   data() {
     return {
       isLoading: true,
@@ -76,13 +67,12 @@ export default {
   },
   computed: {
     ...mapGetters({
-      getCurrentMockupDownloadLink: 'map/getCurrentMockupDownloadLink'
+      voxelizedMesh: 'map/getVoxelizedMesh'
     }),
   },
   watch: {
   },
   mounted() {
-    currentMockupFile = this.getCurrentMockupDownloadLink
     previewDiv = document.getElementById('previewDiv')
 
     scene = new THREE.Scene();
@@ -96,44 +86,6 @@ export default {
     // Camera position set to see the mockup from the right side
     // Position obtained by logging the camera position while going through the map
     camera.position.set( 19.681337335336853, -88.17110542513275, 209.6151261927511 );
-
-    const loadModel = () =>  {
-      const geometries = []
-      let combinedGeometry;
-      voxelized3dModel.traverse( function( child ) {
-        if ( child.isMesh ) {
-          geometries.push(child.geometry);
-        } 
-        if (geometries.length)
-        combinedGeometry = mergeBufferGeometries(geometries);
-
-      } );
-
-      const material = new THREE.MeshPhongMaterial({ 
-          color: 0x666666,
-					shininess: 0,
-					side: THREE.DoubleSide,
-					// Clipping setup:
-					clipShadows: true
-        });
-      const mesh = new THREE.Mesh(combinedGeometry, material);
-      // mesh.material.wireframe = true;
-      // mesh.material.transparent = true;
-      // mesh.material.opacity = 0.7;
-      const offset = new THREE.Vector3();
-      mesh.geometry.computeBoundingBox();
-      mesh.geometry.boundingBox.getCenter(offset);
-      offset.negate();
-      mesh.position.add(offset);
-      scene.add( mesh );
-
-      if (this.isLoading) this.isLoading = false;
-      render();
-
-    }
-
-    const manager = new THREE.LoadingManager( loadModel );
-    const loader = new OBJLoader(manager);
     scene.add( new THREE.AmbientLight( 0xffffff ) );
 
     spotLight = new THREE.SpotLight( 0xffffff, 90 );
@@ -146,36 +98,39 @@ export default {
     spotLight.shadow.mapSize.width = 1024;
     spotLight.shadow.mapSize.height = 1024;
 
-    loader.load(
-      currentMockupFile,
-      (object) => {
-        voxelized3dModel = object
-      },
-      () => {
-        // console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-      },
-      (error) => {
-        console.log(error);
-        this.$notify({
-          title: 'Erreur lors du rendu 3D',
-          text: "Une erreur s'est produite lors de l'affichage de la maquette 3D",
-          type: 'error'
-        });
-      }
-    );
-    
     scene.add( spotLight );
     scene.add( camera );
+
+    // toRaw() removes the "proxy" property of this.voxelizedMesh so it can be accessed and modified by THREE functions.
+    let rawVoxelizedMesh = toRaw(this.voxelizedMesh);
+
+    // Changind the basic material of the mesh to make it reflect and react to light.
+    const material = new THREE.MeshPhongMaterial({ 
+      color: 0x777777,
+      shininess: 1,
+      side: THREE.DoubleSide,
+      // Clipping setup:
+      clipShadows: true,
+    });
+    const mesh = new THREE.Mesh(rawVoxelizedMesh.geometry, material)
+    const offset = new THREE.Vector3();
+    mesh.geometry.computeBoundingBox();
+    mesh.geometry.boundingBox.getCenter(offset);
+    offset.negate();
+    mesh.position.add(offset);
+    scene.add( mesh );
+
+    if (this.isLoading) this.isLoading = false;
+    render();
 
 
     controls = new OrbitControls(camera, renderer.domElement)
     controls.addEventListener( 'change', render );
 
     previewDiv.appendChild( renderer.domElement );
-    console.log(scene)
 
     function animate() {
-      requestAnimationFrame(animate);
+      requestId = requestAnimationFrame(animate);
       render();
     }
 
@@ -184,9 +139,18 @@ export default {
     }
     animate()
   },
+  beforeUnmount() {
+    // Stopping the animation so it doens't continue in the background and 
+    // slow down the user's computer.
+    window.cancelAnimationFrame(requestId);
+    requestId = undefined;
+  },
   methods: {
+    ...mapActions({
+      downloadMesh: 'map/downloadMesh',
+    }),
     download3DModel() {
-      currentMockupFile.click()
+      this.downloadMesh();
     },
     handleHidePreview() {
       this.$emit('onHidePreview')

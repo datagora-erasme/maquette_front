@@ -8,13 +8,12 @@ self.onmessage = (messageEvent) => {
   const chunkOfRaycastArray = data.chunkOfRaycastArray;
   const currentWorker = data.worker;
   const dataGeometryAttributes = data.geometryAttributes;
-  const dataMaterial = data.geometry;
+  // const dataMaterial = data.geometry;
   const ratioZ = data.ratioZ;
   const heightMapSize = data.heightMapSize;
   // https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
   // 0 to 255
   const chunkOfHeightMap = new Uint8Array(heightMapSize);
-  console.log('Worker ' + currentWorker + ' recieved chunk ', chunkOfRaycastArray);
 
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute(
@@ -26,7 +25,9 @@ self.onmessage = (messageEvent) => {
     new THREE.BufferAttribute(dataGeometryAttributes.positionArray, 3)
   );
 
-  const mesh = new THREE.Mesh(geometry, dataMaterial);
+  const material = new THREE.MeshBasicMaterial();
+
+  const mesh = new THREE.Mesh(geometry, material);
   let objects = [];
 
   // const mesh = new THREE.Mesh().toJSON(meshJson);
