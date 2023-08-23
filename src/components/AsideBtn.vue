@@ -22,7 +22,6 @@ export default {
       setAsideStatus: 'aside/setAsideStatus'
     }),
     toggleAside() {
-      console.log('click')
       this.setAsideStatus(!this.asideStatus)
     }
   }

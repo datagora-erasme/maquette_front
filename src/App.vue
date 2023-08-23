@@ -7,8 +7,8 @@
       </v-card>
     </div>
     <itowns-viewer v-if="isLoggedIn" class="itowns-viewer" />
-    <Aside />
-    <AsideBtn />
+    <Aside v-if="isLoggedIn" />
+    <AsideBtn v-if="isLoggedIn" />
     <Notifications position="bottom right" />
   </div>
 </template>
