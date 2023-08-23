@@ -399,11 +399,21 @@ export default {
     loadFdpData() {
       // Init Data and add layer to iTowns
 
+      // OSM layer
+      var osm = require('../datas/OPENSM.json')
+      var osmSource = new itowns.WMTSSource(osm.source)
+      var osmLayer = new itowns.ColorLayer('OpenStreetMap', {
+        source: osmSource,
+      })
+      // Disabled by default
+      osmLayer.visible = false
+      view.addLayer(osmLayer)
+      
       // Ortho layer
       itowns.Fetcher.json('https://www.itowns-project.org/itowns/examples/layers/JSONLayers/Ortho.json')
         .then(ortho => {
           var orthoSource = new itowns.WMTSSource(ortho.source)
-          var orthoLayer = new itowns.ColorLayer('Plan orthophotos IGN', {
+          var orthoLayer = new itowns.ColorLayer('Plan Orthophotos IGN', {
             source: orthoSource,
           })
           view.addLayer(orthoLayer)
@@ -416,6 +426,7 @@ export default {
           var mntLayer = new itowns.ElevationLayer('Couche MNT IGN', {
             source: mntSource,
           })
+          mntLayer.visible = true
           view.addLayer(mntLayer)
         })
     },
@@ -459,7 +470,7 @@ export default {
       })
 
       // Create layer on wfs building source
-      var wfsBuildingLayer = new itowns.FeatureGeometryLayer('Bâtiments IGN (BD Topo Juin 2023)',{
+      var wfsBuildingLayer = new itowns.FeatureGeometryLayer('Bâtiments IGN',{
           batchId: function(property, featureId) { return featureId },
           accurate: true,
           onMeshCreated: function scaleZ(mesh) {
