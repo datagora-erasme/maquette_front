@@ -90,6 +90,7 @@
 import { mapActions, mapGetters } from 'vuex'
 import * as itowns from '@/node_modules/itowns/dist/itowns'
 import * as itowns_widgets from '@/node_modules/itowns/dist/itowns_widgets'
+import * as colorLayersOrdering from '@/node_modules/itowns/lib/Renderer/ColorLayersOrdering.js'
 import { gsap, Power2 } from 'gsap'
 import SidebarComponent from './SidebarComponent.vue'
 import PreviewComponent from './PreviewComponent.vue'
@@ -100,6 +101,7 @@ import { objDownloadUrlToMesh, createHeightMapFromMesh, generateCSVwithHeightMap
 // Global vars...
 var view
 var viewerDiv
+var currentExtent
 var lyonPlacement
 var coordMouse
 var selectedArea
@@ -162,10 +164,14 @@ export default {
     // ===== Init View =====
     view = new itowns.GlobeView(viewerDiv, lyonPlacement)
   
+    // ===== Initiate view Extent =====
+    this.getViewCurrentExtent()
     // ===== Add other projections to iTowns =====
     this.addCustomProjections()
     // ===== Init Data and add layer to iTowns =====
-    this.loadFdpData(view)
+    // this.loadFdpData(view)
+    // ===== Init Scale Widget =====
+    this.addScaleWidget(view)
     // ===== Init Navigation Widgets =====
     this.addNavigationWidget(view)
     // ===== Init Searchbar Widgets =====
@@ -179,6 +185,10 @@ export default {
     // Global init Event
     view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function m() {
       console.info('-Globe initialized-')
+        // ===== Reload view Extent =====
+        this.getViewCurrentExtent()
+        // ===== Init Data and add layer to iTowns =====
+        this.loadFdpData(view)
         // ===== Show Debug =====
         this.showDebugInfos()
         // ===== Show All Layers =====
@@ -292,6 +302,7 @@ export default {
       console.log('== allViewLayers DEBUG ==')
       var allViewLayers = view.getLayers()
       this.setBaseLayers(allViewLayers)
+      console.log(allViewLayers)
 
       allViewLayers.forEach(layer => {
         console.log(layer.id, layer.crs, layer)
@@ -396,9 +407,29 @@ export default {
         }
       });
     },
+    getViewCurrentExtent() {
+      if (view.tileLayer && view.tileLayer.info.displayed.extent) {
+        var extentObj = view.tileLayer.info.displayed.extent;
+        // currentExtent = {
+        //   west: extentObj.west,
+        //   east: extentObj.east,
+        //   south: extentObj.south,
+        //   north: extentObj.north,
+        // }
+        currentExtent = extentObj
+      } else {
+        currentExtent = {
+          west: 'Infinity',
+          east: '-Infinity',
+          south: 'Infinity',
+          north: '-Infinity',
+        }
+      }
+      // DEBUG
+      // console.log(currentExtent)
+    },
     loadFdpData() {
-      // Init Data and add layer to iTowns
-
+      // -- Init Data and add layer to iTowns --
       // OSM layer
       var osm = require('../datas/OPENSM.json')
       var osmSource = new itowns.WMTSSource(osm.source)
@@ -408,13 +439,14 @@ export default {
       // Disabled by default
       osmLayer.visible = false
       view.addLayer(osmLayer)
-      
+
       // Ortho layer
       itowns.Fetcher.json('https://www.itowns-project.org/itowns/examples/layers/JSONLayers/Ortho.json')
         .then(ortho => {
           var orthoSource = new itowns.WMTSSource(ortho.source)
           var orthoLayer = new itowns.ColorLayer('Plan Orthophotos IGN', {
             source: orthoSource,
+            opacity: 0.5,
           })
           view.addLayer(orthoLayer)
         })
@@ -429,6 +461,32 @@ export default {
           mntLayer.visible = true
           view.addLayer(mntLayer)
         })
+
+      // WMS Communes of Metropole de Lyon
+      const wmsCommuneLyonLayer = new itowns.ColorLayer('Communes Lyon', {
+        source: new itowns.WMSSource({
+          url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/wms',
+          protocol: 'wms',
+          version: '1.1.0',
+          name: 'communes',
+          format: 'image/svg',
+          projection: 'EPSG:3857',
+          extent: currentExtent,
+        }),
+        transparent: true,
+        opacity: 1,
+      });
+
+      view.addLayer(wmsCommuneLyonLayer);
+
+      // Re-order layers ?
+      if (view && view.tileLayer && view.tileLayer.colorLayersOrder) {
+        console.log('--tryhard reorder--')
+        console.log(view.tileLayer)
+        // colorLayersOrdering.moveLayerDown(viewer, 'OpenStreetMap');
+        itowns.ColorLayersOrdering.moveLayerDown(view, 'OpenStreetMap');
+        console.log(view.tileLayer)
+      }
     },
     addBuildingLayer() {
       var color = new itowns.THREE.Color()
@@ -570,6 +628,10 @@ export default {
     lookAtCoordinate(coordinates) {
       view.controls.lookAtCoordinate({ coord: coordinates, range: 20000, heading: 0 })
     },
+    addScaleWidget() {
+      // Add Scale Widget
+      var scale = new itowns_widgets.Scale(view, { position: 'bottom-right', translate: { x: -80 } });
+    },
     addNavigationWidget() {
       // Add Navigation Widgets
       var navigationWidgets = new itowns_widgets.Navigation(view, { position: 'bottom-right' })
@@ -667,7 +729,7 @@ export default {
       selectedArea.updateMatrixWorld(); // Used to force the re-rendering ?
       view.notifyChange(true);
     }
-  }
+  },
 }
 </script>
 

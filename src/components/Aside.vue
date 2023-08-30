@@ -246,6 +246,9 @@ export default {
             if (bLayer.id === 'Bâtiments IGN') {
               newSubtitle = 'BD Topo Juin 2023'
             }
+            if (bLayer.id === 'Communes Lyon') {
+              newSubtitle = 'Métropole de Lyon'
+            }
             // Add layers
             let newLayer = {
               title: bLayer.id,
