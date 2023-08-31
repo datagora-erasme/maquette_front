@@ -2,8 +2,14 @@
   <!-- <img alt="Vue logo" src="./assets/logo.png"> -->
   <div class="app-container d-flex flex-row justify-center align-center">
     <div v-if="isLoggedIn === false" class="login-page d-flex flex-column">
-      <v-card class="form-container pa-7" elevation="3">
+      <v-card v-if="!ongoingPasswordRecuperation && !ongoingPasswordModification" class="form-container pa-7" elevation="3">
         <SignIn />
+      </v-card>
+      <v-card v-if="ongoingPasswordRecuperation" class="form-container pa-7" elevation="3">
+        <PasswordRecuperation />
+      </v-card>
+      <v-card v-if="ongoingPasswordModification" class="form-container pa-7" elevation="3">
+        <PasswordModification />
       </v-card>
     </div>
     <itowns-viewer v-if="isLoggedIn" class="itowns-viewer" />
@@ -19,6 +25,8 @@
 import ItownsViewer from './components/ItownsViewer.vue'
 import SignIn from './components/SignIn.vue'
 import CSVLoadingScreen from './components/CSVLoadingScreen.vue'
+import PasswordRecuperation from './components/PasswordRecuperation.vue'
+import PasswordModification from './components/PasswordModification.vue'
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
@@ -26,7 +34,9 @@ export default {
   components: {
     ItownsViewer,
     SignIn,
-    CSVLoadingScreen
+    CSVLoadingScreen,
+    PasswordRecuperation,
+    PasswordModification
   },
   data() {
     return {
@@ -37,6 +47,8 @@ export default {
     ...mapGetters({
       isUserLoggedIn: 'authentication/getIsUserLoggedIn',
       isCSVGenerationOngoing: 'map/getIsCSVGenerationOngoing',
+      ongoingPasswordRecuperation: 'authentication/getOngoingPasswordRecuperation',
+      ongoingPasswordModification: 'authentication/getOngoingPasswordModification'
     }),
     isLoggedIn() {
       return this.isUserLoggedIn
@@ -49,11 +61,14 @@ export default {
     }
   },
   mounted() {
-    this.verifySession();
+    if (window.location.href.includes('reset?token=') && window.location.href.split('reset?token=')[1]) {
+      this.setOngoingPasswordModification(true);
+    } else this.verifySession();
   },
   methods: {
     ...mapActions({
-      verifySession: 'authentication/verifySession'
+      verifySession: 'authentication/verifySession',
+      setOngoingPasswordModification: 'authentication/setOngoingPasswordModification',
     }),
   },
 }

@@ -9,13 +9,17 @@
     </div>
 
     <h3 class="signin-title">
-      Connexion
+      RÉINITIALISER MON MOT DE PASSE
     </h3>
     <br>
+    <div>
+      Pour réinitialiser votre mot de passe, veuillez saisir votre adresse email :
+    </div>
+    <br>
     <!-- Form -->
-    <v-form ref="formLogin" class="form-login" on-submit="return false;">
+    <v-form ref="formReset" class="form-login" on-submit="return false;">
       <v-text-field
-        v-model="currLogin.login"
+        v-model="email"
         autocomplete="username"
         name="login"
         type="text"
@@ -23,42 +27,31 @@
         clearable
         required
         class="input-required"
-        @keyup.enter="submitLoginForm()"
+        @keyup.enter="sendRecuperationEmail()"
       >
         <template #label>
           <span> Email* </span>
         </template>
       </v-text-field>
 
-      <v-text-field
-        v-model="currLogin.password"
-        :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-        :type="showPassword ? 'text' : 'password'"
-        autocomplete="current-password"
-        name="password"
-        variant="underlined"
-        clearable
-        required
-        class="input-required"
-        @click:append="showPassword = !showPassword"
-        @keyup.enter="submitLoginForm()"
-      >
-        <template #label>
-          <span> Mot de passe* </span>
-        </template>
-      </v-text-field>
       <div class="d-flex justify-space-between">
-        <button class="forgotten-password-button" @click="handleChangePassword()" @keyup.enter="console.log('')">
-          Mot de passe oublié ?
-        </button>
         <v-btn
-          :disabled="!(currLogin.password && currLogin.login)"
+          :loading="formLoading"
+          color="#A18276"
+          style="color: #414288"
+          variant="outlined"
+          @click="setOngoingPasswordRecuperation(false)"
+        >
+          Retour
+        </v-btn>
+        <v-btn
+          :disabled="!email"
           :loading="formLoading"
           color="#A18276"
           style="color: white"
-          @click="submitLoginForm()"
+          @click="sendRecuperationEmail()"
         >
-          Connecter
+          Envoyer
         </v-btn>
       </div>
     </v-form>
@@ -69,15 +62,11 @@
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
-  name: 'SignIn',
+  name: 'PasswordRecuperation',
   data() {
     return {
       formLoading: false,
-      showPassword: false,
-      currLogin: {
-        login: '',
-        password: '',
-      },
+      email: null,
     }
   },
   computed: {
@@ -90,30 +79,33 @@ export default {
   },
   methods: {
     ...mapActions({
-      postLogin: 'authentication/postLogin',
+      postResetPassword: 'authentication/postResetPassword',
       getAuth: 'authentication/getAuth',
       setLoggedUser: 'authentication/setLoggedUser',
       setOngoingPasswordRecuperation: 'authentication/setOngoingPasswordRecuperation',
     }),
-    handleChangePassword() {
-      this.setOngoingPasswordRecuperation(true);
-    },
-    submitLoginForm() {
+    sendRecuperationEmail() {
       // Enable loading
       this.formLoading = true
-      this.postLogin({
-        login: this.currLogin.login,
-        password: this.currLogin.password,
+      this.postResetPassword({
+        email: this.email,
       })
         .then((response) => {
-          this.setLoggedUser({
-            firstname: response.data.firstname,
-            lastname: response.data.lastname,
-            token: response.data.token,
-          })
+          this.$notify({
+            title: 'Email de récupération envoyé',
+            text: 'Un email de récupération a été envoyé à votre adresse email.',
+            type: 'success'
+          });
+          this.formLoading = false
+          this.setOngoingPasswordRecuperation(false);
         })
         .catch((e) => {
           console.log(e.message)
+          this.$notify({
+            title: "Erreur lors de l'envoi de l'email de récupération",
+            text: "Une erreur s'est produite lors de l'envoi de l'email de récupération",
+            type: 'error'
+          });
           this.formLoading = false
         })
     },
@@ -139,6 +131,6 @@ export default {
 }
 
 .forgotten-password-button {
-  color: #414288;
+  color: rgb(82, 82, 255);
 }
 </style>

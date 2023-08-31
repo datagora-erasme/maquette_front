@@ -9,29 +9,15 @@
     </div>
 
     <h3 class="signin-title">
-      Connexion
+      RÉINITIALISER MON MOT DE PASSE
     </h3>
+    <br>
+    <div>Veuillez saisir votre nouveau mot de passe</div>
     <br>
     <!-- Form -->
     <v-form ref="formLogin" class="form-login" on-submit="return false;">
       <v-text-field
-        v-model="currLogin.login"
-        autocomplete="username"
-        name="login"
-        type="text"
-        variant="underlined"
-        clearable
-        required
-        class="input-required"
-        @keyup.enter="submitLoginForm()"
-      >
-        <template #label>
-          <span> Email* </span>
-        </template>
-      </v-text-field>
-
-      <v-text-field
-        v-model="currLogin.password"
+        v-model="passwordFirstTry"
         :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
         :type="showPassword ? 'text' : 'password'"
         autocomplete="current-password"
@@ -41,24 +27,39 @@
         required
         class="input-required"
         @click:append="showPassword = !showPassword"
-        @keyup.enter="submitLoginForm()"
+        @keyup.enter="submitPasswordForm()"
       >
         <template #label>
           <span> Mot de passe* </span>
         </template>
       </v-text-field>
-      <div class="d-flex justify-space-between">
-        <button class="forgotten-password-button" @click="handleChangePassword()" @keyup.enter="console.log('')">
-          Mot de passe oublié ?
-        </button>
+
+      <v-text-field
+        v-model="passwordSecondTry"
+        :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+        :type="showPassword ? 'text' : 'password'"
+        autocomplete="current-password"
+        name="password"
+        variant="underlined"
+        clearable
+        required
+        class="input-required"
+        @click:append="showPassword = !showPassword"
+        @keyup.enter="submitPasswordForm()"
+      >
+        <template #label>
+          <span> Confirmation du mot de passe* </span>
+        </template>
+      </v-text-field>
+      <div class="d-flex justify-end">
         <v-btn
-          :disabled="!(currLogin.password && currLogin.login)"
+          :disabled="!passwordFirstTry || !passwordSecondTry || passwordFirstTry !== passwordSecondTry"
           :loading="formLoading"
           color="#A18276"
           style="color: white"
-          @click="submitLoginForm()"
+          @click="submitPasswordForm()"
         >
-          Connecter
+          MODIFIER
         </v-btn>
       </div>
     </v-form>
@@ -69,15 +70,13 @@
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
-  name: 'SignIn',
+  name: 'PasswordModification',
   data() {
     return {
       formLoading: false,
       showPassword: false,
-      currLogin: {
-        login: '',
-        password: '',
-      },
+      passwordFirstTry: null,
+      passwordSecondTry: null,
     }
   },
   computed: {
@@ -90,27 +89,26 @@ export default {
   },
   methods: {
     ...mapActions({
-      postLogin: 'authentication/postLogin',
+      patchChangePasswordWithToken: 'authentication/patchChangePasswordWithToken',
       getAuth: 'authentication/getAuth',
       setLoggedUser: 'authentication/setLoggedUser',
-      setOngoingPasswordRecuperation: 'authentication/setOngoingPasswordRecuperation',
+      setOngoingPasswordModification: 'authentication/setOngoingPasswordModification'
     }),
-    handleChangePassword() {
-      this.setOngoingPasswordRecuperation(true);
-    },
-    submitLoginForm() {
+    submitPasswordForm() {
       // Enable loading
       this.formLoading = true
-      this.postLogin({
-        login: this.currLogin.login,
-        password: this.currLogin.password,
+      this.patchChangePasswordWithToken({
+        token: window.location.href.split('reset?token=')[1],
+        password: this.passwordFirstTry,
       })
         .then((response) => {
-          this.setLoggedUser({
-            firstname: response.data.firstname,
-            lastname: response.data.lastname,
-            token: response.data.token,
-          })
+          this.$notify({
+            title: 'Mot de passe modifié avec succès',
+            text: 'Vous pouvez dès à présent vous connecter avec votre nouveau mot de passe !',
+            type: 'success'
+          });
+          this.formLoading = false
+          this.setOngoingPasswordModification(false);
         })
         .catch((e) => {
           console.log(e.message)

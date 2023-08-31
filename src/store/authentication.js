@@ -10,6 +10,8 @@ const authentication = {
       lastname: null,
       email: null,
     },
+    ongoingPasswordRecuperation: false,
+    ongoingPasswordModification: false,
   }),
   mutations: {
     SET_LOGGED_USER(state, loggedUser) {
@@ -20,15 +22,42 @@ const authentication = {
       state.loggedUser = { firstname: null, lastname: null, email: null };
       state.isUserLoggedIn = false;
     },
+    ONGOING_PASSWORD_RECUPERATION(state, value) {
+      state.ongoingPasswordRecuperation = value;
+    },
+    ONGOING_PASSWORD_MODIFICATION(state, value) {
+      state.ongoingPasswordModification = value;
+    },
   },
   actions: {
+    setOngoingPasswordRecuperation({ commit }, value) {
+      commit('ONGOING_PASSWORD_RECUPERATION', value);
+    },
+    setOngoingPasswordModification({ commit }, value) {
+      commit('ONGOING_PASSWORD_MODIFICATION', value);
+    },
+    patchChangePasswordWithToken({}, formPassword) {
+      const headers = {
+        Authorization: `Bearer ${formPassword.token}`,
+      };
+      return axios
+        .patch('/auth', 
+        { password: formPassword.password }, 
+        { headers })
+        .then((response) => {
+          return Promise.resolve(response);
+        })
+        .catch((e) => {
+          return Promise.reject(e);
+        });
+    },
     verifySession({ dispatch, commit }) {
       const cookiesToken = cookies.get('token');
       if (!cookiesToken) {
         cookies.remove('token'); // just in case
         removeAxiosToken();
         commit('LOGOUT');
-        console.log('TOKEN NOT IN COOKIES')
+        console.log('TOKEN NOT IN COOKIES');
         return;
       }
       dispatch('verifyToken', cookiesToken)
@@ -64,7 +93,10 @@ const authentication = {
     setLoggedUser({ commit }, data) {
       cookies.set('token', data.token, { path: '/' });
       setAxiosToken(data.token);
-      commit('SET_LOGGED_USER', { firstname: data.firstname, lastname: data.lastname });
+      commit('SET_LOGGED_USER', {
+        firstname: data.firstname,
+        lastname: data.lastname,
+      });
     },
     logout({ commit }) {
       cookies.remove('token');
@@ -74,6 +106,16 @@ const authentication = {
     postLogin({}, formLogin) {
       return axios
         .post('/auth/login', formLogin)
+        .then((response) => {
+          return Promise.resolve(response);
+        })
+        .catch((e) => {
+          return Promise.reject(e);
+        });
+    },
+    postResetPassword({}, email) {
+      return axios
+        .post('/auth/reset', email)
         .then((response) => {
           return Promise.resolve(response);
         })
@@ -107,6 +149,12 @@ const authentication = {
     getIsUserLoggedIn(state) {
       return state.isUserLoggedIn;
     },
+    getOngoingPasswordRecuperation(state) {
+      return state.ongoingPasswordRecuperation;
+    },
+    getOngoingPasswordModification(state) {
+      return state.ongoingPasswordModification;
+    }
   },
 };
 
