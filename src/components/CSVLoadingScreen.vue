@@ -1,9 +1,15 @@
 <template>
-  <v-card class="CSVLoadingScreen ma-auto">
-    Idée : informer l'utilisateur que le CSV est en cours de génération et que l'oprération peut prendre du temps<br><br>
-    <div class="red--text">
-      LE TELECHARGEMENT DU CSV EST EN COURS CETTE FENETRE SE FERMERA AUTOMATIQUEMENT A LA FIN DE L'OPERATION. 
-    </div>
+  <v-card loading class="CSVLoadingScreen ma-auto">
+    <v-card-title class="loading-screen-title d-flex justify-center">
+      Téléchargement du CSV en cours
+    </v-card-title>
+    <v-card-item class="w-max px-5">
+      Le modèle de construction CSV de la maquette est en cours de téléchargement. 
+      <br>
+      Cette opération peut prendre quelques minutes.
+      <br><br>
+      <b>Cette fenêtre se fermera automatiquement à la fin du téléchargement.</b>
+    </v-card-item>
   </v-card>
 </template>
 
@@ -19,7 +25,11 @@ export default {
 
 <style>
 .CSVLoadingScreen {
-  width: 500px;
-  height: 300px;
+  width: 600px;
+  height: 200px;
+}
+
+.loading-screen-title {
+  color: #A18276;
 }
 </style>
