@@ -32,11 +32,10 @@
                   @click="clickOnNavbarItem(1)"
                 /> 
                 <v-list-item
-                  disabled
-                
                   prepend-icon="mdi-map-legend"
-                  title="Afficher la voxelisation"
+                  title="Projection de la maquette"
                   value="2"
+                  :disabled="!getSelectedArea"
                   @click="clickOnNavbarItem(2)"
                 />
                 <v-list-item
@@ -64,6 +63,7 @@
         :selected-area="selectedArea"
         :width="sidebarWidth"
         :ongoing-travel="ongoingTravel"
+        @onCloseNavbar="closeNavbarItem"
         @onResetMockupSelection="resetMockupSelection"
         @onRemoveSelectedArea="removeSelectedArea()"
         @onTravelToSelectedArea="travelToSelectedArea()"
@@ -133,6 +133,7 @@ export default {
       voxelizedMesh: 'map/getVoxelizedSingleMesh',
       voxelizedMeshObjContent: 'map/getVoxelizedMeshObjContent',
       selectedPlates: 'map/getPlates',
+      getSelectedArea: 'map/getSelectedArea',
     }),
     currentZoomLevel() {
       if (view && view.controls) {
@@ -195,6 +196,7 @@ export default {
       setVoxelizedMesh: 'map/setVoxelizedMesh',
       setVoxelizedMeshObjContent: 'map/setVoxelizedMeshObjContent',
       voxelizeBbox: 'map/voxelizeBbox',
+      setSelectedArea: 'map/setSelectedArea',
     }),
     resetMockupSelection() {
       this.removeSelectedArea()
@@ -279,6 +281,10 @@ export default {
         this.currentTabValue = value
         this.viewerDivWidth = window.innerWidth - this.sidebarWidth - this.navbarWidth
       }
+    },
+    closeNavbarItem() {
+      this.currentTabValue = null
+      this.viewerDivWidth = window.innerWidth - this.navbarWidth
     },
     onPlatesSelected(plates) {
       this.nbPlatesHorizontal = plates.horizontal;
@@ -627,6 +633,7 @@ export default {
         view.scene.remove(selectedArea);
         selectedArea.updateMatrixWorld(); // Used to force the re-rendering ?
         selectedArea = undefined; 
+        this.setSelectedArea(null);
         view.notifyChange(true);
       }
     },
@@ -645,6 +652,7 @@ export default {
       selectedArea.position.set(result.x, result.y, result.z + 100)
       selectedArea.rotation.set(Math.PI/1, Math.PI / 4, Math.PI / 1)
       this.selectedArea = selectedArea;
+      this.setSelectedArea(selectedArea);
 
       // Filling the selectedArea's metadata (used to get the selectedArea with raycaster)
       selectedArea.userData = { draggable: true, name: 'CUBE' }
@@ -677,11 +685,6 @@ export default {
 
 .viewerDiv-container {
   padding: 0px;
-}
-
-.mockup-creation-card {
-  width: 100%;
-  height: 100%;
 }
 
 .debugInfos {

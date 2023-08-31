@@ -1,6 +1,6 @@
 <template>
   <v-col v-if="currentTabValue !== null" :style="'max-width: ' + width + 'px'" class="pa-0">
-    <v-card v-if="currentTabValue == 1" class="mockup-creation-card py-5 px-7">
+    <v-card v-if="currentTabValue == 1" class="sidebar-cards py-5 px-7">
       <v-row class="d-flex justify-center">
         <v-col class="pa-0">
           <div class="sidebar-title text-h6 font-weight-medium py-2">
@@ -13,7 +13,7 @@
           <stepper-component :steps="stepperSteps" :current-step="currentStep" />
         </v-col>
       </v-row>
-      <v-row class="steps-container">
+      <v-row>
         <v-col class="pa-0">
           <v-row v-if="currentStep == 0" class="step1 d-flex flex-column">
             <v-col class="pa-0">
@@ -202,8 +202,27 @@
         </v-col>
       </v-row>
     </v-card>
-    <v-card v-if="currentTabValue == 2">
-      bbb
+    <v-card v-if="currentTabValue == 2" class="sidebar-cards py-5 px-7">
+      <v-row class="d-flex justify-center">
+        <v-col class="pa-0">
+          <div class="sidebar-title text-h6 font-weight-medium py-2">
+            Panel de projection de la maquette
+          </div>
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col class="projection-panel d-flex flex-column justify-center align-center">
+          <v-btn
+            :stacked="$vuetify.display.height > 722"
+            color="#1B5E20"
+            min-width="330"
+            style="color: white"
+            @click="startSlideShow()"
+          >
+            Lancer le mode projection
+          </v-btn>
+        </v-col>
+      </v-row>
     </v-card>
     <v-card v-if="currentTabValue == 3">
       ccc
@@ -288,6 +307,15 @@ export default {
       generateCSVString: 'map/generateCSVString',
       downloadCSV: 'map/downloadCSV',
     }),
+    startSlideShow() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+      this.$emit('onTravelToSelectedArea')
+      this.$emit('onCloseNavbar')
+    },
     generateAndDownloadCSV() {
       this.generateHeightMap({ mesh: this.voxelizedMesh, platesX: this.plates.x, platesY: this.plates.y }).then((heightMap) => {
         this.generateCSVString({ heightMap, platesX: this.plates.x }).then((csvString) => {
@@ -417,5 +445,18 @@ export default {
 .new-mockup-button {
   color: white !important; 
   width: 100%;
+}
+
+.sidebar-cards {
+  width: 100%;
+  height: 100%;
+}
+
+.projection-panel {
+  height: 100%;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
 }
 </style>

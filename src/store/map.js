@@ -4,6 +4,7 @@ import { axiosInstance as axios } from '../axios';
 const map = {
   namespaced: true,
   state: () => ({
+    selectedArea: null,
     platesX: null,
     platesY: null,
     voxelizedMesh: null,
@@ -13,6 +14,9 @@ const map = {
     csvString: null,
   }),
   mutations: {
+    SET_SELECTED_AREA(state, selectedArea) {
+      state.selectedArea = selectedArea;
+    },
     SET_PLATES_X(state, platesX) {
       state.platesX = platesX;
     },
@@ -42,6 +46,9 @@ const map = {
     setPlates({ commit }, plates) {
       commit('SET_PLATES_X', plates.x);
       commit('SET_PLATES_Y', plates.y);
+    },
+    setSelectedArea({ commit }, selectedArea) {
+      commit('SET_SELECTED_AREA', selectedArea);
     },
     setVoxelizedMeshObjContent({ commit }, content) {
       commit('SET_OBJ_CONTENT', content);
@@ -115,6 +122,9 @@ const map = {
     },
   },
   getters: {
+    getSelectedArea(state) {
+      return state.selectedArea;
+    },
     getPlates(state) {
       return { x: state.platesX, y: state.platesY };
     },
