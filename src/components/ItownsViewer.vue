@@ -457,10 +457,8 @@ export default {
       var mntLayer = new itowns.ElevationLayer('MNT_IGN_Layer', {
         name: 'Couche MNT IGN',
         source: mntSource,
-        opacity: 1
       })
       mntLayer.visible = true
-      // mntLayer.opacity = 1
       view.addLayer(mntLayer)
 
       // WMS Communes of Metropole de Lyon
@@ -478,7 +476,7 @@ export default {
         source: wmsCommuneLyonSource,
         transparent: true,
         opacity: 1,
-      } );
+      });
       wmsCommuneLyonLayer.visible = true
       view.addLayer(wmsCommuneLyonLayer);
     },

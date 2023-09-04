@@ -31,7 +31,7 @@
               class="layers-list-item"
             >
               <template #prepend="{prepend}">
-                <v-icon :icon="prepend" />
+                <v-icon :color="allBaseLayers[index].visible ? 'black' : 'grey'" :icon="prepend" />
               </template>
               <template #title="{title}">
                 <div class="d-flex align-left">
@@ -46,32 +46,44 @@
               <template #append>
                 <v-btn
                   v-if="bLayer.visible"
-                  color="green-darken-4"
+                  color="green-darken-2"
                   icon="mdi-eye"
-                  variant="text"
+                  variant="outlined"
+                  density="comfortable"
+                  class="ml-1"
                   @click="toggleVisible(index)"
                 />
                 <v-btn
                   v-else
                   color="grey"
                   icon="mdi-eye-off"
-                  variant="text"
+                  variant="outlined"
+                  density="comfortable"
+                  class="ml-1"
                   @click="toggleVisible(index)"
                 />
                 <v-btn
                   :color="allBaseLayers[index].openSub ? 'blue': 'black'"
                   icon="mdi-cog"
-                  variant="text"
+                  variant="outlined"
+                  density="comfortable"
+                  class="ml-1"
                   :active="allBaseLayers[index].openSub"
+                  :disabled="!bLayer.opacity"
                   @click="toggleSub(index)"
                 />
-                <!-- :class="allBaseLayers[index].openSub ? 'active': ''" -->
+                <v-btn
+                  color="cyan-darken-3"
+                  icon="mdi-help"
+                  variant="outlined"
+                  density="comfortable"
+                  class="ml-1"
+                />
               </template>
             </v-list-item>
             <div v-if="allBaseLayers[index].openSub" class="sub-item">
-              <!-- {{ bLayer.opacity }} -->
               <v-row class="justify-space-between">
-                <v-col lg="9">
+                <v-col lg="12" class="pb-0">
                   Opacité de la couche :
                   <v-slider
                     v-model="bLayer.opacity"
@@ -84,82 +96,16 @@
                     thumb-label="always"
                   >
                     <template #prepend>
-                      0
+                      0%
                     </template>
-
                     <template #append>
-                      100
+                      100%
                     </template>
                   </v-slider>
-                </v-col>
-                <v-col>
-                  Infos :
-                  <br>
-                  <v-btn
-                    class="layers-info-btn"
-                    color="blue"
-                    icon="mdi-help"
-                    variant="outlined"
-                    density="comfortable"
-                  />
                 </v-col>
               </v-row>
             </div>
           </div>
-          <!-- TODO: To Remove ? -->
-          <!-- <v-list-group subgroup="true" value="Base">
-            <template #activator="{ props }">
-              <v-list-item
-                v-bind="props"
-                title="Couches de base"
-                class="subgroup-list"
-              >
-                <template #title="{title}">
-                  <div class="d-flex align-left subgroup-title">
-                    {{ title }}
-                  </div>
-                </template>
-              </v-list-item>
-            </template>
-
-            <v-list-item
-              v-for="bLayer in allBaseLayers"
-              :key="bLayer.title"
-              :title="bLayer.title"
-              :subtitle="bLayer.subtitle"
-              :prepend-icon="bLayer.icon"
-              :append-icon="bLayer.append"
-              class="layers-list-item"
-            >
-              <template #prepend="{prepend}">
-                <v-icon :icon="prepend" />
-              </template>
-              <template #title="{title}">
-                <div class="d-flex align-left">
-                  {{ title }}
-                </div>
-              </template>
-              <template #subtitle="{subtitle}">
-                <div class="d-flex align-left">
-                  {{ subtitle }}
-                </div>
-              </template>
-              <template #append="{append}">
-                <div class="fake-btn">
-                  <v-icon :icon="append" />
-                </div>
-                <v-btn
-                  v-if="append"
-                  :icon="append"
-                />
-                <v-btn
-                  color="black"
-                  icon="mdi-cog"
-                  variant="text"
-                />
-              </template>
-            </v-list-item>
-          </v-list-group> -->
         </v-list>
         <!-- User data layers -->
         <v-list class="layers-list">
@@ -167,15 +113,15 @@
             Mes données
           </div>
           <v-list-item
-            v-for="bLayer in exampleData"
-            :key="bLayer.title"
-            :title="bLayer.title"
-            :subtitle="bLayer.subtitle"
-            :prepend-icon="bLayer.icon"
+            v-for="(customLayer, index) in exampleData"
+            :key="customLayer.id"
+            :title="customLayer.name"
+            :subtitle="customLayer.subtitle"
+            :prepend-icon="customLayer.icon"
             class="layers-list-item"
           >
             <template #prepend="{prepend}">
-              <v-icon :icon="prepend" />
+              <v-icon :color="exampleData[index].visible ? 'black' : 'grey'" :icon="prepend" />
             </template>
             <template #title="{title}">
               <div class="d-flex align-left">
@@ -189,10 +135,11 @@
             </template>
             <template #append>
               <v-btn
-                v-if="bLayer.visible"
+                v-if="customLayer.visible"
                 color="green-darken-4"
                 icon="mdi-eye"
                 variant="text"
+                disabled
                 @click="toggleVisible(index)"
               />
               <v-btn
@@ -200,6 +147,7 @@
                 color="grey"
                 icon="mdi-eye-off"
                 variant="text"
+                disabled
                 @click="toggleVisible(index)"
               />
               <v-btn
@@ -226,21 +174,24 @@ export default {
       allBaseLayers: [],
       exampleData: [
         {
-          title: 'Réseau routier',
+          id: 'RéseauRoutier',
+          name: 'Réseau routier',
           icon: 'mdi-road',
           subtitle: '2020',
           append: 'mdi-eye-off',
           visible: false,
         },
         {
-          title: 'Lignes de métro',
+          id: 'LignesMétro',
+          name: 'Lignes de métro',
           icon: 'mdi-train',
           subtitle: '2020',
           append: 'mdi-eye-off',
           visible: false,
         },
         {
-          title: 'Arbres',
+          id: 'Arbres',
+          name: 'Arbres',
           icon: 'mdi-tree',
           subtitle: '2020',
           append: 'mdi-eye-off',
