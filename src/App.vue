@@ -70,6 +70,11 @@ body {
   height: 100vh;
 }
 
+.itowns-viewer {
+    height: 100vh;
+    width: 100vw;
+  }
+
 .login-page {
   max-width: 50vw;
   max-height: 50vh;
@@ -78,10 +83,5 @@ body {
 .form-container {
   min-width: 521px;
   min-height: 420px;
-}
-
-.itowns-viewer {
-  height: 100vh;
-  width: 100vw;
 }
 </style>

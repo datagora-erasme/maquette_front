@@ -8,7 +8,7 @@
           </v-col>
           <v-col class="d-flex justify-end">
             <v-btn icon size="small" variant="text">
-              <v-icon class="close-icon" icon="mdi-close" />
+              <v-icon class="close-icon" icon="mdi-close" @click="closeAside()" />
             </v-btn>
           </v-col>
         </v-row>
@@ -22,10 +22,10 @@
           <!-- v-for -->
           <div
             v-for="(bLayer, index) in allBaseLayers"
-            :key="bLayer.title"
+            :key="bLayer.id"
           >
             <v-list-item
-              :title="bLayer.title"
+              :title="bLayer.name"
               :subtitle="bLayer.subtitle"
               :prepend-icon="bLayer.icon"
               class="layers-list-item"
@@ -59,7 +59,7 @@
                   @click="toggleVisible(index)"
                 />
                 <v-btn
-                  color="black"
+                  :color="allBaseLayers[index].openSub ? 'blue': 'black'"
                   icon="mdi-cog"
                   variant="text"
                   :active="allBaseLayers[index].openSub"
@@ -69,9 +69,44 @@
               </template>
             </v-list-item>
             <div v-if="allBaseLayers[index].openSub" class="sub-item">
-              aaaa
+              <!-- {{ bLayer.opacity }} -->
+              <v-row class="justify-space-between">
+                <v-col lg="9">
+                  Opacité de la couche :
+                  <v-slider
+                    v-model="bLayer.opacity"
+                    class="layers-slider"
+                    color="blue"
+                    track-color="grey"
+                    min="0"
+                    max="100"
+                    :step="1"
+                    thumb-label="always"
+                  >
+                    <template #prepend>
+                      0
+                    </template>
+
+                    <template #append>
+                      100
+                    </template>
+                  </v-slider>
+                </v-col>
+                <v-col>
+                  Infos :
+                  <br>
+                  <v-btn
+                    class="layers-info-btn"
+                    color="blue"
+                    icon="mdi-help"
+                    variant="outlined"
+                    density="comfortable"
+                  />
+                </v-col>
+              </v-row>
             </div>
           </div>
+          <!-- TODO: To Remove ? -->
           <!-- <v-list-group subgroup="true" value="Base">
             <template #activator="{ props }">
               <v-list-item
@@ -182,14 +217,12 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 
 export default {
   name: 'AsideComp',
   data() {
     return {
-      // openedLayersMenu: ['Base'],
-      // opened: ['Base'],
       allBaseLayers: [],
       exampleData: [
         {
@@ -230,32 +263,41 @@ export default {
   },
   watch: {
     iTownsBaseLayers() {
-      this.computeBaseLayers()
+      // TEMP DEBUG
+      console.log('trigger update baseLayers')
+      if(!this.allBaseLayers.length) {
+        this.computeBaseLayers()
+      }
     }
   },
   mounted() {
     this.computeBaseLayers()
   },
   methods: {
+    ...mapActions({
+      setAsideStatus: 'aside/setAsideStatus',
+    }),
     computeBaseLayers() {
       if (this.iTownsBaseLayers.length) {
         let tempBaseLayers = []
         this.iTownsBaseLayers.forEach(bLayer => {
           if (bLayer.id !== 'globe' && bLayer.id !== 'atmosphere') {
             let newSubtitle = 'Fond de plan'
-            if (bLayer.id === 'Bâtiments IGN') {
+            if (bLayer.id === 'IGN_Buildings') {
               newSubtitle = 'BD Topo Juin 2023'
             }
-            if (bLayer.id === 'Communes Lyon') {
+            if (bLayer.id === 'Lyon_Districts') {
               newSubtitle = 'Métropole de Lyon'
             }
             // Add layers
             let newLayer = {
-              title: bLayer.id,
+              id: bLayer.id,
+              name: bLayer.name,
               icon: 'mdi-map',
               subtitle: newSubtitle,
               openSub: false,
               visible: bLayer.visible,
+              opacity: bLayer.opacity * 100,
             }
             tempBaseLayers.push(newLayer)
           }
@@ -263,13 +305,18 @@ export default {
         this.allBaseLayers = tempBaseLayers
       }
     },
+    closeAside() {
+      this.setAsideStatus(false)
+    },
     toggleSub(index) {
       console.log('click toggle openSub')
+      // TODO: Refermer autres panels ??
       this.allBaseLayers[index].openSub = !this.allBaseLayers[index].openSub
     },
     toggleVisible(index) {
       console.log('click toggle visible')
       this.allBaseLayers[index].visible = !this.allBaseLayers[index].visible
+      // TODO: Emit Event and get in ItownsViewer ??
     }
   }
 }
@@ -287,7 +334,7 @@ export default {
 
   .layer-card-text {
     overflow-y: auto;
-    height: 100%;
+    height: calc(100% - 56px);
   }
 }
 .close-icon {
@@ -326,5 +373,23 @@ export default {
   font-weight: bold;
   color: #194275;
   border-bottom: 1px solid #e4e4e4;
+}
+
+.sub-item {
+  width: 98%;
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #e4e4e4;
+}
+
+.v-slider.v-input--horizontal .v-slider-thumb__label {
+  left: calc(var(--v-slider-thumb-size) * -0.9)
+}
+
+.layers-slider {
+  padding-top: 30px;
+}
+.layers-info-btn {
+  margin-top: 20px;
 }
 </style>

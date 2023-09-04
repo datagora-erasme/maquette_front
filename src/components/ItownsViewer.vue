@@ -434,59 +434,53 @@ export default {
       var osm = require('../datas/OPENSM.json')
       var osmSource = new itowns.WMTSSource(osm.source)
       var osmLayer = new itowns.ColorLayer('OpenStreetMap', {
+        name: 'OpenStreetMap',
         source: osmSource,
       })
-      // Disabled by default
       osmLayer.visible = false
       view.addLayer(osmLayer)
 
       // Ortho layer
-      itowns.Fetcher.json('https://www.itowns-project.org/itowns/examples/layers/JSONLayers/Ortho.json')
-        .then(ortho => {
-          var orthoSource = new itowns.WMTSSource(ortho.source)
-          var orthoLayer = new itowns.ColorLayer('Plan Orthophotos IGN', {
-            source: orthoSource,
-            opacity: 0.5,
-          })
-          view.addLayer(orthoLayer)
-        })
+      var ortho = require('../datas/Ortho.json')
+      var orthoSource = new itowns.WMTSSource(ortho.source)
+      var orthoLayer = new itowns.ColorLayer('IGN_Orthophotos', {
+        name: 'Plan Orthophotos IGN',
+        source: orthoSource,
+        opacity: 1,
+      })
+      orthoLayer.visible = true
+      view.addLayer(orthoLayer)
 
       // MNT layer
-      itowns.Fetcher.json('https://www.itowns-project.org/itowns/examples/layers/JSONLayers/IGN_MNT.json')
-        .then(mnt => {
-          var mntSource = new itowns.WMTSSource(mnt.source)
-          var mntLayer = new itowns.ElevationLayer('Couche MNT IGN', {
-            source: mntSource,
-          })
-          mntLayer.visible = true
-          view.addLayer(mntLayer)
-        })
+      var mnt = require('../datas/IGN_MNT.json')
+      var mntSource = new itowns.WMTSSource(mnt.source)
+      var mntLayer = new itowns.ElevationLayer('MNT_IGN_Layer', {
+        name: 'Couche MNT IGN',
+        source: mntSource,
+        opacity: 1
+      })
+      mntLayer.visible = true
+      // mntLayer.opacity = 1
+      view.addLayer(mntLayer)
 
       // WMS Communes of Metropole de Lyon
-      const wmsCommuneLyonLayer = new itowns.ColorLayer('Communes Lyon', {
-        source: new itowns.WMSSource({
-          url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/wms',
-          protocol: 'wms',
-          version: '1.1.0',
-          name: 'communes',
-          format: 'image/svg',
-          projection: 'EPSG:3857',
-          extent: currentExtent,
-        }),
+      var wmsCommuneLyonSource = new itowns.WMSSource({
+        url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/wms',
+        protocol: 'wms',
+        version: '1.1.0',
+        name: 'communes',
+        format: 'image/svg',
+        projection: 'EPSG:3857',
+        extent: currentExtent,
+      })
+      const wmsCommuneLyonLayer = new itowns.ColorLayer('Lyon_Districts', {
+        name: 'Communes Lyon',
+        source: wmsCommuneLyonSource,
         transparent: true,
         opacity: 1,
-      });
-
+      } );
+      wmsCommuneLyonLayer.visible = true
       view.addLayer(wmsCommuneLyonLayer);
-
-      // Re-order layers ?
-      if (view && view.tileLayer && view.tileLayer.colorLayersOrder) {
-        console.log('--tryhard reorder--')
-        console.log(view.tileLayer)
-        // colorLayersOrdering.moveLayerDown(viewer, 'OpenStreetMap');
-        itowns.ColorLayersOrdering.moveLayerDown(view, 'OpenStreetMap');
-        console.log(view.tileLayer)
-      }
     },
     addBuildingLayer() {
       var color = new itowns.THREE.Color()
@@ -528,7 +522,8 @@ export default {
       })
 
       // Create layer on wfs building source
-      var wfsBuildingLayer = new itowns.FeatureGeometryLayer('Bâtiments IGN',{
+      var wfsBuildingLayer = new itowns.FeatureGeometryLayer('IGN_Buildings',{
+          name: 'Bâtiments IGN',
           batchId: function(property, featureId) { return featureId },
           accurate: true,
           onMeshCreated: function scaleZ(mesh) {
@@ -555,6 +550,7 @@ export default {
       view.addLayer(wfsBuildingLayer)
     },
     addIGNBuildingLayer() {
+      // ! Unused ?
       var color = new itowns.THREE.Color()
       var meshes = []
 
