@@ -14,6 +14,7 @@ import '@mdi/font/css/materialdesignicons.css';
 import 'vuetify/dist/vuetify.min.css';
 import store from './store';
 import Notifications from '@kyvg/vue3-notification';
+import eventBus from './utils/event-bus';
 
 // Import CSS
 import '@/node_modules/itowns/examples/css/widgets.css'
@@ -33,12 +34,16 @@ const vuetify = createVuetify({
 // Create app
 const app = createApp(App)
 // Use module
-app.config.globalProperties.$axios = axios;
 app.use(Itowns)
 app.use(THREE)
 app.use(vuetify)
 app.use(Notifications);
 app.use(store)
+app.use(eventBus)
+
+// Create prototypes
+app.config.globalProperties.$axios = axios;
+app.config.globalProperties.$eventBus = app;
 
 // Mount
 app.mount('#app')

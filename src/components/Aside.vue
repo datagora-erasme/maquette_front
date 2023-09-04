@@ -35,7 +35,7 @@
               </template>
               <template #title="{title}">
                 <div class="d-flex align-left">
-                  {{ title }}
+                  <span :class="bLayer.visible ? '':'text-grey'">{{ title }}</span>
                 </div>
               </template>
               <template #subtitle="{subtitle}">
@@ -78,28 +78,29 @@
                   variant="outlined"
                   density="comfortable"
                   class="ml-1"
+                  disabled
                 />
               </template>
             </v-list-item>
             <div v-if="allBaseLayers[index].openSub" class="sub-item">
               <v-row class="justify-space-between">
                 <v-col lg="12" class="pb-0">
-                  Opacité de la couche :
+                  <span class="fs-16" :class="bLayer.visible ? '':'text-grey'">Opacité de la couche : <b>{{ Math.round(bLayer.opacity) }}%</b></span>
                   <v-slider
                     v-model="bLayer.opacity"
                     class="layers-slider"
-                    color="blue"
+                    :color="bLayer.visible ? 'blue':'grey'"
                     track-color="grey"
                     min="0"
                     max="100"
                     :step="1"
-                    thumb-label="always"
+                    @update:modelValue="changeOpacity(index)"
                   >
                     <template #prepend>
-                      0%
+                      <span :class="bLayer.visible ? '':'text-grey'">0%</span>
                     </template>
                     <template #append>
-                      100%
+                      <span :class="bLayer.visible ? '':'text-grey'">100%</span>
                     </template>
                   </v-slider>
                 </v-col>
@@ -232,7 +233,7 @@ export default {
       if (this.iTownsBaseLayers.length) {
         let tempBaseLayers = []
         this.iTownsBaseLayers.forEach(bLayer => {
-          if (bLayer.id !== 'globe' && bLayer.id !== 'atmosphere') {
+          if (bLayer.id !== 'globe' && bLayer.id !== 'atmosphere' && bLayer.id !== 'IGN_MNT') {
             let newSubtitle = 'Fond de plan'
             if (bLayer.id === 'IGN_Buildings') {
               newSubtitle = 'BD Topo Juin 2023'
@@ -260,14 +261,23 @@ export default {
       this.setAsideStatus(false)
     },
     toggleSub(index) {
-      console.log('click toggle openSub')
-      // TODO: Refermer autres panels ??
+      // Toggle sub menu
       this.allBaseLayers[index].openSub = !this.allBaseLayers[index].openSub
     },
     toggleVisible(index) {
-      console.log('click toggle visible')
+      // Toggle button
       this.allBaseLayers[index].visible = !this.allBaseLayers[index].visible
-      // TODO: Emit Event and get in ItownsViewer ??
+      // Emit Event to ItownsViewer
+      this.$evtBus.emit('onToggleLayerVisibility', this.allBaseLayers[index].id)
+    },
+    changeOpacity(index) {
+      // Emit Event to ItownsViewer
+      let newLayerOpacity = {
+        id: this.allBaseLayers[index].id,
+        opacity: this.allBaseLayers[index].opacity
+      }
+      console.log(newLayerOpacity)
+      this.$evtBus.emit('onChangeLayerOpacity', newLayerOpacity)
     }
   }
 }
@@ -290,10 +300,6 @@ export default {
 }
 .close-icon {
   font-size: 25px;
-}
-
-.v-list-item__append>.v-icon, .v-list-item__prepend>.v-icon {
-  --v-medium-emphasis-opacity: 1;
 }
 .layers-list {
   // border-bottom: 1px solid #e4e4e4 !important;
@@ -325,22 +331,32 @@ export default {
   color: #194275;
   border-bottom: 1px solid #e4e4e4;
 }
-
 .sub-item {
   width: 98%;
-  padding: 10px;
+  padding: 12px;
   text-align: left;
   border-bottom: 1px solid #e4e4e4;
 }
-
-.v-slider.v-input--horizontal .v-slider-thumb__label {
-  left: calc(var(--v-slider-thumb-size) * -0.9)
-}
-
 .layers-slider {
-  padding-top: 30px;
+  padding-top: 10px;
 }
 .layers-info-btn {
   margin-top: 20px;
+}
+
+// Generic
+.fs-16 {
+  font-size: 16px;
+}
+
+// Override Vuetify : Fix CSS...
+.v-slider.v-input--horizontal .v-slider-thumb__label {
+  left: calc(var(--v-slider-thumb-size) * -0.9)
+}
+.v-list-item__append>.v-icon, .v-list-item__prepend>.v-icon {
+  --v-medium-emphasis-opacity: 1;
+}
+.v-list-item__prepend>.v-icon {
+  margin-inline-end: 16px !important;
 }
 </style>

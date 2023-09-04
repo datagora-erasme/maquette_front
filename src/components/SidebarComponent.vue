@@ -18,35 +18,37 @@
           <v-row v-if="currentStep == 0" class="step1 d-flex flex-column">
             <v-col class="pa-0">
               <div class="step1Title pa-3 text-h6 font-weight-bold">
-                Panel de sélection d'une emprise
+                Sélection d'une emprise
               </div>
               <v-row class="d-flex justify-center">
                 <v-col class="pa-0" :class="$vuetify.display.height > 722 ? 'text-subtitle-1' : 'text-subtitle-2'" cols="11">
-                  Veuillez indiquer le nombre de plaques horizontales et verticales de lego que vous souhaitez utiliser
+                  Veuillez indiquer le nombre de plaques horizontales et verticales de Lego que vous souhaitez utiliser
                 </v-col>
               </v-row>
               <v-row class="d-flex justify-space-evenly pt-6 pb-3">
                 <v-col class="pa-0 pb-2" cols="5">
                   <v-text-field
                     v-model="nbPlatesHorizontal"
-                    variant="solo-filled"
+                    variant="underlined"
                     clearable
                     :density="$vuetify.display.height > 722 ? 'default' : 'compact'"
                     :disabled="isPlatesSelected" 
                     label="Horizontal" 
                     type="number"
+                    prepend-icon="mdi-arrow-expand-horizontal"
                     :rules="[onlyNumbers, rangeValidationHorizontal]"
                   />
                 </v-col>
                 <v-col class="pa-0 pb-2" cols="5">
                   <v-text-field
                     v-model="nbPlatesVertical"
-                    variant="solo-filled"
+                    variant="underlined"
                     clearable
                     :density="$vuetify.display.height > 722 ? 'default' : 'compact'"
                     :disabled="isPlatesSelected" 
                     label="Vertical" 
                     type="number"
+                    prepend-icon="mdi-arrow-expand-vertical"
                     :rules="[onlyNumbers, rangeValidationVertical]"
                   />
                 </v-col>
@@ -60,7 +62,7 @@
                   style="color: white"
                   @click="checkPlatesNumber()"
                 >
-                  Valider plaques
+                  Valider les plaques
                 </v-btn>
                 <v-btn
                   v-if="isPlatesSelected"
@@ -71,12 +73,12 @@
                   :disabled="ongoingTravel"
                   @click="clearPlatesNumber()"
                 >
-                  Redéfinir plaques
+                  Redéfinir les plaques
                 </v-btn>
               </v-row>
               <v-row>
                 <v-col :class="$vuetify.display.height > 722 ? 'text-subtitle-1' : 'text-subtitle-2'"> 
-                  Après avoir sélectionné le nombre de plaques souhaité, cliquez sur "Sélectionnez la zone" puis cliquez sur la carte pour choisir une zone.
+                  Après avoir sélectionné le nombre de plaques souhaité, cliquez sur "Sélectionner la zone" puis cliquez sur la carte pour positionner votre emprise.
                 </v-col>
               </v-row>
               <v-row class="d-flex justify-center">
@@ -128,7 +130,7 @@
               <v-row v-if="isAreaSelected && !isAreaSelectionActive" class="d-flex justify-center">
                 <v-col>
                   <div :class="$vuetify.display.height > 722 ? 'text-subtitle-1' : 'text-subtitle-2'">
-                    Si la sélection vous convient, cliquez sur "Étape suivante" pour lancer la voxelisation.
+                    Si la sélection vous convient, cliquez sur "Étape suivante" pour lancer la création.
                   </div>
                   <v-btn
                     :stacked="$vuetify.display.height > 722"
@@ -154,14 +156,14 @@
                 :width="5"
               />
               <div class="pt-2">
-                Veuillez patienter pendant la voxelisation{{ dots }}
+                Veuillez patienter pendant la construction <br>de vos Lego{{ dots }}
               </div>
             </div>
           </v-row>
           <v-row v-if="currentStep === 2" class="step3 w-100 d-flex justify-center" style="height: calc(100vh - 124.38px)">
             <v-col class="title-buttons-container w-100 d-flex flex-column align-center justify-space-around">
               <h2 class="mockup-ready-title">
-                La maquette est prête !
+                Votre maquette est prête !
               </h2>
               <v-card class="buttons-card pa-0 d-flex flex-column justif-center">
                 <v-row class="h-100 pa-0">
@@ -171,7 +173,7 @@
                       class="last-step-buttons"
                       @click="showMockup"
                     >
-                      Afficher maquette
+                      Afficher le rendu 3D
                     </v-btn>
                     <v-btn
                       color="#A18276"
@@ -269,7 +271,7 @@ export default {
       isLoading: false,
       dotsCount: 3,
       dotsVisible: 0,
-      stepperSteps: ['Emprise', 'Voxelisation', 'Finalisation'],
+      stepperSteps: ['Emprise', 'Construction', 'Finalisation'],
     }
   },
   computed: {

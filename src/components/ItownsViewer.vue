@@ -132,7 +132,7 @@ export default {
   },
   computed: {
     ...mapGetters({
-      voxelizedMesh: 'map/getVoxelizedSingleMesh',
+      // voxelizedMesh: 'map/getVoxelizedSingleMesh',
       voxelizedMeshObjContent: 'map/getVoxelizedMeshObjContent',
       selectedPlates: 'map/getPlates',
       getSelectedArea: 'map/getSelectedArea',
@@ -151,10 +151,17 @@ export default {
   },
   watch: {
     currentZoomLevel() {
+      // ! Useless ?
       // console.log(this.currentZoomLevel)
     },
   },
+  created() {
+  },
   mounted() {
+    // ===== Bind Events =====
+    this.$evtBus.on('onToggleLayerVisibility', this.toggleLayerVisibility);
+    this.$evtBus.on('onChangeLayerOpacity', this.changeLayerOpacity);
+
     // ===== Init iTowns vars =====
     // Placement in Lyon - France
     lyonPlacement = {
@@ -214,6 +221,20 @@ export default {
       setCurrentMockupDownloadLink: 'map/setCurrentMockupDownloadLink',
       setBaseLayers: 'map/setBaseLayers'
     }),
+    toggleLayerVisibility(layerId) {
+      if(view) {
+        const currLayer = view.getLayerById(layerId);
+        currLayer.visible = !currLayer.visible
+        view.notifyChange()
+      }
+    },
+    changeLayerOpacity(newLayerOp) {
+      if(view) {
+        const currLayer = view.getLayerById(newLayerOp.id);
+        currLayer.opacity = newLayerOp.opacity / 100
+        view.notifyChange()
+      }
+    },
     resetMockupSelection() {
       this.removeSelectedArea()
     },
@@ -485,7 +506,7 @@ export default {
       // MNT layer
       var mnt = require('../datas/IGN_MNT.json')
       var mntSource = new itowns.WMTSSource(mnt.source)
-      var mntLayer = new itowns.ElevationLayer('MNT_IGN_Layer', {
+      var mntLayer = new itowns.ElevationLayer('IGN_MNT', {
         name: 'Couche MNT IGN',
         source: mntSource,
       })
