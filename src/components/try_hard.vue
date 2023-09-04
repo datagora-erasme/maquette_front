@@ -127,6 +127,14 @@ export default {
     // itowns.Fetcher.json('./layers/JSONLayers/IGN_MNT_HIGHRES.json').then(addElevationLayerFromConfig);
     // itowns.Fetcher.json('./layers/JSONLayers/WORLD_DTM.json').then(addElevationLayerFromConfig);
     */
+
+    // Change Layers Order (Only color layers...................)
+    // itowns.ColorLayersOrdering.moveLayerUp(view, 'CommunesLyon');
+    // itowns.ColorLayersOrdering.moveLayerToIndex(view, 'Lyon_Districts', 3);
+
+    // Try2
+    // const imageryLayers = view.getLayers(l => l.isColorLayer);
+    // const layer = view.getLayerById('Lyon_Districts');
   }
 }
 </script>

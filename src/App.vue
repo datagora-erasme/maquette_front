@@ -18,11 +18,16 @@
     </v-dialog>
     <!-- <csv-loading-screen @onHidePreview="hidePreview" /> -->
     <notifications position="bottom right" />
+    <Aside v-if="isLoggedIn" />
+    <AsideBtn v-if="isLoggedIn" />
+    <Notifications position="bottom right" />
   </div>
 </template>
 
 <script>
 import ItownsViewer from './components/ItownsViewer.vue'
+import AsideBtn from './components/AsideBtn.vue'
+import Aside from './components/Aside.vue'
 import SignIn from './components/SignIn.vue'
 import CSVLoadingScreen from './components/CSVLoadingScreen.vue'
 import PasswordRecuperation from './components/PasswordRecuperation.vue'
@@ -36,7 +41,10 @@ export default {
     SignIn,
     CSVLoadingScreen,
     PasswordRecuperation,
-    PasswordModification
+    PasswordModification,
+    AsideBtn,
+    Aside,
+    SignIn
   },
   data() {
     return {
@@ -48,12 +56,15 @@ export default {
       isUserLoggedIn: 'authentication/getIsUserLoggedIn',
       isCSVGenerationOngoing: 'map/getIsCSVGenerationOngoing',
       ongoingPasswordRecuperation: 'authentication/getOngoingPasswordRecuperation',
-      ongoingPasswordModification: 'authentication/getOngoingPasswordModification'
+      ongoingPasswordModification: 'authentication/getOngoingPasswordModification',
+      getAsideStatus: 'aside/getAsideStatus'
     }),
     isLoggedIn() {
       return this.isUserLoggedIn
     },
-    
+    asideStatus() {
+      return this.getAsideStatus
+    }
   },
   watch: {
     isCSVGenerationOngoing() {
@@ -93,6 +104,11 @@ body {
   height: 100vh;
 }
 
+.itowns-viewer {
+  height: 100vh;
+  width: 100vw;
+}
+
 .login-page {
   max-width: 50vw;
   max-height: 50vh;
@@ -101,11 +117,6 @@ body {
 .form-container {
   min-width: 521px;
   min-height: 420px;
-}
-
-.itowns-viewer {
-  height: 100vh;
-  width: 100vw;
 }
 .csv-loading-screen-dialog {
   display: flex;

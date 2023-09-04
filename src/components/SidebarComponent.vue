@@ -26,7 +26,7 @@
                 </v-col>
               </v-row>
               <v-row class="d-flex justify-space-evenly pt-6 pb-3">
-                <v-col class="pa-0" cols="5">
+                <v-col class="pa-0 pb-2" cols="5">
                   <v-text-field
                     v-model="nbPlatesHorizontal"
                     variant="solo-filled"
@@ -34,10 +34,11 @@
                     :density="$vuetify.display.height > 722 ? 'default' : 'compact'"
                     :disabled="isPlatesSelected" 
                     label="Horizontal" 
+                    type="number"
                     :rules="[onlyNumbers, rangeValidationHorizontal]"
                   />
                 </v-col>
-                <v-col class="pa-0" cols="5">
+                <v-col class="pa-0 pb-2" cols="5">
                   <v-text-field
                     v-model="nbPlatesVertical"
                     variant="solo-filled"
@@ -45,6 +46,7 @@
                     :density="$vuetify.display.height > 722 ? 'default' : 'compact'"
                     :disabled="isPlatesSelected" 
                     label="Vertical" 
+                    type="number"
                     :rules="[onlyNumbers, rangeValidationVertical]"
                   />
                 </v-col>
@@ -355,15 +357,15 @@ export default {
       if (!this.nbPlatesHorizontal || !this.nbPlatesVertical) {
           this.$notify({
             title: 'Nombre de plaques non saisi',
-            text: "Veuillez d'abord sélectionner le nombre de plaques !",
+            text: 'Veuillez sélectionner le nombre de plaques',
             type: 'info'
           });
           return;
       }
-      if (this.nbPlatesHorizontal > 5 || this.nbPlatesVertical > 3) {
+      if ((this.nbPlatesHorizontal < 1 || this.nbPlatesHorizontal > 6) || (this.nbPlatesVertical < 1 || this.nbPlatesVertical > 6)) {
         this.$notify({
             title: 'Nombre de plaques incorrect',
-            text: 'Veuillez sélectionner au plus 5 plaques horizontales et 3 plaques verticales',
+            text: 'Veuillez sélectionner 6 plaques horizontales et 6 plaques verticales maximum',
             type: 'info'
           });
         return;
@@ -411,11 +413,11 @@ export default {
     },
     rangeValidationHorizontal(value) {
       const numValue = parseInt(value);
-      return numValue >= 1 && numValue <= 5 || 'Doit être compris entre 1 et 5';
+      return numValue >= 1 && numValue <= 6 || 'Doit être compris entre 1 et 6';
     },
     rangeValidationVertical(value) {
       const numValue = parseInt(value);
-      return numValue >= 1 && numValue <= 3 || 'Doit être compris entre 1 et 3.';
+      return numValue >= 1 && numValue <= 6 || 'Doit être compris entre 1 et 6';
     },
   },
 }

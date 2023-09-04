@@ -12,7 +12,39 @@ const map = {
     heightMap: null,
     isCSVGenerationOngoing: false,
     csvString: null,
+    currentMockupUrl: null,
+    currentMockupObjFile: null, //Blob containing the obj file's content. Downloadable with a .obj extension.
+    baseLayers: []
   }),
+  getters: {
+    getCurrentMockupDownloadLink(state) {
+      return state.currentMockupUrl;
+    },
+    getPlates(state) {
+      return { x: state.platesX, y: state.platesY };
+    },
+    // getVoxelizedSingleMesh(state) {
+    //   return state.voxelizedSingleMesh;
+    // },
+    getSelectedArea(state) {
+      return state.selectedArea;
+    },
+    getPlates(state) {
+      return { x: state.platesX, y: state.platesY };
+    },
+    getVoxelizedMeshObjContent(state) {
+      return state.voxelizedMeshObjContent;
+    },
+    getVoxelizedMesh(state) {
+      return state.voxelizedMesh;
+    },
+    getIsCSVGenerationOngoing(state) {
+      return state.isCSVGenerationOngoing;
+    },
+    getBaseLayers(state) {
+      return state.baseLayers
+    }
+  },
   mutations: {
     SET_SELECTED_AREA(state, selectedArea) {
       state.selectedArea = selectedArea;
@@ -38,6 +70,9 @@ const map = {
     SET_IS_CSV_GENERATION_ONGOING(state, isCSVGenerationOngoing) {
       state.isCSVGenerationOngoing = isCSVGenerationOngoing;
     },
+    SET_BASE_LAYERS(state, newLayers) {
+      state.baseLayers = newLayers
+    }
   },
   actions: {
     /**
@@ -120,23 +155,9 @@ const map = {
       downloadLink.download = 'Modele3D.obj'; // Change the file name as desired
       downloadLink.click();
     },
-  },
-  getters: {
-    getSelectedArea(state) {
-      return state.selectedArea;
-    },
-    getPlates(state) {
-      return { x: state.platesX, y: state.platesY };
-    },
-    getVoxelizedMeshObjContent(state) {
-      return state.voxelizedMeshObjContent;
-    },
-    getVoxelizedMesh(state) {
-      return state.voxelizedMesh;
-    },
-    getIsCSVGenerationOngoing(state) {
-      return state.isCSVGenerationOngoing;
-    },
+    setBaseLayers({ commit }, newLayers) {
+      commit('SET_BASE_LAYERS', newLayers)
+    }
   },
 };
 

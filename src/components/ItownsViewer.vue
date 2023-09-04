@@ -90,6 +90,7 @@
 import { mapActions, mapGetters } from 'vuex'
 import * as itowns from '@/node_modules/itowns/dist/itowns'
 import * as itowns_widgets from '@/node_modules/itowns/dist/itowns_widgets'
+import * as colorLayersOrdering from '@/node_modules/itowns/lib/Renderer/ColorLayersOrdering.js'
 import { gsap, Power2 } from 'gsap'
 import SidebarComponent from './SidebarComponent.vue'
 import PreviewComponent from './PreviewComponent.vue'
@@ -100,6 +101,7 @@ import { objToMesh } from '../utils/threeUtils'
 // Global vars...
 var view
 var viewerDiv
+var currentExtent
 var lyonPlacement
 var coordMouse
 var selectedArea
@@ -134,6 +136,7 @@ export default {
       voxelizedMeshObjContent: 'map/getVoxelizedMeshObjContent',
       selectedPlates: 'map/getPlates',
       getSelectedArea: 'map/getSelectedArea',
+      getBaseLayers: 'map/getBaseLayers'
     }),
     currentZoomLevel() {
       if (view && view.controls) {
@@ -142,6 +145,9 @@ export default {
         return null
       }
     },
+    baseLayers() {
+      return this.getBaseLayers
+    }
   },
   watch: {
     currentZoomLevel() {
@@ -160,10 +166,14 @@ export default {
     // ===== Init View =====
     view = new itowns.GlobeView(viewerDiv, lyonPlacement)
   
+    // ===== Initiate view Extent =====
+    this.getViewCurrentExtent()
     // ===== Add other projections to iTowns =====
     this.addCustomProjections()
     // ===== Init Data and add layer to iTowns =====
-    this.loadFdpData(view)
+    // this.loadFdpData(view)
+    // ===== Init Scale Widget =====
+    this.addScaleWidget(view)
     // ===== Init Navigation Widgets =====
     this.addNavigationWidget(view)
     // ===== Init Searchbar Widgets =====
@@ -177,6 +187,10 @@ export default {
     // Global init Event
     view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function m() {
       console.info('-Globe initialized-')
+        // ===== Reload view Extent =====
+        this.getViewCurrentExtent()
+        // ===== Init Data and add layer to iTowns =====
+        this.loadFdpData(view)
         // ===== Show Debug =====
         this.showDebugInfos()
         // ===== Show All Layers =====
@@ -197,6 +211,8 @@ export default {
       setVoxelizedMeshObjContent: 'map/setVoxelizedMeshObjContent',
       voxelizeBbox: 'map/voxelizeBbox',
       setSelectedArea: 'map/setSelectedArea',
+      setCurrentMockupDownloadLink: 'map/setCurrentMockupDownloadLink',
+      setBaseLayers: 'map/setBaseLayers'
     }),
     resetMockupSelection() {
       this.removeSelectedArea()
@@ -257,6 +273,24 @@ export default {
         //   ratio: 5
         // }).then((response) => {
         //   this.$refs.sidebarComponent.endVoxelisation();
+        //   this.selectedAreaVoxelized = atob(response.data.data)
+        //   const blob = new Blob([atob(response.data.data)], { type: 'text/plain' });
+        //   const downloadUrl = URL.createObjectURL(blob);
+        //   const downloadLink = document.createElement('a');
+        //   downloadLink.href = downloadUrl;
+        //   downloadLink.download = 'myfile.obj'; // TODO: Change the file name with maquette project name choose by user
+        //   this.setCurrentMockupDownloadLink(downloadLink);
+        //   objDownloadUrlToMesh(downloadLink).then((mesh) => {
+        //     console.log(mesh)
+        //     console.log(this.selectedPlates);
+        //     const heightMap = createHeightMapFromMeshUsingWorkers(mesh, this.selectedPlates.x, this.selectedPlates.y);
+        //     // generateCSVwithHeightMap(heightMap, 'CSV_OMG');
+
+        // await this.$axios.post('/dataprocess/bbox', {
+        //   bbox: this.selectedBbox,
+        //   ratio: 5
+        // }).then((response) => {
+        //   this.$refs.sidebarComponent.endVoxelisation();
         //   this.setVoxelizedMeshObjContent(atob(response.data.data))
         //   objToMesh(atob(response.data.data)).then((mesh) => {
         //     this.setVoxelizedMesh(mesh);
@@ -299,6 +333,9 @@ export default {
       // DEBUG Show layers
       console.log('== allViewLayers DEBUG ==')
       var allViewLayers = view.getLayers()
+      this.setBaseLayers(allViewLayers)
+      console.log(allViewLayers)
+
       allViewLayers.forEach(layer => {
         console.log(layer.id, layer.crs, layer)
       })
@@ -401,28 +438,78 @@ export default {
         }
       });
     },
+    getViewCurrentExtent() {
+      if (view.tileLayer && view.tileLayer.info.displayed.extent) {
+        var extentObj = view.tileLayer.info.displayed.extent;
+        // currentExtent = {
+        //   west: extentObj.west,
+        //   east: extentObj.east,
+        //   south: extentObj.south,
+        //   north: extentObj.north,
+        // }
+        currentExtent = extentObj
+      } else {
+        currentExtent = {
+          west: 'Infinity',
+          east: '-Infinity',
+          south: 'Infinity',
+          north: '-Infinity',
+        }
+      }
+      // DEBUG
+      // console.log(currentExtent)
+    },
     loadFdpData() {
-      // Init Data and add layer to iTowns
+      // -- Init Data and add layer to iTowns --
+      // OSM layer
+      var osm = require('../datas/OPENSM.json')
+      var osmSource = new itowns.WMTSSource(osm.source)
+      var osmLayer = new itowns.ColorLayer('OpenStreetMap', {
+        name: 'OpenStreetMap',
+        source: osmSource,
+      })
+      osmLayer.visible = false
+      view.addLayer(osmLayer)
 
       // Ortho layer
-      itowns.Fetcher.json('https://www.itowns-project.org/itowns/examples/layers/JSONLayers/Ortho.json')
-        .then(ortho => {
-          var orthoSource = new itowns.WMTSSource(ortho.source)
-          var orthoLayer = new itowns.ColorLayer('Ortho', {
-            source: orthoSource,
-          })
-          view.addLayer(orthoLayer)
-        })
+      var ortho = require('../datas/Ortho.json')
+      var orthoSource = new itowns.WMTSSource(ortho.source)
+      var orthoLayer = new itowns.ColorLayer('IGN_Orthophotos', {
+        name: 'Plan Orthophotos IGN',
+        source: orthoSource,
+        opacity: 1,
+      })
+      orthoLayer.visible = true
+      view.addLayer(orthoLayer)
 
       // MNT layer
-      itowns.Fetcher.json('https://www.itowns-project.org/itowns/examples/layers/JSONLayers/IGN_MNT.json')
-        .then(mnt => {
-          var mntSource = new itowns.WMTSSource(mnt.source)
-          var mntLayer = new itowns.ElevationLayer('IGN_MNT', {
-            source: mntSource,
-          })
-          view.addLayer(mntLayer)
-        })
+      var mnt = require('../datas/IGN_MNT.json')
+      var mntSource = new itowns.WMTSSource(mnt.source)
+      var mntLayer = new itowns.ElevationLayer('MNT_IGN_Layer', {
+        name: 'Couche MNT IGN',
+        source: mntSource,
+      })
+      mntLayer.visible = true
+      view.addLayer(mntLayer)
+
+      // WMS Communes of Metropole de Lyon
+      var wmsCommuneLyonSource = new itowns.WMSSource({
+        url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/wms',
+        protocol: 'wms',
+        version: '1.1.0',
+        name: 'communes',
+        format: 'image/svg',
+        projection: 'EPSG:3857',
+        extent: currentExtent,
+      })
+      const wmsCommuneLyonLayer = new itowns.ColorLayer('Lyon_Districts', {
+        name: 'Communes Lyon',
+        source: wmsCommuneLyonSource,
+        transparent: true,
+        opacity: 1,
+      });
+      wmsCommuneLyonLayer.visible = true
+      view.addLayer(wmsCommuneLyonLayer);
     },
     addBuildingLayer() {
       var color = new itowns.THREE.Color()
@@ -464,7 +551,8 @@ export default {
       })
 
       // Create layer on wfs building source
-      var wfsBuildingLayer = new itowns.FeatureGeometryLayer('WFS Building',{
+      var wfsBuildingLayer = new itowns.FeatureGeometryLayer('IGN_Buildings',{
+          name: 'Bâtiments IGN',
           batchId: function(property, featureId) { return featureId },
           accurate: true,
           onMeshCreated: function scaleZ(mesh) {
@@ -491,6 +579,7 @@ export default {
       view.addLayer(wfsBuildingLayer)
     },
     addIGNBuildingLayer() {
+      // ! Unused ?
       var color = new itowns.THREE.Color()
       var meshes = []
 
@@ -562,6 +651,10 @@ export default {
     lookAtCoordinate(coordinates) {
       view.controls.lookAtCoordinate({ coord: coordinates, range: 20000, heading: 0 })
     },
+    addScaleWidget() {
+      // Add Scale Widget
+      var scale = new itowns_widgets.Scale(view, { position: 'bottom-right', translate: { x: -80 } });
+    },
     addNavigationWidget() {
       // Add Navigation Widgets
       var navigationWidgets = new itowns_widgets.Navigation(view, { position: 'bottom-right' })
@@ -570,7 +663,7 @@ export default {
       navigationWidgets.addButton(
           'rotate-up',
           '<p style="font-size: 20px">&#8595</p>',
-          'rotate camera up',
+          'Pivoter vers le haut',
           () => {
               view.controls.lookAtCoordinate({
                   tilt: view.controls.getTilt() - 10,
@@ -582,7 +675,7 @@ export default {
       navigationWidgets.addButton(
           'rotate-down',
           '<p style="font-size: 20px">&#8593</p>',
-          'rotate camera down',
+          'Pivoter vers le bas',
           () => {
               view.controls.lookAtCoordinate({
                   tilt: view.controls.getTilt() + 10,
@@ -594,7 +687,7 @@ export default {
       navigationWidgets.addButton(
           'reset-position',
           '&#8634',
-          'reset position',
+          'Réinitialiser la position',
           () => { view.controls.lookAtCoordinate(lyonPlacement) },
       )
     },
@@ -623,7 +716,7 @@ export default {
       // eslint-disable-next-line no-unused-vars
       var searchbarWidget = new itowns_widgets.Searchbar(view, geocodingOptions, {
           maxSuggestionNumber: 5,
-          position: 'top-right',
+          position: 'top',
           width: '320',
           placeholder: 'Cherchez un emplacement en France 🔎',
       })
@@ -661,11 +754,15 @@ export default {
       selectedArea.updateMatrixWorld(); // Used to force the re-rendering ?
       view.notifyChange(true);
     }
-  }
+  },
 }
 </script>
 
 <style>
+html, body {
+  overflow: hidden !important;
+}
+
 #wrapper-div {
   height: 100vh;
   width: 100%;
@@ -687,8 +784,8 @@ export default {
   padding: 0px;
 }
 
-.debugInfos {
-}
+/* .debugInfos {
+} */
 
 #info-div {
   display: flex;
@@ -708,13 +805,13 @@ export default {
 
 /* Override Itowns CSS */
 #widgets-searchbar form > input::placeholder {
-    color: #e6e6e6 !important;
+  color: #e6e6e6 !important;
 }
-.preview-container {
+#widgets-navigation #zoom-out-logo {
+  background-position: bottom !important;
 }
 
 .user-info-dialog {
-
   display: flex;
   flex-direction: column;
   justify-content: center;

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: 'https://dev-maquette.exo-dev.fr/api',
+  baseURL: 'https://api-dev-maquette.exo-dev.fr/api',
 });
 
 const setToken = (token) => {
