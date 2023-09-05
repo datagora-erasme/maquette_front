@@ -1,5 +1,5 @@
 <template>
-  <v-col v-if="currentTabValue !== null" :style="'max-width: ' + width + 'px'" class="pa-0">
+  <v-col v-if="currentTabValue !== null" :style="'max-width: ' + width + 'px; border-right: 1px solid #e4e4e4;'" class="pa-0">
     <v-card v-if="currentTabValue == 1" class="sidebar-cards py-5 px-7">
       <v-row class="d-flex justify-center">
         <v-col class="pa-0">
@@ -148,14 +148,9 @@
           </v-row>
           <v-row v-if="currentStep === 1" class="step2 w-100 d-flex justify-center align-center" style="height: calc(100vh - 200.38px)">
             <div class="d-flex flex-column justify-center align-center">
-              <v-progress-circular
-                v-if="isLoading"
-                color="#414288"
-                indeterminate
-                :size="128"
-                :width="5"
-              />
-              <div class="pt-2">
+              <!-- Loading Lego Gif -->
+              <img src="https://i.gifer.com/origin/f3/f39692ecaeca69ab75397c1caee129e8.gif" width="400">
+              <div class="pt-0">
                 Veuillez patienter pendant la construction <br>de vos Lego{{ dots }}
               </div>
             </div>
@@ -165,34 +160,37 @@
               <h2 class="mockup-ready-title">
                 Votre maquette est prête !
               </h2>
-              <v-card class="buttons-card pa-0 d-flex flex-column justif-center">
-                <v-row class="h-100 pa-0">
-                  <v-col class="py-0 px-1 d-flex flex-column justify-space-evenly align-center">
-                    <v-btn
-                      color="#A18276"
-                      class="last-step-buttons"
-                      @click="showMockup"
-                    >
-                      Afficher le rendu 3D
-                    </v-btn>
-                    <v-btn
-                      color="#A18276"
-                      class="last-step-buttons"
-                      @click="generateAndDownloadCSV"
-                    >
-                      Générer le CSV
-                    </v-btn>
-                    <v-btn
-                      color="#A18276"
-                      class="last-step-buttons"
-                      disabled
-                      @click="downloadArea"
-                    >
-                      Télécharger l'emprise
-                    </v-btn>
-                  </v-col>
-                </v-row>
-              </v-card>
+              <!-- <v-card class="buttons-card pa-0 d-flex flex-column justif-center"> -->
+              <v-row class="h-100 pa-0">
+                <v-col class="py-0 px-1 d-flex flex-column justify-space-evenly align-center">
+                  <v-btn
+                    color="#A18276"
+                    class="last-step-buttons"
+                    @click="showMockup"
+                  >
+                    Afficher le rendu 3D
+                  </v-btn>
+                  <v-btn
+                    color="#A18276"
+                    class="last-step-buttons"
+                    prepend-icon="$vuetify"
+                    stacked
+                    @click="generateAndDownloadCSV"
+                  >
+                    Générer le guide<br> de montage
+                  </v-btn>
+                  <v-btn
+                    color="#A18276"
+                    class="last-step-buttons"
+                    stacked
+                    disabled
+                    @click="downloadArea"
+                  >
+                    Télécharger l'emprise géographique
+                  </v-btn>
+                </v-col>
+              </v-row>
+              <!-- </v-card> -->
               <v-btn
                 color="#414288"
                 class="new-mockup-button"

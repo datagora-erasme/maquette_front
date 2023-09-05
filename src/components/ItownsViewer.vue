@@ -57,7 +57,7 @@
           </v-layout>
         </v-card>
       </v-col>
-      <sidebar-component
+      <!-- <sidebar-component
         ref="sidebarComponent"
         :current-tab-value="currentTabValue"
         :selected-area="selectedArea"
@@ -72,7 +72,7 @@
         @onShowPreview="showPreview"
         @onHidePreview="hidePreview"
         @onDownloadArea="downloadArea"
-      />
+      /> -->
       <v-col class="viewerDiv-container pa-0" :style="{ width: viewerDivWidth + 'px' }">
         <div id="viewerDiv" class="viewer" />
       </v-col>
@@ -92,7 +92,7 @@ import * as itowns from '@/node_modules/itowns/dist/itowns'
 import * as itowns_widgets from '@/node_modules/itowns/dist/itowns_widgets'
 import * as colorLayersOrdering from '@/node_modules/itowns/lib/Renderer/ColorLayersOrdering.js'
 import { gsap, Power2 } from 'gsap'
-import SidebarComponent from './SidebarComponent.vue'
+// import SidebarComponent from './SidebarComponent.vue'
 import PreviewComponent from './PreviewComponent.vue'
 import UserInfo from './UserInfo.vue'
 import { objToMesh } from '../utils/threeUtils'
@@ -104,13 +104,18 @@ var viewerDiv
 var currentExtent
 var lyonPlacement
 var coordMouse
-var selectedArea
+var selectedArea = null
+var scaler
 const raycaster = new itowns.THREE.Raycaster(); // create once
 const clickMouse = new itowns.THREE.Vector2();  // create once
 
 export default {
   name: 'ItownsViewer',
-  components: { SidebarComponent, PreviewComponent, UserInfo },
+  components: { 
+    // SidebarComponent, 
+    PreviewComponent, 
+    UserInfo 
+  },
   data() {
     return {
       debugInfos: null,
@@ -185,8 +190,6 @@ export default {
     this.addNavigationWidget(view)
     // ===== Init Searchbar Widgets =====
     this.addSearchBarWidget(view)
-    // ===== Add 3D Building =====
-    this.addBuildingLayer()
 
     // Finally...
     view.notifyChange()
@@ -198,6 +201,8 @@ export default {
         this.getViewCurrentExtent()
         // ===== Init Data and add layer to iTowns =====
         this.loadFdpData(view)
+        // ===== Add 3D Building =====
+        this.addIGNBuildingLayer()
         // ===== Show Debug =====
         this.showDebugInfos()
         // ===== Show All Layers =====
@@ -245,6 +250,7 @@ export default {
       this.isUserInfoActive = false;
     },
     async downloadArea() {
+      // ! TODO: Refacto
       if (this.selectedBbox) {
         await this.$axios.get('https://geoserver-planta.exo-dev.fr/geoserver/Metropole/ows', {
           params: {
@@ -289,6 +295,7 @@ export default {
             this.$refs.sidebarComponent.endVoxelisation();
           });
         });
+        // ! Useless ?
         // await this.$axios.post('/dataprocess/bbox', {
         //   bbox: this.selectedBbox,
         //   ratio: 5
@@ -390,7 +397,7 @@ export default {
     },
     handleClick(event) {
       // Ensures that the selectedArea is only added when alt is pressed.
-      if(this.$refs.sidebarComponent.isAreaSelectionActive) {
+      if(this.$refs.sidebarComponent && this.$refs.sidebarComponent.isAreaSelectionActive) {
         this.selectArea(event);
         return;
       }
@@ -462,12 +469,6 @@ export default {
     getViewCurrentExtent() {
       if (view.tileLayer && view.tileLayer.info.displayed.extent) {
         var extentObj = view.tileLayer.info.displayed.extent;
-        // currentExtent = {
-        //   west: extentObj.west,
-        //   east: extentObj.east,
-        //   south: extentObj.south,
-        //   north: extentObj.north,
-        // }
         currentExtent = extentObj
       } else {
         currentExtent = {
@@ -513,6 +514,24 @@ export default {
       mntLayer.visible = true
       view.addLayer(mntLayer)
 
+      var mntHD = require('../datas/IGN_MNT_HIGHRES.json')
+      var mntHDSource = new itowns.WMTSSource(mntHD.source)
+      var mntHDLayer = new itowns.ElevationLayer('IGN_MNT_HIGHRES', {
+        name: 'Couche MNT HD IGN',
+        source: mntHDSource,
+      })
+      mntHDLayer.visible = true
+      view.addLayer(mntHDLayer)
+
+      var worldDTM = require('../datas/WORLD_DTM.json')
+      var worldDTMSource = new itowns.WMTSSource(worldDTM.source)
+      var worldDTMLayer = new itowns.ElevationLayer('MNT_WORLD_SRTM3', {
+        name: 'Couche DTM IGN',
+        source: worldDTMSource,
+      })
+      worldDTMLayer.visible = true
+      view.addLayer(worldDTMLayer)
+
       // WMS Communes of Metropole de Lyon
       var wmsCommuneLyonSource = new itowns.WMSSource({
         url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/wms',
@@ -529,26 +548,28 @@ export default {
         transparent: true,
         opacity: 1,
       });
-      wmsCommuneLyonLayer.visible = true
+      wmsCommuneLyonLayer.visible = false
       view.addLayer(wmsCommuneLyonLayer);
     },
-    addBuildingLayer() {
+    addCustomBuildingLayer() {
+      // ! Unused ?
       var color = new itowns.THREE.Color()
       var meshes = []
 
       function colorBuildings(properties) {
-        if (properties.usage_1 === 'Résidentiel') {
-            return color.set(0xFDFDFF)
-        } else if (properties.usage_1 === 'Annexe') {
-            return color.set(0xC6C5B9)
-        } else if (properties.usage_1 === 'Commercial et services') {
-            return color.set(0x62929E)
-        } else if (properties.usage_1 === 'Religieux') {
-            return color.set(0x393D3F)
-        } else if (properties.usage_1 === 'Sportif') {
-            return color.set(0x546A7B)
-        }
-        return color.set(0x555555)
+        // ? Grey : 0x555555 / White : 0xFDFDFF
+        // if (properties.usage_1 === 'Résidentiel') {
+        //     return color.set(0xFDFDFF)
+        // } else if (properties.usage_1 === 'Annexe') {
+        //     return color.set(0xC6C5B9)
+        // } else if (properties.usage_1 === 'Commercial et services') {
+        //     return color.set(0x62929E)
+        // } else if (properties.usage_1 === 'Religieux') {
+        //     return color.set(0x393D3F)
+        // } else if (properties.usage_1 === 'Sportif') {
+        //     return color.set(0x546A7B)
+        // }
+        return color.set(0xFDFDFF)
       }
       function acceptFeature(properties) {
         return !!properties.hauteur
@@ -560,7 +581,24 @@ export default {
         return parseFloat(properties.hauteur)
       }
 
-      // DB IGN Building on Exo-Dev Server (https://geoserver-planta.exo-dev.fr/geoserver/) - Only dep 69 in France
+      scaler = function update(/* dt */) {
+        var i;
+        var mesh;
+        if (meshes.length) {
+          view.notifyChange(view.camera.camera3D, true);
+        }
+        for (i = 0; i < meshes.length; i++) {
+          mesh = meshes[i];
+          if (mesh) {
+            mesh.scale.z = Math.min(1.0, mesh.scale.z + 0.1);
+            mesh.updateMatrixWorld(true);
+          }
+        }
+        meshes = meshes.filter(function filter(m) { return m.scale.z < 1; });
+      };
+      view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.BEFORE_RENDER, scaler);
+
+      // DB IGN Building from Exo-Dev Server (https://geoserver-planta.exo-dev.fr/geoserver/) - Only dep 69 in France
       var wfsBuildingSource = new itowns.WFSSource({
         protocol: 'wfs',
         url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/ows?',
@@ -568,67 +606,9 @@ export default {
         typeName: 'Metropole:bati',
         crs: 'EPSG:4326',
         format: 'application/json',
-        maxFeatures: 50
+        // maxFeatures: 50
       })
 
-      // Create layer on wfs building source
-      var wfsBuildingLayer = new itowns.FeatureGeometryLayer('IGN_Buildings',{
-          name: 'Bâtiments IGN',
-          batchId: function(property, featureId) { return featureId },
-          accurate: true,
-          onMeshCreated: function scaleZ(mesh) {
-              mesh.children.forEach(c => {
-                  c.scale.z = 0.01
-                  meshes.push(c)
-              })
-          },
-          filter: acceptFeature,
-          source: wfsBuildingSource,
-          zoom: { min: 15 }, //14
-          style: new itowns.Style({
-              fill: {
-                  color: colorBuildings,
-                  base_altitude: altitudeBuildings,
-                  extrusion_height: extrudeBuildings,
-              }
-          })
-      })
-      // TODO: Add to local variable ???
-      // wfsMeshes = meshes
-
-      // Finally add layer
-      view.addLayer(wfsBuildingLayer)
-    },
-    addIGNBuildingLayer() {
-      // ! Unused ?
-      var color = new itowns.THREE.Color()
-      var meshes = []
-
-      function colorBuildings(properties) {
-        if (properties.usage_1 === 'Résidentiel') {
-            return color.set(0xFDFDFF)
-        } else if (properties.usage_1 === 'Annexe') {
-            return color.set(0xC6C5B9)
-        } else if (properties.usage_1 === 'Commercial et services') {
-            return color.set(0x62929E)
-        } else if (properties.usage_1 === 'Religieux') {
-            return color.set(0x393D3F)
-        } else if (properties.usage_1 === 'Sportif') {
-            return color.set(0x546A7B)
-        }
-        return color.set(0x555555)
-      }
-      function acceptFeature(properties) {
-        return !!properties.hauteur
-      }
-      function altitudeBuildings(properties) {
-        return properties.altitude_minimale_sol
-      }
-      function extrudeBuildings(properties) {
-        return properties.hauteur
-      }
-
-      // BD Topo 3D layer (buildings)
       var wfsBuildingSource = new itowns.WFSSource({
         url: 'https://wxs.ign.fr/topographie/geoportail/wfs?',
         version: '2.0.0',
@@ -642,13 +622,96 @@ export default {
           south: 45.437,
           north: 46.03,
         },
-      })
+      });
 
       // Create layer on wfs building source
-      var wfsBuildingLayer = new itowns.FeatureGeometryLayer('WFS Building',{
+      var wfsBuildingLayer = new itowns.FeatureGeometryLayer('IGN_Buildings',{
+          name: 'Bâtiments IGN',
           batchId: function(property, featureId) { return featureId },
           accurate: true,
           onMeshCreated: function scaleZ(mesh) {
+              console.log('mesh')
+              console.log(mesh)
+              mesh.children.forEach(c => {
+                  c.scale.z = 0.01
+              })
+          },
+          filter: acceptFeature,
+          source: wfsBuildingSource,
+          zoom: { min: 15 }, //14
+          style: new itowns.Style({
+            fill: {
+              color: colorBuildings,
+              base_altitude: altitudeBuildings,
+              extrusion_height: extrudeBuildings,
+            },
+            stroke: { color: color.set(0x546A7B) },
+          })
+      })
+      // TODO: Add to local variable ???
+      // wfsMeshes = meshes
+
+      // Finally add layer
+      view.addLayer(wfsBuildingLayer)
+    },
+    addIGNBuildingLayer() {
+      var color = new itowns.THREE.Color()
+      var meshes = []
+
+      function colorBuildings(properties) {
+        // ? Grey : 0x555555 / White : 0xFDFDFF
+        return color.set(0xFDFDFF)
+      }
+      function acceptFeature(properties) {
+        return !!properties.hauteur
+      }
+      function altitudeBuildings(properties) {
+        return parseFloat(properties.altitude_minimale_sol)
+      }
+      function extrudeBuildings(properties) {
+        return parseFloat(properties.hauteur)
+      }
+
+      scaler = function update(/* dt */) {
+        var i;
+        var mesh;
+        if (meshes.length) {
+          view.notifyChange(view.camera.camera3D, true);
+        }
+        for (i = 0; i < meshes.length; i++) {
+          mesh = meshes[i];
+          if (mesh) {
+            mesh.scale.z = Math.min(1.0, mesh.scale.z + 0.1);
+            mesh.updateMatrixWorld(true);
+          }
+        }
+        meshes = meshes.filter(function filter(m) { return m.scale.z < 1; });
+      };
+      view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.BEFORE_RENDER, scaler);
+
+      var wfsBuildingSource = new itowns.WFSSource({
+        url: 'https://wxs.ign.fr/topographie/geoportail/wfs?',
+        version: '2.0.0',
+        typeName: 'BDTOPO_V3:batiment',
+        crs: 'EPSG:4326',
+        ipr: 'IGN',
+        format: 'application/json',
+        extent: {
+          west: 4.568,
+          east: 5.18,
+          south: 45.437,
+          north: 46.03,
+        },
+      });
+
+      // Create layer on wfs building source
+      var wfsBuildingLayer = new itowns.FeatureGeometryLayer('IGN_Buildings',{
+          name: 'Bâtiments IGN',
+          batchId: function(property, featureId) { return featureId },
+          accurate: true,
+          onMeshCreated: function scaleZ(mesh) {
+              console.log('mesh')
+              console.log(mesh)
               mesh.children.forEach(c => {
                   c.scale.z = 0.01
                   meshes.push(c)
@@ -656,15 +719,18 @@ export default {
           },
           filter: acceptFeature,
           source: wfsBuildingSource,
-          zoom: { min: 17 }, //14
+          zoom: { min: 15 }, //14
           style: new itowns.Style({
-              fill: {
-                  color: colorBuildings,
-                  base_altitude: altitudeBuildings,
-                  extrusion_height: extrudeBuildings,
-              }
+            fill: {
+              color: colorBuildings,
+              base_altitude: altitudeBuildings,
+              extrusion_height: extrudeBuildings,
+            },
+            stroke: { color: color.set(0x546A7B) },
           })
       })
+      // TODO: Add to local variable ???
+      // wfsMeshes = meshes
 
       // Finally add layer
       view.addLayer(wfsBuildingLayer)

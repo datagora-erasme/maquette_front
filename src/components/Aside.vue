@@ -233,7 +233,7 @@ export default {
       if (this.iTownsBaseLayers.length) {
         let tempBaseLayers = []
         this.iTownsBaseLayers.forEach(bLayer => {
-          if (bLayer.id !== 'globe' && bLayer.id !== 'atmosphere' && bLayer.id !== 'IGN_MNT') {
+          if (bLayer.id !== 'globe' && bLayer.id !== 'atmosphere' && bLayer.id !== 'IGN_MNT' && bLayer.id !== 'IGN_MNT_HIGHRES' && bLayer.id !== 'MNT_WORLD_SRTM3') {
             let newSubtitle = 'Fond de plan'
             if (bLayer.id === 'IGN_Buildings') {
               newSubtitle = 'BD Topo Juin 2023'
@@ -302,8 +302,6 @@ export default {
   font-size: 25px;
 }
 .layers-list {
-  // border-bottom: 1px solid #e4e4e4 !important;
-
   .layers-list-item {
     border-bottom: 1px solid #e4e4e4;
   }
