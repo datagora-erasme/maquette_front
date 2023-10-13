@@ -57,7 +57,7 @@
           </v-layout>
         </v-card>
       </v-col>
-      <!-- <sidebar-component
+      <sidebar-component
         ref="sidebarComponent"
         :current-tab-value="currentTabValue"
         :selected-area="selectedArea"
@@ -65,6 +65,7 @@
         :ongoing-travel="ongoingTravel"
         @onCloseNavbar="closeNavbarItem"
         @onResetMockupSelection="resetMockupSelection"
+        @onStartSelection="startSelection()"
         @onRemoveSelectedArea="removeSelectedArea()"
         @onTravelToSelectedArea="travelToSelectedArea()"
         @onPlatesSelected="onPlatesSelected"
@@ -72,7 +73,7 @@
         @onShowPreview="showPreview"
         @onHidePreview="hidePreview"
         @onDownloadArea="downloadArea"
-      /> -->
+      />
       <v-col class="viewerDiv-container pa-0" :style="{ width: viewerDivWidth + 'px' }">
         <div id="viewerDiv" class="viewer" />
       </v-col>
@@ -92,7 +93,7 @@ import * as itowns from '@/node_modules/itowns/dist/itowns'
 import * as itowns_widgets from '@/node_modules/itowns/dist/itowns_widgets'
 import * as colorLayersOrdering from '@/node_modules/itowns/lib/Renderer/ColorLayersOrdering.js'
 import { gsap, Power2 } from 'gsap'
-// import SidebarComponent from './SidebarComponent.vue'
+import SidebarComponent from './SidebarComponent.vue'
 import PreviewComponent from './PreviewComponent.vue'
 import UserInfo from './UserInfo.vue'
 import { objToMesh } from '../utils/threeUtils'
@@ -112,7 +113,7 @@ const clickMouse = new itowns.THREE.Vector2();  // create once
 export default {
   name: 'ItownsViewer',
   components: { 
-    // SidebarComponent, 
+    SidebarComponent, 
     PreviewComponent, 
     UserInfo 
   },
@@ -213,7 +214,9 @@ export default {
         viewerDiv.addEventListener('wheel', this.handleMouseMove)
         // Add Click Event listener
         viewerDiv.addEventListener('click', this.handleClick)
+        viewerDiv.addEventListener('mouseover', this.handleDragEnd)
     }.bind(this))
+    // view.addEventListener('click', this.handleClick)
 
   },
   methods: {
@@ -396,6 +399,8 @@ export default {
       this.debugInfos += '<br> Test proj convert 2154 to 4326 : ' + JSON.stringify(convertProjCoord)
     },
     handleClick(event) {
+      console.log('click event')
+      console.log(event)
       // Ensures that the selectedArea is only added when alt is pressed.
       if(this.$refs.sidebarComponent && this.$refs.sidebarComponent.isAreaSelectionActive) {
         this.selectArea(event);
@@ -404,6 +409,10 @@ export default {
 
       // Trying to detect the selectedArea
       this.raycast(event)
+    },
+    handleDragEnd(event) {
+      console.log('drag end event')
+      console.log(event)
     },
     intersectArea(areaSelected, min, max) {
       const area = areaSelected;
@@ -630,8 +639,6 @@ export default {
           batchId: function(property, featureId) { return featureId },
           accurate: true,
           onMeshCreated: function scaleZ(mesh) {
-              console.log('mesh')
-              console.log(mesh)
               mesh.children.forEach(c => {
                   c.scale.z = 0.01
               })
@@ -648,8 +655,6 @@ export default {
             stroke: { color: color.set(0x546A7B) },
           })
       })
-      // TODO: Add to local variable ???
-      // wfsMeshes = meshes
 
       // Finally add layer
       view.addLayer(wfsBuildingLayer)
@@ -710,11 +715,9 @@ export default {
           batchId: function(property, featureId) { return featureId },
           accurate: true,
           onMeshCreated: function scaleZ(mesh) {
-              console.log('mesh')
-              console.log(mesh)
               mesh.children.forEach(c => {
-                  c.scale.z = 0.01
-                  meshes.push(c)
+                c.scale.z = 0.01
+                meshes.push(c)
               })
           },
           filter: acceptFeature,
@@ -729,14 +732,15 @@ export default {
             stroke: { color: color.set(0x546A7B) },
           })
       })
-      // TODO: Add to local variable ???
-      // wfsMeshes = meshes
-
       // Finally add layer
       view.addLayer(wfsBuildingLayer)
     },
-    lookAtCoordinate(coordinates) {
-      view.controls.lookAtCoordinate({ coord: coordinates, range: 20000, heading: 0 })
+    lookAtCoordinate(coordinates, range) {
+      view.controls.lookAtCoordinate({ 
+        coord: coordinates, 
+        range: range ? range:20000, 
+        heading: 0 
+      })
     },
     addScaleWidget() {
       // Add Scale Widget
@@ -808,6 +812,10 @@ export default {
           placeholder: 'Cherchez un emplacement en France 🔎',
       })
     },
+    startSelection() {
+      // Set zoom at 15 to map
+      view.controls.setZoom(15, true)
+    },
     removeSelectedArea() {
       if (selectedArea) {
         view.scene.remove(selectedArea);
@@ -818,19 +826,31 @@ export default {
       }
     },
     selectArea(event){
-      
+      // Remove existing Area
       this.removeSelectedArea();
 
+      // Get target coordinate
       const target = new itowns.Coordinates('EPSG:4978', 0, 0, 0);
       const result = view.pickCoordinates(event, target);
+      console.log('pick selectedArea')
+      console.log(result)
 
-      const geometry = new itowns.THREE.BoxGeometry(250, this.nbPlatesHorizontal * 100, this.nbPlatesVertical * 100);
+      // GoTo coordinate
+      // view.controls.lookAtCoordinate(result, true)
+      this.lookAtCoordinate(result, 2000)
+
+      const geometry = new itowns.THREE.BoxGeometry(50, this.nbPlatesHorizontal * 100, this.nbPlatesVertical * 100);
       const material = new itowns.THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.4, transparent: true });
 
       
       selectedArea = new itowns.THREE.Mesh(geometry, material);
-      selectedArea.position.set(result.x, result.y, result.z + 100)
-      selectedArea.rotation.set(Math.PI/1, Math.PI / 4, Math.PI / 1)
+      selectedArea.position.set(result.x, result.y, result.z)
+      // selectedArea.rotation.set(0, 0, 0)
+      selectedArea.rotation.set(Math.PI/1, Math.PI / 1, Math.PI / 1)
+      console.log(selectedArea)
+      
+      selectedArea.updateMatrixWorld(); // Used to force the re-rendering ?
+      
       this.selectedArea = selectedArea;
       this.setSelectedArea(selectedArea);
 

@@ -151,7 +151,7 @@
               <!-- Loading Lego Gif -->
               <img src="https://i.gifer.com/origin/f3/f39692ecaeca69ab75397c1caee129e8.gif" width="400">
               <div class="pt-0">
-                Veuillez patienter pendant la construction <br>de vos Lego{{ dots }}
+                Veuillez patienter pendant la construction en Lego<br>de votre maquette{{ dots }}
               </div>
             </div>
           </v-row>
@@ -315,6 +315,7 @@ export default {
       } else if (document.exitFullscreen) {
         document.exitFullscreen();
       }
+      // ! Need to replace
       this.$emit('onTravelToSelectedArea')
       this.$emit('onCloseNavbar')
     },
@@ -390,17 +391,18 @@ export default {
     },
     startSelection() {
       this.isAreaSelectionActive = true
+      this.$emit('onStartSelection')
     },
     endSelection() {
       this.isAreaSelected = !!this.selectedArea
-      if (this.isAreaSelected) {
-        this.$emit('onTravelToSelectedArea')
-      } else {
+      if (!this.isAreaSelected) {
         this.$notify({
           title: 'Zone non sélectionnée',
           text: "Veuillez d'abord sélectionner une zone en cliquant sur la carte",
           type: 'info'
         });
+      } else {
+        this.$emit('onTravelToSelectedArea')
       }
     },
     cancelSelection() {
