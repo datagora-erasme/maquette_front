@@ -37,7 +37,7 @@
       <div class="d-flex justify-space-between">
         <v-btn
           :loading="formLoading"
-          color="#A18276"
+          color="#37474F"
           style="color: #414288"
           variant="outlined"
           @click="setOngoingPasswordRecuperation(false)"
@@ -47,7 +47,7 @@
         <v-btn
           :disabled="!email"
           :loading="formLoading"
-          color="#A18276"
+          color="#414288"
           style="color: white"
           @click="sendRecuperationEmail()"
         >
@@ -117,7 +117,7 @@ export default {
 
 .signin-title {
   text-transform: uppercase;
-  color: #A18276;
+  color: #37474F;
 }
 .signin-logo-container {
   display: flex;

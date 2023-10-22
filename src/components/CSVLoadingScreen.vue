@@ -30,6 +30,6 @@ export default {
 }
 
 .loading-screen-title {
-  color: #A18276;
+  color: #37474F;
 }
 </style>

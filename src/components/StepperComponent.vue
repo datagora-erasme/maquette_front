@@ -7,7 +7,7 @@
     >
       <div 
         class="bullet d-flex flex-row justify-center align-center" 
-        :style="{'background-color': index < currentStep ? '#414288': '#A18276'}"
+        :style="{'background-color': index < currentStep ? '#414288': '#1976D3'}"
       >
         <v-icon v-if="index < currentStep || currentStep === steps.length" class="check-icon" icon="mdi-check" />
         <div v-else>
@@ -15,12 +15,12 @@
         </div>
       </div>
       <div class="title">
-        {{ step }}
+        <span :class="index === currentStep ? 'font-weight-bold fs-15':''">{{ step }}</span>
       </div>
       <div
         v-if="index < steps.length -1"
         class="line"
-        :style="{'background-color': index < currentStep -1 ? '#414288': '#A18276'}"
+        :style="{'background-color': index < currentStep -1 ? '#414288': '#1976D3'}"
       />
     </div>
   </div>
@@ -63,6 +63,9 @@ export default {
   color: #414288;
   text-align: center;
   margin-top: 0.3rem;
+}
+.fs-15 {
+  font-size: 15px;
 }
 
 .line {

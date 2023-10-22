@@ -8,7 +8,7 @@
         <div class="d-flex flex-row align-center">
           <v-btn
             density="comfortable"
-            color="#A18276"
+            color="#37474F"
             style="color: white"
             @click="download3DModel"
           >
@@ -78,7 +78,7 @@ export default {
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera( 75, 800 / 500 );
     renderer = new THREE.WebGLRenderer( { antialias: true } );
-    renderer.setClearColor( 0xa18276, 0);
+    renderer.setClearColor( 0x37474F, 0);
     renderer.setSize( 800, 500);
     pointLight = new THREE.PointLight( 0xffffff  );
     camera.add( pointLight );

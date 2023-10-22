@@ -31,11 +31,12 @@
                   value="1"
                   @click="clickOnNavbarItem(1)"
                 /> 
+                <!-- TODO: Disable if maq was not load -->
+                <!-- :disabled="!getSelectedArea" -->
                 <v-list-item
                   prepend-icon="mdi-map-legend"
                   title="Projection de la maquette"
                   value="2"
-                  :disabled="!getSelectedArea"
                   @click="clickOnNavbarItem(2)"
                 />
                 <v-list-item
@@ -144,7 +145,6 @@ export default {
       // voxelizedMesh: 'map/getVoxelizedSingleMesh',
       voxelizedMeshObjContent: 'map/getVoxelizedMeshObjContent',
       selectedPlates: 'map/getPlates',
-      getSelectedArea: 'map/getSelectedArea',
       getBaseLayers: 'map/getBaseLayers',
       getCurrAreaRotation: 'map/getCurrAreaRotation',
       getNewAreaRotation: 'map/getNewAreaRotation',
@@ -313,14 +313,27 @@ export default {
     },
     async voxelize() {
       if (selectedArea) {
+
+        // DEBUG
+        const box = new itowns.THREE.Box3();
+        box.setFromObject(selectedArea);
+
+        const helper = new itowns.THREE.Box3Helper( box, 0xffff00 );
+        view.scene.add( helper );
+
+
         const clonedGeometry = selectedArea.geometry.clone();
         clonedGeometry.computeBoundingBox()
+
         const bbMin = clonedGeometry.boundingBox.min.clone().applyMatrix4(selectedArea.matrixWorld)
         const bbMax = clonedGeometry.boundingBox.max.clone().applyMatrix4(selectedArea.matrixWorld)
 
         const coordsMin = new itowns.Coordinates('EPSG:4978', bbMin).as('EPSG:2154')
         const coordsMax = new itowns.Coordinates('EPSG:4978', bbMax).as('EPSG:2154')
-        this.selectedBbox = coordsMin.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMax.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
+        this.selectedBbox = coordsMax.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMin.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
+        // this.selectedBbox = coordsMin.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMax.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
+        
+        // Api call for voxelize
         this.voxelizeBbox(this.selectedBbox).then((objContent) =>  {
           objToMesh(objContent).then((mesh) => {
             this.setVoxelizedMesh(mesh);
@@ -843,6 +856,7 @@ export default {
         selectedArea = undefined; 
         view.notifyChange(true);
       }
+      this.$evtBus.emit('onResetSliderRotation', true)
     },
     rotateSelectedArea() {
       // Get cube in scene

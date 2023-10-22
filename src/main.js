@@ -1,8 +1,8 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 // Import module
-// import Itowns from 'itowns'
 import * as Itowns from 'itowns'
+// TODO: Remove ?
 import * as THREE from 'three'
 import 'vuetify/styles';
 import { axiosInstance as axios }  from './axios';

@@ -54,11 +54,11 @@
         <v-btn
           :disabled="!(currLogin.password && currLogin.login)"
           :loading="formLoading"
-          color="#A18276"
+          color="#414288"
           style="color: white"
           @click="submitLoginForm()"
         >
-          Connecter
+          Connexion
         </v-btn>
       </div>
     </v-form>
@@ -125,7 +125,7 @@ export default {
 
 .signin-title {
   text-transform: uppercase;
-  color: #A18276;
+  color: #37474F;
 }
 .signin-logo-container {
   display: flex;

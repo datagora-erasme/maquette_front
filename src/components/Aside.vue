@@ -1,7 +1,7 @@
 <template>
   <v-slide-x-transition>
     <v-card v-show="asideStatus" id="aside-card">
-      <v-card-title style="background: #1976D3; color: white">
+      <v-card-title class="aside-card-title">
         <v-row>
           <v-col class="d-flex align-center">
             Menu des couches
@@ -295,6 +295,11 @@ export default {
   height: 100%;
   border-radius: 0;
   z-index: 10;
+
+  .aside-card-title {
+    background: #1976D3; 
+    color: white;
+  }
 
   .layer-card-text {
     overflow-y: auto;

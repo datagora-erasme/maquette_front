@@ -24,7 +24,7 @@
 
     <v-card-text class="d-flex flex-column px-3 mt-3">
       <v-row class="user-info-my-info d-flex flex-row justify-space-between" style="max-height: 40px;">
-        <h4 class="user-info-section-title" style="color: #A18276">
+        <h4 class="user-info-section-title" style="color: #37474F">
           Mes informations
         </h4>
         <div class="user-info-buttons-container pr-3">
@@ -32,7 +32,7 @@
             v-if="!isInfoUpdateActive"
             class=""
             size="small"
-            color="#A18276"
+            color="#37474F"
             style="color: white;"
             disabled
             @click="isInfoUpdateActive = true"
@@ -52,7 +52,7 @@
             v-if="isInfoUpdateActive"
             size="small"
             class="ml-1"
-            color="#A18276"
+            color="#37474F"
             style="color: white;"
             @click="submitNewInfo"
           >
@@ -98,7 +98,7 @@
         </v-col>
       </v-row>
       <v-row class="user-info-my-info d-flex flex-row justify-space-between mt-10" style="max-height: 40px;">
-        <h4 class="user-info-section-title" style="color: #A18276">
+        <h4 class="user-info-section-title" style="color: #37474F">
           Mot de passe
         </h4>
         <div class="user-info-buttons-container pr-3">
@@ -107,7 +107,7 @@
             small
             class=""
             size="small"
-            color="#A18276"
+            color="#37474F"
             style="color: white;"
             disabled
             @click="isPasswordUpdateActive = true"
@@ -127,7 +127,7 @@
             v-if="isPasswordUpdateActive"
             size="small"
             class="ml-1"
-            color="#A18276"
+            color="#37474F"
             style="color: white;"
             @click="submitNewPassword"
           >

@@ -101,7 +101,7 @@ Here are the main dependencies used in the project. The complete list can be fou
 
 - **Purple** : #414288
 
-- **Beaver** : #A18276
+- **Beaver** : #37474F
 
 - **Red (black bean)** : #3F0D12
 

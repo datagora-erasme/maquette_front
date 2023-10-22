@@ -3,10 +3,12 @@
     <!-- <v-col v-if="currentTabValue !== null" :style="'max-width: ' + width + 'px; border-right: 1px solid #e4e4e4;'" class="pa-0"> -->
     <v-card v-if="currentTabValue == 1" class="sidebar-cards py-5 px-7">
       <v-row class="d-flex justify-center">
-        <v-col class="pa-0">
-          <div class="sidebar-title text-h6 font-weight-medium py-2">
+        <v-col class="sidebar-title-col pa-0">
+          <!-- <div class="sidebar-title py-2"> -->
+          <h3 class="sidebar-title py-2">
             Parcours de création d'une maquette
-          </div>
+          </h3>
+          <!-- </div> -->
         </v-col>
       </v-row>
       <v-row class="py-5">
@@ -68,7 +70,7 @@
                 <v-btn
                   v-if="isPlatesSelected"
                   density="comfortable"
-                  color="#A18276"
+                  color="#37474F"
                   min-width="230"
                   style="color: white"
                   :disabled="ongoingTravel"
@@ -97,7 +99,7 @@
                 <v-btn
                   v-if="!isAreaSelectionActive && isAreaSelected"
                   density="comfortable"
-                  color="#A18276"
+                  color="#37474F"
                   min-width="230"
                   style="color: white"
                   @click="startSelection()"
@@ -184,14 +186,14 @@
               <v-row class="h-100 pa-0">
                 <v-col class="py-0 px-1 d-flex flex-column justify-space-evenly align-center">
                   <v-btn
-                    color="#A18276"
+                    color="#37474F"
                     class="last-step-buttons"
                     @click="showMockup"
                   >
                     Afficher le rendu 3D
                   </v-btn>
                   <v-btn
-                    color="#A18276"
+                    color="#37474F"
                     class="last-step-buttons"
                     prepend-icon="$vuetify"
                     stacked
@@ -200,7 +202,7 @@
                     Générer le guide<br> de montage
                   </v-btn>
                   <v-btn
-                    color="#A18276"
+                    color="#37474F"
                     class="last-step-buttons"
                     stacked
                     disabled
@@ -321,7 +323,11 @@ export default {
     },
     sliderValue() {
       this.computeAreaRotation(this.sliderValue)
-    }
+    },
+  },
+  mounted() {
+    // ===== Bind Events =====
+    this.$evtBus.on('onResetSliderRotation', this.resetSliderRotation);
   },
   methods: {
     ...mapActions({
@@ -430,6 +436,9 @@ export default {
       this.sliderValue = 0
       this.$emit('onRemoveSelectedArea')
     },
+    resetSliderRotation() {
+      this.sliderValue = 0
+    },
     onlyNumbers(value) {
       return /^\d+$/.test(value) || 'Nombres uniquement';
     },
@@ -467,7 +476,8 @@ export default {
   color: #414288;
 }
 .sidebar-title {
-  color: #A18276;
+  color: #414288;
+  font-weight: bold;
 }
 .step1Title {
   color: #414288;

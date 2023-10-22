@@ -55,7 +55,7 @@
         <v-btn
           :disabled="!passwordFirstTry || !passwordSecondTry || passwordFirstTry !== passwordSecondTry"
           :loading="formLoading"
-          color="#A18276"
+          color="#37474F"
           style="color: white"
           @click="submitPasswordForm()"
         >
@@ -123,7 +123,7 @@ export default {
 
 .signin-title {
   text-transform: uppercase;
-  color: #A18276;
+  color: #37474F;
 }
 .signin-logo-container {
   display: flex;

@@ -57,7 +57,7 @@ const authentication = {
         cookies.remove('token'); // just in case
         removeAxiosToken();
         commit('LOGOUT');
-        console.log('TOKEN NOT IN COOKIES');
+        // console.log('TOKEN NOT IN COOKIES');
         return;
       }
       dispatch('verifyToken', cookiesToken)
@@ -65,11 +65,11 @@ const authentication = {
           // The token is valid : add it again to axios config just in case
           setAxiosToken(cookiesToken);
           dispatch('fetchUserInfo');
-          console.log('TOKEN IN COOKIES IS VALID');
+          // console.log('TOKEN IN COOKIES IS VALID');
         })
         .catch(() => {
           // If not valid, logout
-          console.log('TOKEN IN COOKIES IS NOT VALID');
+          // console.log('TOKEN IN COOKIES IS NOT VALID');
           cookies.remove('token'); // just in case
           removeAxiosToken();
           commit('LOGOUT');

@@ -1,7 +1,7 @@
-import axios from 'axios';
+import axios from 'axios'
 
 const axiosInstance = axios.create({
-  baseURL: 'https://api-dev-maquette.exo-dev.fr/api',
+  baseURL: process.env.VUE_APP_API_BASE_URL,
 });
 
 const setToken = (token) => {
