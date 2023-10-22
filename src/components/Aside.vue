@@ -113,7 +113,10 @@
           <div class="d-flex align-left subgroup-title-text">
             Mes données
           </div>
-          <v-list-item
+          <div class="d-flex align-center justify-center mt-2">
+            <i>A venir...</i>
+          </div>
+          <!-- <v-list-item
             v-for="(customLayer, index) in exampleData"
             :key="customLayer.id"
             :title="customLayer.name"
@@ -158,7 +161,7 @@
                 disabled
               />
             </template>
-          </v-list-item>
+          </v-list-item> -->
         </v-list>
       </v-card-text>
     </v-card>

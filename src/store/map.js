@@ -4,7 +4,6 @@ import { axiosInstance as axios } from '../axios';
 const map = {
   namespaced: true,
   state: () => ({
-    selectedArea: null,
     platesX: null,
     platesY: null,
     voxelizedMesh: null,
@@ -14,7 +13,12 @@ const map = {
     csvString: null,
     currentMockupUrl: null,
     currentMockupObjFile: null, //Blob containing the obj file's content. Downloadable with a .obj extension.
-    baseLayers: []
+    baseLayers: [],
+    currAreaRotation: 0,
+    newAreaRotation: 0,
+    areaSelectionActive: false,
+    areaDropped: false,
+    areaSelected: false,
   }),
   getters: {
     getCurrentMockupDownloadLink(state) {
@@ -26,9 +30,6 @@ const map = {
     // getVoxelizedSingleMesh(state) {
     //   return state.voxelizedSingleMesh;
     // },
-    getSelectedArea(state) {
-      return state.selectedArea;
-    },
     getPlates(state) {
       return { x: state.platesX, y: state.platesY };
     },
@@ -43,12 +44,24 @@ const map = {
     },
     getBaseLayers(state) {
       return state.baseLayers
-    }
+    },
+    getCurrAreaRotation(state) {
+      return state.currAreaRotation
+    },
+    getNewAreaRotation(state) {
+      return state.newAreaRotation
+    },
+    getAreaSelectionActive(state) {
+      return state.areaSelectionActive
+    },
+    getAreaDropped(state) {
+      return state.areaDropped
+    },
+    getAreaSelected(state) {
+      return state.areaSelected
+    },
   },
   mutations: {
-    SET_SELECTED_AREA(state, selectedArea) {
-      state.selectedArea = selectedArea;
-    },
     SET_PLATES_X(state, platesX) {
       state.platesX = platesX;
     },
@@ -72,7 +85,22 @@ const map = {
     },
     SET_BASE_LAYERS(state, newLayers) {
       state.baseLayers = newLayers
-    }
+    },
+    SET_CURR_AREA_ROTATION(state, currRotation) {
+      state.currAreaRotation = currRotation
+    },
+    SET_NEW_AREA_ROTATION(state, newRotation) {
+      state.newAreaRotation = newRotation
+    },
+    SET_AREA_SELECTION_ACTIVE(state, newState) {
+      state.areaSelectionActive = newState
+    },
+    SET_AREA_DROPPED(state, newState) {
+      state.areaDropped = newState
+    },
+    SET_AREA_SELECTED(state, newState) {
+      state.areaSelected = newState
+    },
   },
   actions: {
     /**
@@ -81,9 +109,6 @@ const map = {
     setPlates({ commit }, plates) {
       commit('SET_PLATES_X', plates.x);
       commit('SET_PLATES_Y', plates.y);
-    },
-    setSelectedArea({ commit }, selectedArea) {
-      commit('SET_SELECTED_AREA', selectedArea);
     },
     setVoxelizedMeshObjContent({ commit }, content) {
       commit('SET_OBJ_CONTENT', content);
@@ -157,7 +182,22 @@ const map = {
     },
     setBaseLayers({ commit }, newLayers) {
       commit('SET_BASE_LAYERS', newLayers)
-    }
+    },
+    setCurrAreaRotation({ commit }, currRotation) {
+      commit('SET_CURR_AREA_ROTATION', currRotation)
+    },
+    setNewAreaRotation({ commit }, newRotation) {
+      commit('SET_NEW_AREA_ROTATION', newRotation)
+    },
+    setAreaSelectionActive({ commit }, newState) {
+      commit('SET_AREA_SELECTION_ACTIVE', newState)
+    },
+    setAreaDropped({ commit }, newState) {
+      commit('SET_AREA_DROPPED', newState)
+    },
+    setAreaSelected({ commit }, newState) {
+      commit('SET_AREA_SELECTED', newState)
+    },
   },
 };
 

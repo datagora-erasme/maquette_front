@@ -1,5 +1,6 @@
 <template>
-  <v-col v-if="currentTabValue !== null" :style="'max-width: ' + width + 'px; border-right: 1px solid #e4e4e4;'" class="pa-0">
+  <div v-if="currentTabValue !== null" class="sidebar-container pa-0">
+    <!-- <v-col v-if="currentTabValue !== null" :style="'max-width: ' + width + 'px; border-right: 1px solid #e4e4e4;'" class="pa-0"> -->
     <v-card v-if="currentTabValue == 1" class="sidebar-cards py-5 px-7">
       <v-row class="d-flex justify-center">
         <v-col class="pa-0">
@@ -115,6 +116,25 @@
                     Annuler la sélection
                   </v-btn>
                   <br><br>
+                </div>
+                <div v-if="isAreaDropped && !isAreaSelected">
+                  <!-- <div v-if="!isAreaSelected"> -->
+                  Appliquer une rotation à la zone séléctionnée :
+                  <v-slider
+                    v-model="sliderValue"
+                    class="align-center"
+                    :max="sliderMax"
+                    :min="sliderMin"
+                    hide-details
+                  >
+                    <template #append>
+                      <div style="width: 70px">
+                        {{ sliderValue.toFixed(1) }}°
+                      </div>
+                    </template>
+                  </v-slider>
+                  <br>
+                  <!-- </div> -->
                   <v-btn
                     :loading="ongoingTravel"
                     density="comfortable"
@@ -151,7 +171,7 @@
               <!-- Loading Lego Gif -->
               <img src="https://i.gifer.com/origin/f3/f39692ecaeca69ab75397c1caee129e8.gif" width="400">
               <div class="pt-0">
-                Veuillez patienter pendant la construction en Lego<br>de votre maquette{{ dots }}
+                Veuillez patienter pendant la construction en Lego<br>de votre maquette...
               </div>
             </div>
           </v-row>
@@ -229,7 +249,8 @@
     <v-card v-if="currentTabValue == 3">
       ccc
     </v-card>
-  </v-col>
+  <!-- </v-col> -->
+  </div>
 </template>
 
 <script>
@@ -241,17 +262,9 @@ export default {
   name: 'SidebarComponent',
   components: { StepperComponent },
   props: {
-    width: {
-      type: Number,
-      required: true,
-    },
     currentTabValue: {
       type: Number,
       required: true,
-    },
-    selectedArea: {
-      type: Object,
-      required: true
     },
     ongoingTravel: {
       type: Boolean,
@@ -260,36 +273,44 @@ export default {
   },
   data() {
     return {
+      width: 400,
       nbPlatesHorizontal: null,
       nbPlatesVertical: null,
       isPlatesSelected: false,
-      isAreaSelectionActive: false,
-      isAreaSelected: false,
       currentStep: 0,
       isLoading: false,
-      dotsCount: 3,
-      dotsVisible: 0,
       stepperSteps: ['Emprise', 'Construction', 'Finalisation'],
+      sliderValue: 0,
+      sliderMin: 0,
+      sliderMax: 360,
     }
   },
   computed: {
     ...mapGetters({
       voxelizedMesh: 'map/getVoxelizedMesh',
       plates: 'map/getPlates',
+      getCurrAreaRotation: 'map/getCurrAreaRotation',
+      getAreaSelectionActive: 'map/getAreaSelectionActive',
+      getAreaDropped: 'map/getAreaDropped',
+      getAreaSelected: 'map/getAreaSelected',
     }),
-    // Added here because props.selectedArea isn't a vue data() object, thus its value 
-    // doesn't get updated here when it is updated in the parent component
-    localSelectedArea() {
-      return this.$props.selectedArea;
+    currAreaRotation() {
+      return this.getCurrAreaRotation
     },
-    dots() {
-      return '.'.repeat(this.dotsVisible);
+    isAreaSelectionActive() {
+      return this.getAreaSelectionActive
+    },
+    isAreaDropped() {
+      return this.getAreaDropped
+    },
+    isAreaSelected() {
+      return this.getAreaSelected
     },
   },
   watch: {
     ongoingTravel() {
       if (this.ongoingTravel === false) {
-        this.isAreaSelectionActive = false
+        this.setAreaSelectionActive(false)
       }
     },
     currentStep() {
@@ -298,9 +319,9 @@ export default {
         this.$emit('onStep1')
       }
     },
-  },
-  mounted() {
-    this.animateDots();
+    sliderValue() {
+      this.computeAreaRotation(this.sliderValue)
+    }
   },
   methods: {
     ...mapActions({
@@ -308,7 +329,15 @@ export default {
       generateHeightMap: 'map/generateHeightMap',
       generateCSVString: 'map/generateCSVString',
       downloadCSV: 'map/downloadCSV',
+      setNewAreaRotation: 'map/setNewAreaRotation',
+      setAreaSelectionActive: 'map/setAreaSelectionActive',
+      setAreaDropped: 'map/setAreaDropped',
+      setAreaSelected: 'map/setAreaSelected',
     }),
+    computeAreaRotation(newRotation) {
+      this.setNewAreaRotation(newRotation) // in Deg
+      this.$emit('onRotateSelectedArea')
+    },
     startSlideShow() {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen();
@@ -327,18 +356,14 @@ export default {
       });
     },
     resetMockupSelection() {
+      console.log('resetMockupSelection')
       this.currentStep = 0;
-      this.$emit('onResetMockupSelection')
       this.clearPlatesNumber()
+      this.cancelSelection()
+      this.$emit('onResetMockupSelection')
     },
     downloadArea() {
       this.$emit('onDownloadArea')
-    },
-    animateDots() {
-      setTimeout(() => {
-        this.dotsVisible = (this.dotsVisible + 1) % (this.dotsCount + 1);
-        this.animateDots();
-      }, this.dotsVisible === 0 ? 800 : 400);
     },
     endVoxelisation() {
       this.isLoading = false;
@@ -366,48 +391,43 @@ export default {
       if ((this.nbPlatesHorizontal < 1 || this.nbPlatesHorizontal > 6) || (this.nbPlatesVertical < 1 || this.nbPlatesVertical > 6)) {
         this.$notify({
             title: 'Nombre de plaques incorrect',
-            text: 'Veuillez sélectionner 6 plaques horizontales et 6 plaques verticales maximum',
+            text: 'Veuillez sélectionner entre 1 à 6 plaques horizontales et verticales',
             type: 'info'
           });
         return;
       }
-      // if ((parseInt(this.nbPlatesHorizontal) != Number) || (parseInt(this.nbPlatesVertical) != Number)) {
-      //   console.log('Veuillez indiquer des valeurs numériques')
-      //   console.log(typeof parseInt(this.nbPlatesVertical))
-      //   return;
-      // }
       this.isPlatesSelected = true
       this.$emit('onPlatesSelected', { horizontal: this.nbPlatesHorizontal, vertical: this.nbPlatesVertical })
     },
     clearPlatesNumber() {
-      // Remove selected area when redefining the plates number
-      this.$emit('onRemoveSelectedArea')
-      this.isAreaSelectionActive = false
-      this.localSelectedArea = null
-      this.isAreaSelected = false
       this.nbPlatesVertical = null
       this.nbPlatesHorizontal = null
       this.isPlatesSelected = false
+      // Remove selected area when redefining the plates number
+      this.cancelSelection()
     },
     startSelection() {
-      this.isAreaSelectionActive = true
+      this.setAreaSelectionActive(true)
+      this.setAreaSelected(false)
       this.$emit('onStartSelection')
     },
     endSelection() {
-      this.isAreaSelected = !!this.selectedArea
-      if (!this.isAreaSelected) {
+      if (!this.isAreaDropped) {
         this.$notify({
           title: 'Zone non sélectionnée',
           text: "Veuillez d'abord sélectionner une zone en cliquant sur la carte",
           type: 'info'
         });
       } else {
+        this.setAreaSelected(true)
         this.$emit('onTravelToSelectedArea')
       }
     },
     cancelSelection() {
-      this.isAreaSelectionActive = false
-      this.isAreaSelected = false
+      this.setAreaSelectionActive(false)
+      this.setAreaDropped(false)
+      this.setAreaSelected(false)
+      this.sliderValue = 0
       this.$emit('onRemoveSelectedArea')
     },
     onlyNumbers(value) {
@@ -426,6 +446,23 @@ export default {
 </script>
 
 <style>
+.sidebar-container {
+  position: fixed;
+  left: 55px;
+  top: 0;
+  max-width: 400px;
+  height: 100%;
+  z-index: 10;
+  border-right: 1px solid #e4e4e4;
+}
+
+.sidebar-cards {
+  width: 100%;
+  height: 100%;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
 .mockup-ready-title {
   color: #414288;
 }
@@ -451,10 +488,6 @@ export default {
   width: 100%;
 }
 
-.sidebar-cards {
-  width: 100%;
-  height: 100%;
-}
 
 .projection-panel {
   height: 100%;

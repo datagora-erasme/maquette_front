@@ -35,6 +35,42 @@ export default {
     //     view.controls.lookAtCoordinate({ coord: coordinates, range: 20000, heading: 0 })
     // }
 
+    // Set zoom at 15 to map
+    // view.controls.setZoom(15, true)
+
+
+  // ! Rotate 3D object
+
+  // sceneCube.rotation.y = this.currentSliderX
+  // sceneCube.rotateX(this.currentSliderX / 100)
+  // sceneCube.rotateX(MathUtils.degToRad(this.currentSliderX)) // × π/180
+  
+  // sceneCube.rotation.x = MathUtils.degToRad(-60)
+  // sceneCube.rotation.set(new itowns.THREE.Euler(this.currentSliderX, 0,0))
+
+  // var quaternion = new itowns.THREE.Quaternion();
+  // console.log(quaternion)
+  // quaternion = sceneCube.quaternion
+  // console.log(quaternion)
+  // quaternion.x = this.currentSliderX
+  // sceneCube.setRotationFromQuaternion(quaternion)
+
+  // const quaternion = new itowns.THREE.Quaternion();
+  // quaternion.setFromAxisAngle( new itowns.THREE.Vector3( 0, 0, 1 ), Math.PI / this.currentSliderX ); // Pi / 2
+  // sceneCube.applyQuaternion(quaternion)
+  // quaternion.set(this.currentSliderX,1,1,1)
+  // sceneCube.setRotationFromQuaternion(quaternion)
+  // sceneCube.applyQuaternion(quaternion)
+
+  // sceneCube.rotateOnWorldAxis(new itowns.THREE.Vector3( 1, 0, 1 ), Math.PI / this.currentSliderX)
+
+  // var cubeAxis = new itowns.THREE.AxesHelper(20);
+  // cubeAxis.updateMatrixWorld()
+  // sceneCube.add(cubeAxis);
+
+  // const a = new itowns.THREE.Euler( this.currentSliderX, sceneCube.rotation.y, sceneCube.rotation.z, 'XYZ' );
+  // sceneCube.setRotationFromEuler(a)
+
   // !
     function intersect(pos) {
       raycaster.setFromCamera(pos, view.camera.camera3D);

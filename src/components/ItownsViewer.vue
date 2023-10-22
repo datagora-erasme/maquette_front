@@ -7,7 +7,7 @@
     <v-dialog v-model="isUserInfoActive" class="user-info-dialog">
       <user-info @onCloseUserInfo="closeUserInfo" />
     </v-dialog>
-    <v-row>
+    <v-row class="screen-row">
       <v-col class="navbar-container pa-0" :style="{ 'max-width': navbarWidth + 'px' }">
         <v-card>
           <v-layout>
@@ -18,7 +18,7 @@
             >
               <v-list-item
                 :prepend-avatar="require('../assets/logo_metropole_favicon.jpg')"
-                title="John Leider"
+                title="Logo Métropole de Lyon"
                 nav
               />
 
@@ -58,13 +58,12 @@
         </v-card>
       </v-col>
       <sidebar-component
+        v-if="currentTabValue"
         ref="sidebarComponent"
         :current-tab-value="currentTabValue"
-        :selected-area="selectedArea"
-        :width="sidebarWidth"
         :ongoing-travel="ongoingTravel"
-        @onCloseNavbar="closeNavbarItem"
         @onResetMockupSelection="resetMockupSelection"
+        @onCloseNavbar="closeNavbarItem"
         @onStartSelection="startSelection()"
         @onRemoveSelectedArea="removeSelectedArea()"
         @onTravelToSelectedArea="travelToSelectedArea()"
@@ -73,7 +72,9 @@
         @onShowPreview="showPreview"
         @onHidePreview="hidePreview"
         @onDownloadArea="downloadArea"
+        @onRotateSelectedArea="rotateSelectedArea()"
       />
+      <!-- :selected-area="currentSelectedArea" -->
       <v-col class="viewerDiv-container pa-0" :style="{ width: viewerDivWidth + 'px' }">
         <div id="viewerDiv" class="viewer" />
       </v-col>
@@ -97,13 +98,14 @@ import SidebarComponent from './SidebarComponent.vue'
 import PreviewComponent from './PreviewComponent.vue'
 import UserInfo from './UserInfo.vue'
 import { objToMesh } from '../utils/threeUtils'
-// TODO : Remove draggable variable
+import { MathUtils } from 'three'
 
 // Global vars...
 var view
 var viewerDiv
 var currentExtent
 var lyonPlacement
+var lyonPlacementSmall
 var coordMouse
 var selectedArea = null
 var scaler
@@ -123,8 +125,7 @@ export default {
       drawer: true,
       rail: true,
       viewerDivWidth: window.innerWidth - 50,
-      navbarWidth: 50,
-      sidebarWidth: 400,
+      navbarWidth: 55,
       currentTabValue: null,
       nbPlatesHorizontal: null,
       nbPlatesVertical: null,
@@ -134,6 +135,8 @@ export default {
       selectedBbox: null,
       ongoingTravel: false,
       isUserInfoActive: false,
+      dragging: false,
+      selectedAreaCoordinate: null,
     }
   },
   computed: {
@@ -142,7 +145,9 @@ export default {
       voxelizedMeshObjContent: 'map/getVoxelizedMeshObjContent',
       selectedPlates: 'map/getPlates',
       getSelectedArea: 'map/getSelectedArea',
-      getBaseLayers: 'map/getBaseLayers'
+      getBaseLayers: 'map/getBaseLayers',
+      getCurrAreaRotation: 'map/getCurrAreaRotation',
+      getNewAreaRotation: 'map/getNewAreaRotation',
     }),
     currentZoomLevel() {
       if (view && view.controls) {
@@ -153,6 +158,15 @@ export default {
     },
     baseLayers() {
       return this.getBaseLayers
+    },
+    currentSelectedArea() {
+      return selectedArea ? selectArea : null
+    },
+    currAreaRotation() {
+      return this.getCurrAreaRotation
+    },
+    newAreaRotation() {
+      return this.getNewAreaRotation
     }
   },
   watch: {
@@ -160,8 +174,6 @@ export default {
       // ! Useless ?
       // console.log(this.currentZoomLevel)
     },
-  },
-  created() {
   },
   mounted() {
     // ===== Bind Events =====
@@ -174,7 +186,13 @@ export default {
       coord: new itowns.Coordinates('EPSG:4326', 4.835095, 45.757838),
         range: 30000,
     }
+    lyonPlacementSmall = {
+      coord: new itowns.Coordinates('EPSG:4326', 4.835095, 45.757838),
+        range: 3000,
+    }
     viewerDiv = document.getElementById('viewerDiv')
+    console.log('viewerDiv')
+    console.log(viewerDiv)
 
     // ===== Init View =====
     view = new itowns.GlobeView(viewerDiv, lyonPlacement)
@@ -195,6 +213,9 @@ export default {
     // Finally...
     view.notifyChange()
 
+    this.removeSelectedArea()
+    this.resetAreaStore()
+
     // Global init Event
     view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function m() {
       console.info('-Globe initialized-')
@@ -208,15 +229,18 @@ export default {
         this.showDebugInfos()
         // ===== Show All Layers =====
         this.showAllLayers()
-        // Add Mouse move Event listener
-        viewerDiv.addEventListener('mousemove', this.handleMouseMove);
-        // Add Wheel Event listener
+
+        // ## Add Wheel Event listener ##
         viewerDiv.addEventListener('wheel', this.handleMouseMove)
-        // Add Click Event listener
-        viewerDiv.addEventListener('click', this.handleClick)
-        viewerDiv.addEventListener('mouseover', this.handleDragEnd)
+
+        // ## Add Mouse Event listener ##
+        viewerDiv.addEventListener('mousedown', this.handleMouseDown)
+        viewerDiv.addEventListener('mousemove', this.handleMouseMove)
+        viewerDiv.addEventListener('mouseup', this.handleMouseUp)
+
+        // ## Add Click Event listener ##
+        // viewerDiv.addEventListener('click', this.handleClick)
     }.bind(this))
-    // view.addEventListener('click', this.handleClick)
 
   },
   methods: {
@@ -227,7 +251,12 @@ export default {
       voxelizeBbox: 'map/voxelizeBbox',
       setSelectedArea: 'map/setSelectedArea',
       setCurrentMockupDownloadLink: 'map/setCurrentMockupDownloadLink',
-      setBaseLayers: 'map/setBaseLayers'
+      setBaseLayers: 'map/setBaseLayers',
+      setCurrAreaRotation: 'map/setCurrAreaRotation',
+      setNewAreaRotation: 'map/setNewAreaRotation',
+      setAreaSelectionActive: 'map/setAreaSelectionActive',
+      setAreaDropped: 'map/setAreaDropped',
+      setAreaSelected: 'map/setAreaSelected',
     }),
     toggleLayerVisibility(layerId) {
       if(view) {
@@ -339,17 +368,15 @@ export default {
     },
     clickOnNavbarItem(value) {
       if (value == this.currentTabValue) {
-        this.currentTabValue = null
-        this.viewerDivWidth = window.innerWidth - this.navbarWidth
-      }
-      else {
+        this.closeNavbarItem()
+      } else {
         this.currentTabValue = value
-        this.viewerDivWidth = window.innerWidth - this.sidebarWidth - this.navbarWidth
       }
     },
     closeNavbarItem() {
       this.currentTabValue = null
-      this.viewerDivWidth = window.innerWidth - this.navbarWidth
+      this.removeSelectedArea()
+      this.resetAreaStore()
     },
     onPlatesSelected(plates) {
       this.nbPlatesHorizontal = plates.horizontal;
@@ -379,40 +406,51 @@ export default {
       // DEBUG
       // console.log(event)
 
+      // Enable drag boolean
+      this.dragging = true
+
       // Define mouse coord
       coordMouse = new itowns.THREE.Vector2();
       coordMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
       coordMouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-      const target = new itowns.Coordinates('EPSG:2154', 0, 0, 0);
-      const result = view.pickCoordinates(event, target);
-      // ! Print Zoom level in debug div
-      this.debugInfos = 'Zoom level : ' + JSON.stringify(view.controls.getZoom())
-      // ! Print mouse coords in debug div
-      this.debugInfos += '<br> Mouse (window) coord : <br>' + JSON.stringify(coordMouse)
-      this.debugInfos += '<br> Map coord (2154) : ' + JSON.stringify({ x: result.x, y: result.y, z: result.z })
-      // ! Reproj with Coordinates
-      let convertCoord = new itowns.Coordinates('EPSG:2154', result).as('EPSG:4326')
-      this.debugInfos += '<br> Test convert 2154 to 4326 : ' + JSON.stringify({ x: convertCoord.x, y: convertCoord.y, z: convertCoord.z })
-      // ! Reproj with itowns.proj4 (z ignored)
-      let convertProjCoord = itowns.proj4('EPSG:2154','EPSG:4326',{ x:result.x, y:result.y })
-      this.debugInfos += '<br> Test proj convert 2154 to 4326 : ' + JSON.stringify(convertProjCoord)
-    },
-    handleClick(event) {
-      console.log('click event')
-      console.log(event)
-      // Ensures that the selectedArea is only added when alt is pressed.
-      if(this.$refs.sidebarComponent && this.$refs.sidebarComponent.isAreaSelectionActive) {
-        this.selectArea(event);
-        return;
+      // TODO: Detect handle only on viewer Itowns
+      if (coordMouse.x && coordMouse.y) {
+        const target = new itowns.Coordinates('EPSG:2154', 0, 0, 0);
+        const result = view.pickCoordinates(event, target);
+        // ! Print Zoom level in debug div
+        this.debugInfos = 'Zoom level : ' + JSON.stringify(view.controls.getZoom())
+        // ! Print mouse coords in debug div
+        this.debugInfos += '<br> Mouse (window) coord : <br>' + JSON.stringify(coordMouse)
+        this.debugInfos += '<br> Map coord (2154) : ' + JSON.stringify({ x: result.x, y: result.y, z: result.z })
+        // ! Reproj with Coordinates
+        let convertCoord = new itowns.Coordinates('EPSG:2154', result).as('EPSG:4326')
+        this.debugInfos += '<br> Test convert 2154 to 4326 : ' + JSON.stringify({ x: convertCoord.x, y: convertCoord.y, z: convertCoord.z })
+        // ! Reproj with itowns.proj4 (z ignored)
+        let convertProjCoord = itowns.proj4('EPSG:2154','EPSG:4326',{ x:result.x, y:result.y })
+        this.debugInfos += '<br> Test proj convert 2154 to 4326 : ' + JSON.stringify(convertProjCoord)
       }
 
-      // Trying to detect the selectedArea
-      this.raycast(event)
     },
-    handleDragEnd(event) {
-      console.log('drag end event')
-      console.log(event)
+    handleMouseDown() {
+      // Reset drag boolean
+      this.dragging = false
+    },
+    handleMouseUp(event) {
+      // Check drag boolean
+      // console.log('mouse up')
+      // console.log(this.dragging ? 'drag': 'click')
+      if (this.dragging === false) {
+        // Add selectedArea
+        if(this.$refs.sidebarComponent && this.$refs.sidebarComponent.isAreaSelectionActive) {
+          this.selectArea(event);
+          return;
+        }
+
+        // ! USELESS ?
+        // Trying to detect the selectedArea
+        // this.raycast(event)
+      }
     },
     intersectArea(areaSelected, min, max) {
       const area = areaSelected;
@@ -450,30 +488,6 @@ export default {
     intersect(pos) {
       raycaster.setFromCamera(pos, view.camera.camera3D);
       return raycaster.intersectObjects(view.scene.children, true);
-    },
-    travelToSelectedArea() {
-      if (!selectedArea)
-        return;
-      this.ongoingTravel = true;
-      const targetPosition = selectedArea.position.clone()
-      const duration = 2; // Animation duration in seconds
-      const easing = Power2.easeInOut; // Easing function
-
-      const offset = 1000 // variable used to set the camera position above the selectedArea
-      gsap.to(view.camera.camera3D.position, {
-        x: targetPosition.x + offset,
-        y: targetPosition.y + offset/11.8,
-        z: targetPosition.z + offset * 1.01,
-        duration: duration,
-        ease: easing,
-        onUpdate: () => {
-          view.camera.camera3D.lookAt(targetPosition);
-          view.notifyChange(true);
-        },
-        onComplete: () => {
-          this.ongoingTravel = false;
-        }
-      });
     },
     getViewCurrentExtent() {
       if (view.tileLayer && view.tileLayer.info.displayed.extent) {
@@ -813,16 +827,39 @@ export default {
       })
     },
     startSelection() {
-      // Set zoom at 15 to map
-      view.controls.setZoom(15, true)
+      // Set placement on Lyon + zoom
+      view.controls.lookAtCoordinate(lyonPlacementSmall)
+    },
+    resetAreaStore() {
+      this.setCurrAreaRotation(0)
+      this.setNewAreaRotation(0)
+      this.setAreaSelectionActive(false)
+      this.setAreaDropped(false)
+      this.setAreaSelected(false)
     },
     removeSelectedArea() {
       if (selectedArea) {
         view.scene.remove(selectedArea);
-        selectedArea.updateMatrixWorld(); // Used to force the re-rendering ?
         selectedArea = undefined; 
-        this.setSelectedArea(null);
         view.notifyChange(true);
+      }
+    },
+    rotateSelectedArea() {
+      // Get cube in scene
+      const sceneCube = view.scene.getObjectByName( 'selectedAreaCube' )
+      
+      if (sceneCube) {
+        // Compare actual with new rotation get from slider
+        const diffRotationDeg = this.newAreaRotation - this.currAreaRotation
+        const diffRotationRad = MathUtils.degToRad(diffRotationDeg)
+        // Apply Rotation
+        sceneCube.rotateX(diffRotationRad)
+        // Re-set new actual rotation (in Deg)
+        this.setCurrAreaRotation(this.newAreaRotation)
+
+        // Re-render cube
+        sceneCube.updateMatrixWorld()
+        view.notifyChange()
       }
     },
     selectArea(event){
@@ -832,35 +869,61 @@ export default {
       // Get target coordinate
       const target = new itowns.Coordinates('EPSG:4978', 0, 0, 0);
       const result = view.pickCoordinates(event, target);
-      console.log('pick selectedArea')
-      console.log(result)
+      // console.log('pick selectedArea')
+      // console.log(result)
+
+      // Keep coordinate
+      this.selectedAreaCoordinate = result
 
       // GoTo coordinate
-      // view.controls.lookAtCoordinate(result, true)
-      this.lookAtCoordinate(result, 2000)
+      this.lookAtCoordinate(result, 1500)
 
-      const geometry = new itowns.THREE.BoxGeometry(50, this.nbPlatesHorizontal * 100, this.nbPlatesVertical * 100);
-      const material = new itowns.THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.4, transparent: true });
-
+      // Set Geometry in scene (h, L, l)
+      const geometry = new itowns.THREE.BoxGeometry(100, this.nbPlatesHorizontal * 100, this.nbPlatesVertical * 100);
+      // DEBUG
+      // const texture = new itowns.THREE.TextureLoader().load(require('../assets/atlas.png'))
+      // texture.colorSpace = itowns.THREE.SRGBColorSpace
+      // texture.magFilter = itowns.THREE.NearestFilter
+      // selectedArea = new itowns.THREE.Mesh(geometry, new itowns.THREE.MeshLambertMaterial( { map: texture, side: itowns.THREE.DoubleSide } ))
       
+      const material = new itowns.THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.4, transparent: true });
       selectedArea = new itowns.THREE.Mesh(geometry, material);
       selectedArea.position.set(result.x, result.y, result.z)
-      // selectedArea.rotation.set(0, 0, 0)
-      selectedArea.rotation.set(Math.PI/1, Math.PI / 1, Math.PI / 1)
-      console.log(selectedArea)
       
-      selectedArea.updateMatrixWorld(); // Used to force the re-rendering ?
-      
-      this.selectedArea = selectedArea;
-      this.setSelectedArea(selectedArea);
+      selectedArea.rotation.set(Math.PI / 1, Math.PI / 4, Math.PI / 1)
+      selectedArea.rotateX(MathUtils.degToRad(-180))
+      // console.log(selectedArea)
 
+      // Set area rotation in Store (in Deg)
+      const currRotateXDeg = MathUtils.radToDeg(selectedArea.rotation.x) // Convert Rad to Deg
+      this.setCurrAreaRotation(currRotateXDeg)
+
+      // Set variables
+      this.selectedArea = selectedArea;
+      this.setAreaDropped(true)
+
+      // TODO: Remove ? USELESS ?
       // Filling the selectedArea's metadata (used to get the selectedArea with raycaster)
+      selectedArea.name = 'selectedAreaCube'
       selectedArea.userData = { draggable: true, name: 'CUBE' }
       view.scene.add(selectedArea);
-      // console.log(selectedArea)
-      selectedArea.updateMatrixWorld(); // Used to force the re-rendering ?
+      
+      // ! Used to force the re-rendering ?
+      selectedArea.updateMatrixWorld(); 
       view.notifyChange(true);
-    }
+    },
+    travelToSelectedArea() {
+      if (!selectedArea) {
+        return
+      }
+      // Go To area
+      this.ongoingTravel = true;
+      this.lookAtCoordinate(this.selectedAreaCoordinate, 1500)
+      this.ongoingTravel = false;
+      
+      // Disable area selection
+      this.setAreaSelectionActive(false)
+    },
   },
 }
 </script>
@@ -870,10 +933,16 @@ html, body {
   overflow: hidden !important;
 }
 
+.screen-row {
+  margin: 0 !important;
+  width: 100% !important;
+}
+
 #wrapper-div {
   height: 100vh;
   width: 100%;
   overflow: hidden;
+  padding: 0 !important;
 }
 
 .viewer {
