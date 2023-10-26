@@ -1,6 +1,5 @@
 <template>
   <div v-if="currentTabValue !== null" class="sidebar-container pa-0">
-    <!-- <v-col v-if="currentTabValue !== null" :style="'max-width: ' + width + 'px; border-right: 1px solid #e4e4e4;'" class="pa-0"> -->
     <v-card v-if="currentTabValue == 1" class="sidebar-cards py-5 px-7">
       <v-row class="d-flex justify-center">
         <v-col class="sidebar-title-col pa-0">
@@ -155,11 +154,12 @@
                     Si la sélection vous convient, cliquez sur "Étape suivante" pour lancer la création.
                   </div>
                   <v-btn
-                    :stacked="$vuetify.display.height > 722"
                     :class="$vuetify.display.height > 722 ? 'mt-2' : 'mt-4'"
                     color="#1B5E20"
                     min-width="230"
+                    min-height="80"
                     style="color: white"
+                    append-icon="mdi-arrow-right"
                     @click="goToNextStep"
                   >
                     Étape suivante
@@ -183,44 +183,84 @@
                 Votre maquette est prête !
               </h2>
               <!-- <v-card class="buttons-card pa-0 d-flex flex-column justif-center"> -->
-              <v-row class="h-100 pa-0">
+              <v-row class="d-flex align-center pa-0">
                 <v-col class="py-0 px-1 d-flex flex-column justify-space-evenly align-center">
                   <v-btn
-                    color="#37474F"
-                    class="last-step-buttons"
+                    color="#414288"
+                    class="last-step-buttons mb-3"
+                    prepend-icon="mdi-printer-3d"
+                    height="50"
+                    block
                     @click="showMockup"
                   >
                     Afficher le rendu 3D
                   </v-btn>
                   <v-btn
-                    color="#37474F"
-                    class="last-step-buttons"
-                    prepend-icon="$vuetify"
-                    stacked
+                    color="#414288"
+                    class="last-step-buttons mb-3"
+                    prepend-icon="mdi-file-excel"
+                    height="50"
+                    block
                     @click="generateAndDownloadCSV"
                   >
-                    Générer le guide<br> de montage
+                    <span class="py-2">Générer le guide<br> de montage</span>
                   </v-btn>
                   <v-btn
-                    color="#37474F"
+                    color="#414288"
                     class="last-step-buttons"
-                    stacked
+                    prepend-icon="mdi-cloud-download"
+                    height="50"
+                    block
                     disabled
                     @click="downloadArea"
                   >
-                    Télécharger l'emprise géographique
+                    <span class="py-2">Télécharger l'emprise<br> géographique</span>
                   </v-btn>
                 </v-col>
               </v-row>
               <!-- </v-card> -->
-              <v-btn
-                color="#414288"
-                class="new-mockup-button"
-                prepend-icon="mdi-arrow-left"
-                @click="resetMockupSelection"
-              >
-                Créer une nouvelle maquette
-              </v-btn>
+              <v-form ref="formMockup" on-submit="return false;">
+                <div v-if="!newMockupSend">
+                  <div class="w-100 mb-2">
+                    <v-text-field
+                      v-model="newMockupName"
+                      label="Nom de la nouvelle maquette *" 
+                      width="100%"
+                      variant="outlined" 
+                      :rules="[rules.required, rules.max20]"
+                      maxlength="20"
+                      counter
+                      clearable
+                    />
+                  </div>
+                  <v-btn
+                    color="#1B5E20"
+                    class="new-mockup-button mb-2"
+                    prepend-icon="mdi-content-save"
+                    @click="saveNewMockup()"
+                  >
+                    Sauvegarder cette maquette
+                  </v-btn>
+                </div>
+                <div v-else>
+                  <v-btn
+                    color="#37474F"
+                    class="new-mockup-button mb-2"
+                    prepend-icon="mdi-arrow-left"
+                    @click="redirectMockupList()"
+                  >
+                    Consulter mes maquettes
+                  </v-btn>
+                </div>
+                <v-btn
+                  color="#37474F"
+                  class="new-mockup-button"
+                  prepend-icon="mdi-arrow-left"
+                  @click="resetMockupSelection()"
+                >
+                  Créer une nouvelle maquette
+                </v-btn>
+              </v-form>
             </v-col>
           </v-row>
         </v-col>
@@ -229,9 +269,9 @@
     <v-card v-if="currentTabValue == 2" class="sidebar-cards py-5 px-7">
       <v-row class="d-flex justify-center">
         <v-col class="pa-0">
-          <div class="sidebar-title text-h6 font-weight-medium py-2">
+          <h3 class="sidebar-title py-2">
             Panel de projection de la maquette
-          </div>
+          </h3>
         </v-col>
       </v-row>
       <v-row>
@@ -248,10 +288,150 @@
         </v-col>
       </v-row>
     </v-card>
-    <v-card v-if="currentTabValue == 3">
-      ccc
+    <v-card v-if="currentTabValue == 3" class="mockup-list-cards py-5 px-0">
+      <v-row class="d-flex justify-center">
+        <v-col class="pa-0">
+          <h3 class="sidebar-title py-2">
+            Mes maquettes
+          </h3>
+        </v-col>
+      </v-row>
+      <v-card-text class="pa-0 layer-card-text">
+        <!-- Mockup List -->
+        <div v-if="!allMockupList.length" class="mt-5 align-center">
+          <i>Aucune maquette sauvegardée</i>
+        </div>
+        <v-list v-else class="pa-0 mockup-list">
+          <!-- v-for -->
+          <div
+            v-for="(cMock, index) in allMockupList.sort(function(a, b){return a.id - b.id})"
+            :key="cMock.id"
+          >
+            <v-list-item
+              :title="cMock.name"
+              :subtitle="cMock.subtitle"
+              :prepend-icon="cMock.icon"
+              class="mockup-list-item"
+            >
+              <template #prepend>
+                <v-icon class="fs-25" color="black" icon="mdi-toy-brick-outline" />
+              </template>
+              <template #title="{title}">
+                <div class="d-flex align-left">
+                  <span class="mockup-list-title">N°{{ cMock.id + ' - ' + title }}</span>
+                </div>
+              </template>
+              <template #subtitle>
+                <div class="d-flex align-left">
+                  Plaques : {{ cMock.nb_plaques_h + ' x ' + cMock.nb_plaques_v }}
+                </div>
+              </template>
+              <template #append>
+                <v-btn
+                  color="green-darken-2"
+                  icon="mdi-eye"
+                  variant="outlined"
+                  density="comfortable"
+                  class="ml-1"
+                  @click="openMockup(index)"
+                />
+                <v-btn
+                  color="black"
+                  icon="mdi-square-edit-outline"
+                  variant="outlined"
+                  density="comfortable"
+                  class="ml-1"
+                  @click="editMockup(index)"
+                />
+                <v-btn
+                  color="red-darken-3"
+                  icon="mdi-trash-can"
+                  variant="outlined"
+                  density="comfortable"
+                  class="ml-1"
+                  @click="deleteMockup(index)"
+                />
+              </template>
+            </v-list-item>
+          </div>
+        </v-list>
+      </v-card-text>
     </v-card>
-  <!-- </v-col> -->
+    <!-- Edit Mockup Dialog -->
+    <v-dialog
+      v-model="editMockupDialog"
+      width="400px"
+    >
+      <v-card>
+        <v-card-title>
+          Modification d'une maquette
+        </v-card-title>
+        <v-card-text>
+          <v-form ref="formEditMockup" on-submit="return false;">
+            <v-text-field
+              v-model="editMockupNewName"
+              label="Nouveau nom pour cette maquette *" 
+              width="100%"
+              variant="outlined" 
+              :rules="[rules.required, rules.max20]"
+              maxlength="20"
+              counter
+              clearable
+            />
+          </v-form>
+        </v-card-text>
+        <v-card-actions class="d-flex justify-end">
+          <v-btn
+            color="#37474F"
+            variant="outlined"
+            size="small"
+            @click="closeEditMockup()"
+          >
+            Annuler
+          </v-btn>
+          <v-btn
+            color="green-darken-2"
+            variant="flat"
+            size="small"
+            @click="updateCurrentMockup()"
+          >
+            Sauvegarder
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <!-- Delete Mockup Dialog -->
+    <v-dialog
+      v-model="deleteMockupDialog"
+      width="400px"
+    >
+      <v-card>
+        <v-card-title>
+          Suppression d'une maquette
+        </v-card-title>
+        <v-card-text>
+          Etes-vous sûr de vouloir supprimer la maquette <b>n°{{ editMockupId + ' - ' + editMockupNewName }}</b> ?
+        </v-card-text>
+        <v-card-actions class="d-flex justify-end">
+          <v-btn
+            color="#37474F"
+            variant="outlined"
+            size="small"
+            @click="closeDeleteMockup()"
+          >
+            Annuler
+          </v-btn>
+          <v-btn
+            color="red-darken-3"
+            variant="flat"
+            size="small"
+            @click="deleteCurrentMockup()"
+          >
+            Supprimer
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -285,6 +465,16 @@ export default {
       sliderValue: 0,
       sliderMin: 0,
       sliderMax: 360,
+      newMockupSend: false,
+      newMockupName: null,
+      editMockupDialog: false,
+      editMockupId: null,
+      editMockupNewName: null,
+      deleteMockupDialog: false,
+      rules: {
+        required: value => !!value || 'Champs obligatoire',
+        max20: value => value.length <= 20 || 'Max 20 caractères',
+      },
     }
   },
   computed: {
@@ -295,6 +485,8 @@ export default {
       getAreaSelectionActive: 'map/getAreaSelectionActive',
       getAreaDropped: 'map/getAreaDropped',
       getAreaSelected: 'map/getAreaSelected',
+      getSelectedBbox: 'map/getSelectedBbox',
+      getProjectsList: 'project/getProjectsList',
     }),
     currAreaRotation() {
       return this.getCurrAreaRotation
@@ -308,6 +500,12 @@ export default {
     isAreaSelected() {
       return this.getAreaSelected
     },
+    currentBbox() {
+      return this.getSelectedBbox
+    },
+    allMockupList() {
+      return this.getProjectsList
+    }
   },
   watch: {
     ongoingTravel() {
@@ -339,6 +537,10 @@ export default {
       setAreaSelectionActive: 'map/setAreaSelectionActive',
       setAreaDropped: 'map/setAreaDropped',
       setAreaSelected: 'map/setAreaSelected',
+      fetchProjectsList: 'project/fetchProjectsList',
+      saveProject: 'project/saveProject',
+      updateProject: 'project/updateProject',
+      deleteProject: 'project/deleteProject'
     }),
     computeAreaRotation(newRotation) {
       this.setNewAreaRotation(newRotation) // in Deg
@@ -361,12 +563,130 @@ export default {
         });
       });
     },
+    saveNewMockup() {
+      this.$refs.formMockup.validate().then((response) => {
+        console.log(response)
+        if (response.valid) {
+          // Build mockup Obj (get position of area ?)
+          var newMockupObj = {
+            bbox: this.currentBbox,
+            name: this.newMockupName,
+            nb_plaques_h: this.nbPlatesHorizontal,
+            nb_plaques_v: this.nbPlatesVertical,
+            ratio: 1
+          }
+          console.log(newMockupObj)
+          // Save
+          this.saveProject(newMockupObj)
+          .then((response) => {
+            // Switch form
+            this.newMockupSend = true
+            // Notify
+            this.$notify({
+              title: 'Nouvelle maquette sauvegardée',
+              text: 'Votre nouvelle maquette à bien été ajoutée à votre compte',
+              type: 'success'
+            });
+          }).catch((e) => {
+            // Notify
+            this.$notify({
+              title: 'Erreur lors de la sauvegarde',
+              text: "Une erreur s'est produite lors de l'enregistrement des données",
+              type: 'error'
+            });
+          })
+        }
+      })
+    },
     resetMockupSelection() {
-      console.log('resetMockupSelection')
       this.currentStep = 0;
       this.clearPlatesNumber()
       this.cancelSelection()
+      // Reset Mockup form
+      this.newMockupName = null
+      this.newMockupSend = false
       this.$emit('onResetMockupSelection')
+    },
+    editMockup(index) {
+      this.editMockupDialog = true
+      this.editMockupNewName = this.allMockupList[index].name
+      this.editMockupId = this.allMockupList[index].id
+    },
+    closeEditMockup() {
+      this.editMockupDialog = false
+      this.editMockupNewName = null
+      this.editMockupId = null
+    },
+    updateCurrentMockup() {
+      this.$refs.formEditMockup.validate().then((response) => {
+        if (response.valid) {
+          // Build Obj
+          const updatedMockup = {
+            id: this.editMockupId,
+            name: this.editMockupNewName
+          }
+          // PATCH Mockup
+          this.updateProject(updatedMockup).then((response) => {
+            // Notify
+            this.$notify({
+              title: 'Maquette mise à jour',
+              text: 'Votre maquette à bien été mise à jour',
+              type: 'success'
+            });
+            // Refetch list
+            this.fetchProjectsList()
+            // Clear and close
+            this.closeEditMockup()
+          }).catch((e) => {
+            // Notify
+            this.$notify({
+              title: 'Erreur lors de la sauvegarde',
+              text: "Une erreur s'est produite lors de l'enregistrement des données",
+              type: 'error'
+            });
+            // Clear and close
+            this.closeEditMockup()
+          })
+        }
+      })
+    },
+    deleteMockup(index) {
+      this.deleteMockupDialog = true
+      this.editMockupNewName = this.allMockupList[index].name
+      this.editMockupId = this.allMockupList[index].id
+    },
+    closeDeleteMockup() {
+      this.deleteMockupDialog = false
+      this.editMockupNewName = null
+      this.editMockupId = null
+    },
+    deleteCurrentMockup() {
+      // DELETE Mockup
+      this.deleteProject(this.editMockupId).then((response) => {
+        // Notify
+        this.$notify({
+          title: 'Maquette supprimée',
+          text: 'Votre maquette à bien été supprimée',
+          type: 'success'
+        });
+        // Refetch list
+        this.fetchProjectsList()
+        // Clear and close
+        this.closeDeleteMockup()
+      }).catch((e) => {
+          // Notify
+          this.$notify({
+            title: 'Erreur lors de la sauvegarde',
+            text: "Une erreur s'est produite lors de l'enregistrement des données",
+            type: 'error'
+          });
+          // Clear and close
+          this.closeDeleteMockup()
+        })
+    },
+    redirectMockupList() {
+      this.resetMockupSelection()
+      // TODO: Change step
     },
     downloadArea() {
       this.$emit('onDownloadArea')
@@ -454,7 +774,7 @@ export default {
 }
 </script>
 
-<style>
+<style lang="scss">
 .sidebar-container {
   position: fixed;
   left: 55px;
@@ -498,12 +818,54 @@ export default {
   width: 100%;
 }
 
-
+/* Projection */
 .projection-panel {
   height: 100%;
   display: flex !important;
   flex-direction: column !important;
   justify-content: center !important;
   align-items: center !important;
+}
+
+/* Mockup List */
+.mockup-list-cards {
+  width: 410px;
+  height: 100%;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+.layer-card-text {
+  overflow-y: auto;
+  height: calc(100% - 56px);
+}
+.close-icon {
+  font-size: 25px;
+}
+.mockup-list {
+  margin-top: 2em;
+  border-top: 1px solid #e4e4e4 !important;
+
+  .mockup-list-item {
+    border-bottom: 1px solid #e4e4e4;
+  }
+  .v-list-group__items {
+    --indent-padding: 0px !important;
+  }
+}
+.mockup-list-item {
+  padding-left: 16px !important;
+}
+.mockup-list-title {
+  font-size: 16px;
+}
+
+.w-100 {
+  width: 100%;
+}
+.fs-16 {
+  font-size: 16px !important;
+}
+.fs-25 {
+  font-size: 25px !important;
 }
 </style>

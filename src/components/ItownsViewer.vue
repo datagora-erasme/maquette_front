@@ -25,34 +25,54 @@
               <v-divider />
 
               <v-list density="compact" nav>
-                <v-list-item
-                  prepend-icon="mdi-domain"
-                  title="Sélectionner une emprise"
-                  value="1"
-                  @click="clickOnNavbarItem(1)"
-                /> 
-                <!-- TODO: Disable if maq was not load -->
-                <!-- :disabled="!getSelectedArea" -->
-                <v-list-item
-                  prepend-icon="mdi-map-legend"
-                  title="Projection de la maquette"
-                  value="2"
-                  @click="clickOnNavbarItem(2)"
-                />
-                <v-list-item
-                  disabled
-                  prepend-icon="mdi-account-group-outline"
-                  title="Générer le guide de montage"
-                  value="3"
-                  @click="clickOnNavbarItem(3)"
-                />
-                <v-list-item
-                  prepend-icon="mdi-account"
-                  title="Générer le guide de montage"
-                  value="3"
-                  style="transform: scaleX(-1)"
-                  @click="openUserInfo"
-                />
+                <v-tooltip text="Construire une maquette">
+                  <template #activator="{ props }">
+                    <v-list-item
+                      v-bind="props"
+                      prepend-icon="mdi-toy-brick"
+                      title="Construire une maquette"
+                      value="1"
+                      @click="clickOnNavbarItem(1)"
+                    /> 
+                  </template>
+                </v-tooltip>
+                <v-tooltip text="Consulter mes maquettes">
+                  <template #activator="{ props }">
+                    <v-list-item
+                      v-bind="props"
+                      prepend-icon="mdi-toy-brick-marker"
+                      title="Mes maquettes"
+                      value="3"
+                      @click="clickOnNavbarItem(3)"
+                    />
+                  </template>
+                </v-tooltip>
+                <v-tooltip text="Mode projection">
+                  <template #activator="{ props }">
+                    <!-- TODO: Disable if maq was not load -->
+                    <!-- :disabled="!getSelectedArea" -->
+                    <v-list-item
+                      v-bind="props"
+                      prepend-icon="mdi-video-box"
+                      title="Projection de la maquette"
+                      value="2"
+                      @click="clickOnNavbarItem(2)"
+                    />
+                  </template>
+                </v-tooltip>
+                
+                <v-tooltip text="Mon compte">
+                  <template #activator="{ props }">
+                    <v-list-item
+                      v-bind="props"
+                      prepend-icon="mdi-account"
+                      title="Mon compte"
+                      value="99"
+                      style="transform: scaleX(-1)"
+                      @click="openUserInfo()"
+                    />
+                  </template>
+                </v-tooltip>
               </v-list>
             </v-navigation-drawer>
           </v-layout>
@@ -257,6 +277,8 @@ export default {
       setAreaSelectionActive: 'map/setAreaSelectionActive',
       setAreaDropped: 'map/setAreaDropped',
       setAreaSelected: 'map/setAreaSelected',
+      setSelectedBbox: 'map/setSelectedBbox',
+      fetchProjectsList: 'project/fetchProjectsList',
     }),
     toggleLayerVisibility(layerId) {
       if(view) {
@@ -331,8 +353,10 @@ export default {
         const coordsMin = new itowns.Coordinates('EPSG:4978', bbMin).as('EPSG:2154')
         const coordsMax = new itowns.Coordinates('EPSG:4978', bbMax).as('EPSG:2154')
         this.selectedBbox = coordsMax.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMin.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
+        // ! OLD BBOX not inverted
         // this.selectedBbox = coordsMin.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMax.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
-        
+        this.setSelectedBbox(this.selectedBbox)
+
         // Api call for voxelize
         this.voxelizeBbox(this.selectedBbox).then((objContent) =>  {
           objToMesh(objContent).then((mesh) => {
@@ -384,6 +408,10 @@ export default {
         this.closeNavbarItem()
       } else {
         this.currentTabValue = value
+        // Specific get mockup list
+        if (this.currentTabValue === 3) {
+          this.fetchProjectsList()
+        }
       }
     },
     closeNavbarItem() {

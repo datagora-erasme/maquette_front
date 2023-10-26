@@ -19,6 +19,7 @@ const map = {
     areaSelectionActive: false,
     areaDropped: false,
     areaSelected: false,
+    selectedBbox: null,
   }),
   getters: {
     getCurrentMockupDownloadLink(state) {
@@ -60,6 +61,9 @@ const map = {
     getAreaSelected(state) {
       return state.areaSelected
     },
+    getSelectedBbox(state) {
+      return state.selectedBbox
+    },
   },
   mutations: {
     SET_PLATES_X(state, platesX) {
@@ -100,6 +104,9 @@ const map = {
     },
     SET_AREA_SELECTED(state, newState) {
       state.areaSelected = newState
+    },
+    SET_SELECTED_BBOX(state, newBbox) {
+      state.selectedBbox = newBbox
     },
   },
   actions: {
@@ -197,6 +204,9 @@ const map = {
     },
     setAreaSelected({ commit }, newState) {
       commit('SET_AREA_SELECTED', newState)
+    },
+    setSelectedBbox({ commit }, newBbox) {
+      commit('SET_SELECTED_BBOX', newBbox)
     },
   },
 };
