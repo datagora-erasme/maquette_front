@@ -439,7 +439,7 @@
 <script>
 import StepperComponent from './StepperComponent.vue'
 import { mapActions, mapGetters } from 'vuex'
-
+import { convertBboxToPolygon } from '../utils/threeUtils'
 
 export default {
   name: 'SidebarComponent',
@@ -607,6 +607,12 @@ export default {
       this.newMockupName = null
       this.newMockupSend = false
       this.$emit('onResetMockupSelection')
+    },
+    openMockup(index) {
+      // Get current Mockup
+      var currMockupBbox = this.allMockupList[index]
+      // TODO: Trigger Event and send Bbox to ItownsViewer
+      // this.$evtBus
     },
     editMockup(index) {
       this.editMockupDialog = true

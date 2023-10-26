@@ -321,8 +321,44 @@ const generateCSV = (heightMap, platesX) => {
 //   link.click();
 // };
 
+/**
+ * Convert BBOX coordinates to POLYGON coordinates.
+ * @param {String} bbox : Desired BBOX.
+ * @returns {String} Polygon computed.
+ */
+const convertBboxToPolygon = (bbox) => {
+  // Split bbox coordinates
+  const bboxArray = bbox.split(',')
+  // Get min/max from coord
+  const bboxAminX = bboxArray[0]
+  const bboxAminY = bboxArray[1]
+  const bboxAmaxX = bboxArray[2]
+  const bboxAmaxY = bboxArray[3]
+  // Compute Points
+  const pt1 = bboxAminX + ',' + bboxAminY
+  const pt2 = bboxAminX + ',' + bboxAmaxY
+  const pt3 = bboxAmaxX + ',' + bboxAmaxY
+  const pt4 = bboxAmaxX + ',' + bboxAminY
+  const pt5 = bboxAminX + ',' + bboxAminY
+  // Build Polygon
+  const polygon = new THREE.Shape();
+  polygon.moveTo( pt1 );
+  polygon.lineTo( pt2 );
+  polygon.lineTo( pt3 );
+  polygon.lineTo( pt4 );
+  polygon.lineTo( pt5 );
+  
+  // DEBUG
+  console.log(polygon)
+  
+  // Return
+  return polygon
+};
+
+
 export {
   objToMesh,
   generateHeightMap,
   generateCSV,
+  convertBboxToPolygon,
 };
