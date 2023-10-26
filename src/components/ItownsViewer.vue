@@ -190,10 +190,6 @@ export default {
     }
   },
   watch: {
-    currentZoomLevel() {
-      // ! Useless ?
-      // console.log(this.currentZoomLevel)
-    },
   },
   mounted() {
     // ===== Bind Events =====

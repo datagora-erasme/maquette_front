@@ -5,6 +5,25 @@
         <h4 style="color: #414288">
           Apercu de la maquette Lego
         </h4>
+        <!-- <v-tooltip text="Construire une maquette">
+          <template #activator="{ props }">
+          </template>
+        </v-tooltip> -->
+        <v-btn
+          color="cyan-darken-3"
+          icon="mdi-help"
+          variant="outlined"
+          density="comfortable"
+          class="ml-1"
+        >
+          <v-icon icon="mdi-help" />
+          <v-tooltip
+            activator="parent"
+            location="bottom"
+          >
+            Clic gauche : Rotation<br>Clic droit : Déplacement
+          </v-tooltip>
+        </v-btn>
         <div class="d-flex flex-row align-center">
           <v-btn
             density="comfortable"
@@ -48,14 +67,13 @@ import { mapGetters, mapActions } from 'vuex'
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { toRaw } from 'vue';
+import { VertexNormalsHelper } from 'three/addons/helpers/VertexNormalsHelper.js';
 
 var previewDiv;
 var scene;
 var camera;
 var renderer;
 var controls;
-var spotLight;
-var pointLight;
 var requestId;
 
 export default {
@@ -76,30 +94,20 @@ export default {
     previewDiv = document.getElementById('previewDiv')
 
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera( 75, 800 / 500 );
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setClearColor( 0x37474F, 0);
     renderer.setSize( 800, 500);
-    pointLight = new THREE.PointLight( 0xffffff  );
-    camera.add( pointLight );
-    
+
+    camera = new THREE.PerspectiveCamera( 75, 800 / 500 );
     // Camera position set to see the mockup from the right side
     // Position obtained by logging the camera position while going through the map
-    camera.position.set( 19.681337335336853, -88.17110542513275, 209.6151261927511 );
-    scene.add( new THREE.AmbientLight( 0xffffff ) );
-
-    spotLight = new THREE.SpotLight( 0xffffff, 90 );
-    spotLight.angle = Math.PI / 2;
-    spotLight.penumbra = 0.2;
-    spotLight.position.set( 0, 0, 0 );
-    spotLight.castShadow = true;
-    spotLight.shadow.camera.near = 3;
-    spotLight.shadow.camera.far = 10;
-    spotLight.shadow.mapSize.width = 1024;
-    spotLight.shadow.mapSize.height = 1024;
-
-    scene.add( spotLight );
-    scene.add( camera );
+    // camera.position.set( 19.681337335336853, -88.17110542513275, 209.6151261927511 );
+    camera.position.set( 0, 0, 0 )
+    camera.position.z = 100
+    scene.add( camera )
+    
+    scene.add( new THREE.AmbientLight( 0x404040, 10 ) );
+    scene.background = new THREE.Color( 0xbfe3dd );
 
     // toRaw() removes the "proxy" property of this.voxelizedMesh so it can be accessed and modified by THREE functions.
     let rawVoxelizedMesh = toRaw(this.voxelizedMesh);
@@ -112,20 +120,37 @@ export default {
       // Clipping setup:
       clipShadows: true,
     });
+    const materialWire = new THREE.MeshPhongMaterial({ 
+      color: 0x000000,
+      shininess: 1,
+      side: THREE.DoubleSide,
+      // Clipping setup:
+      clipShadows: true,
+      wireframe: true,
+    });
+
+    // Add Mockup Mesh to Scene
     const mesh = new THREE.Mesh(rawVoxelizedMesh.geometry, material)
-    const offset = new THREE.Vector3();
-    mesh.geometry.computeBoundingBox();
-    mesh.geometry.boundingBox.getCenter(offset);
-    offset.negate();
-    mesh.position.add(offset);
+    const offset = new THREE.Vector3()
+    mesh.geometry.computeBoundingBox()
+    mesh.geometry.boundingBox.getCenter(offset)
+    offset.negate()
+    mesh.position.add(offset)
     scene.add( mesh );
+    
+    // Add Wireframe of Mockup Mesh
+    var geo = new THREE.EdgesGeometry( mesh.geometry ); // or WireframeGeometry
+    var mat = new THREE.LineBasicMaterial( { color: 0x000000 } );
+    var wireframe = new THREE.LineSegments( geo, mat );
+    mesh.add( wireframe );
 
-    if (this.isLoading) this.isLoading = false;
-    render();
-
-
+    // Configure controls
     controls = new OrbitControls(camera, renderer.domElement)
     controls.addEventListener( 'change', render );
+
+    // Trigger Render
+    if (this.isLoading) this.isLoading = false
+    render();
 
     previewDiv.appendChild( renderer.domElement );
 

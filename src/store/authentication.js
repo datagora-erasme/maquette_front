@@ -13,6 +13,20 @@ const authentication = {
     ongoingPasswordRecuperation: false,
     ongoingPasswordModification: false,
   }),
+  getters: {
+    getLoggedUser(state) {
+      return state.loggedUser;
+    },
+    getIsUserLoggedIn(state) {
+      return state.isUserLoggedIn;
+    },
+    getOngoingPasswordRecuperation(state) {
+      return state.ongoingPasswordRecuperation;
+    },
+    getOngoingPasswordModification(state) {
+      return state.ongoingPasswordModification;
+    }
+  },
   mutations: {
     SET_LOGGED_USER(state, loggedUser) {
       state.loggedUser = loggedUser;
@@ -134,6 +148,8 @@ const authentication = {
             firstname: userInfos.firstname,
             lastname: userInfos.lastname,
             email: userInfos.email,
+            id: userInfos.id,
+            id_user: userInfos.id_user,
           });
           return Promise.resolve(response);
         })
@@ -141,19 +157,22 @@ const authentication = {
           return Promise.reject(error);
         });
     },
-  },
-  getters: {
-    getLoggedUser(state) {
-      return state.loggedUser;
-    },
-    getIsUserLoggedIn(state) {
-      return state.isUserLoggedIn;
-    },
-    getOngoingPasswordRecuperation(state) {
-      return state.ongoingPasswordRecuperation;
-    },
-    getOngoingPasswordModification(state) {
-      return state.ongoingPasswordModification;
+    patchUserInfo({ commit }, updatedUserInfos) {
+      return axios
+        .patch('/users/' + updatedUserInfos.id_user, updatedUserInfos)
+        .then((response) => {
+          commit('SET_LOGGED_USER', {
+            firstname: updatedUserInfos.firstname,
+            lastname: updatedUserInfos.lastname,
+            email: updatedUserInfos.email,
+            id: updatedUserInfos.id,
+            id_user: updatedUserInfos.id_user,
+          });
+          return Promise.resolve(response);
+        })
+        .catch((error) => {
+          return Promise.reject(error);
+        });
     }
   },
 };

@@ -78,14 +78,14 @@
                   Redéfinir les plaques
                 </v-btn>
               </v-row>
-              <v-row>
+              <v-row v-if="isPlatesSelected">
                 <v-col :class="$vuetify.display.height > 722 ? 'text-subtitle-1' : 'text-subtitle-2'"> 
-                  Après avoir sélectionné le nombre de plaques souhaité, cliquez sur "Sélectionner la zone" puis cliquez sur la carte pour positionner votre emprise.
+                  Après avoir sélectionné le nombre de plaques, cliquez sur "Sélectionner la zone" puis cliquez sur<br> la carte pour positionner votre emprise.
                 </v-col>
               </v-row>
               <v-row class="d-flex justify-center">
                 <v-btn
-                  v-if="!isAreaSelectionActive && !isAreaSelected"
+                  v-if="!isAreaSelectionActive && !isAreaSelected && isPlatesSelected"
                   density="comfortable"
                   :disabled="!isPlatesSelected"
                   color="#414288"
@@ -96,7 +96,7 @@
                   Sélectionner la zone
                 </v-btn>
                 <v-btn
-                  v-if="!isAreaSelectionActive && isAreaSelected"
+                  v-if="!isAreaSelectionActive && isAreaSelected && isPlatesSelected"
                   density="comfortable"
                   color="#37474F"
                   min-width="230"
@@ -105,7 +105,7 @@
                 >
                   Modifier la sélection
                 </v-btn>
-                <div v-if="isAreaSelectionActive">
+                <div v-if="isAreaSelectionActive && isPlatesSelected">
                   <v-btn
                     density="comfortable"
                     color="#3F0D12"
@@ -118,7 +118,7 @@
                   </v-btn>
                   <br><br>
                 </div>
-                <div v-if="isAreaDropped && !isAreaSelected">
+                <div v-if="isAreaDropped && !isAreaSelected && isPlatesSelected">
                   <!-- <div v-if="!isAreaSelected"> -->
                   Appliquer une rotation à la zone séléctionnée :
                   <v-slider
