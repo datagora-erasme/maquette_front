@@ -148,7 +148,7 @@
                   </v-btn>
                 </div>
               </v-row>
-              <v-row v-if="isAreaSelected && !isAreaSelectionActive" class="d-flex justify-center">
+              <v-row v-if="isAreaSelected && !isAreaSelectionActive && isPlatesSelected" class="d-flex justify-center">
                 <v-col>
                   <div :class="$vuetify.display.height > 722 ? 'text-subtitle-1' : 'text-subtitle-2'">
                     Si la sélection vous convient, cliquez sur "Étape suivante" pour lancer la création.
@@ -224,11 +224,12 @@
                   <div class="w-100 mb-2">
                     <v-text-field
                       v-model="newMockupName"
-                      label="Nom de la nouvelle maquette *" 
+                      label="Nom de votre nouvelle maquette *" 
                       width="100%"
                       variant="outlined" 
                       :rules="[rules.required, rules.max20]"
                       maxlength="20"
+                      density="compact"
                       counter
                       clearable
                     />
@@ -706,6 +707,7 @@ export default {
       this.$emit('onHidePreview')
     },
     checkPlatesNumber() {
+      this.cancelSelection()
       if (!this.nbPlatesHorizontal || !this.nbPlatesVertical) {
           this.$notify({
             title: 'Nombre de plaques non saisi',
