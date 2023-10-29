@@ -610,9 +610,9 @@ export default {
     },
     openMockup(index) {
       // Get current Mockup
-      var currMockupBbox = this.allMockupList[index]
+      var currMockupBbox = this.allMockupList[index].bbox
       // TODO: Trigger Event and send Bbox to ItownsViewer
-      // this.$evtBus
+      this.$evtBus.emit('onOpenMockup', currMockupBbox)
     },
     editMockup(index) {
       this.editMockupDialog = true

@@ -40,7 +40,7 @@
                   <template #activator="{ props }">
                     <v-list-item
                       v-bind="props"
-                      prepend-icon="mdi-toy-brick-marker"
+                      prepend-icon="mdi-list-box"
                       title="Mes maquettes"
                       value="3"
                       @click="clickOnNavbarItem(3)"
@@ -118,7 +118,7 @@ import { gsap, Power2 } from 'gsap'
 import SidebarComponent from './SidebarComponent.vue'
 import PreviewComponent from './PreviewComponent.vue'
 import UserInfo from './UserInfo.vue'
-import { objToMesh } from '../utils/threeUtils'
+import { objToMesh, convertBboxToPolygon } from '../utils/threeUtils'
 import { MathUtils } from 'three'
 
 // Global vars...
@@ -193,8 +193,9 @@ export default {
   },
   mounted() {
     // ===== Bind Events =====
-    this.$evtBus.on('onToggleLayerVisibility', this.toggleLayerVisibility);
-    this.$evtBus.on('onChangeLayerOpacity', this.changeLayerOpacity);
+    this.$evtBus.on('onToggleLayerVisibility', this.toggleLayerVisibility)
+    this.$evtBus.on('onChangeLayerOpacity', this.changeLayerOpacity)
+    this.$evtBus.on('onOpenMockup', this.openMockup)
 
     // ===== Init iTowns vars =====
     // Placement in Lyon - France
@@ -289,6 +290,39 @@ export default {
         currLayer.opacity = newLayerOp.opacity / 100
         view.notifyChange()
       }
+    },
+    openMockup(bbox) {
+      console.log(bbox)
+      // Convert Bbox to Poly
+      const polyShape = convertBboxToPolygon(bbox)
+      // Extrude
+      const extrudeSettings = {
+        steps: 2,
+        depth: 16,
+        bevelEnabled: true,
+        bevelThickness: 1,
+        bevelSize: 1,
+        bevelOffset: 0,
+        bevelSegments: 1
+      }
+
+      // Add to scene
+      const geometry = new itowns.THREE.ExtrudeGeometry( polyShape, extrudeSettings )
+      const material = new itowns.THREE.MeshBasicMaterial( { color: 0x00ff00 } )
+      const polyMesh = new itowns.THREE.Mesh( geometry, material )
+      view.scene.add(polyMesh)
+      // Trigger boolean to next step (sidebar)
+      console.log(polyMesh)
+      // Goto poly position
+      // const polyPlacement = {
+      //   coord: new itowns.Coordinates('EPSG:4326', polyMesh.position.x, polyMesh.position.y, polyMesh.position.z),
+      //     range: 5000,
+      // }
+      // const polyPlacement = {
+      //   coord: new itowns.Coordinates('EPSG:4326', 1,1,1),
+      //     range: 5000,
+      // }
+      // this.lookAtCoordinate(polyPlacement)
     },
     resetMockupSelection() {
       this.removeSelectedArea()
