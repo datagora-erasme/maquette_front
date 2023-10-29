@@ -71,6 +71,12 @@ export default {
   // const a = new itowns.THREE.Euler( this.currentSliderX, sceneCube.rotation.y, sceneCube.rotation.z, 'XYZ' );
   // sceneCube.setRotationFromEuler(a)
 
+  // ! Apply texture to mesh
+  // const texture = new itowns.THREE.TextureLoader().load(require('../assets/atlas.png'))
+  // texture.colorSpace = itowns.THREE.SRGBColorSpace
+  // texture.magFilter = itowns.THREE.NearestFilter
+  // selectedArea = new itowns.THREE.Mesh(geometry, new itowns.THREE.MeshLambertMaterial( { map: texture, side: itowns.THREE.DoubleSide } ))
+
   // !
     function intersect(pos) {
       raycaster.setFromCamera(pos, view.camera.camera3D);

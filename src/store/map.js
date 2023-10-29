@@ -20,6 +20,7 @@ const map = {
     areaDropped: false,
     areaSelected: false,
     selectedBbox: null,
+    currentTabValue: null,
   }),
   getters: {
     getCurrentMockupDownloadLink(state) {
@@ -63,6 +64,9 @@ const map = {
     },
     getSelectedBbox(state) {
       return state.selectedBbox
+    },
+    getCurrentTabValue(state) {
+      return state.currentTabValue
     },
   },
   mutations: {
@@ -108,6 +112,9 @@ const map = {
     SET_SELECTED_BBOX(state, newBbox) {
       state.selectedBbox = newBbox
     },
+    SET_CURRENT_TAB_VALUE(state, newValue) {
+      state.currentTabValue = newValue
+    }
   },
   actions: {
     /**
@@ -207,6 +214,9 @@ const map = {
     },
     setSelectedBbox({ commit }, newBbox) {
       commit('SET_SELECTED_BBOX', newBbox)
+    },
+    setCurrentTabValue({ commit }, newValue) {
+      commit('SET_CURRENT_TAB_VALUE', newValue)
     },
   },
 };

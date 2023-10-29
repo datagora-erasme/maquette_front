@@ -147,7 +147,7 @@ export default {
       rail: true,
       viewerDivWidth: window.innerWidth - 50,
       navbarWidth: 55,
-      currentTabValue: null,
+      // currentTabValue: null,
       nbPlatesHorizontal: null,
       nbPlatesVertical: null,
       isPreviewActive: false,
@@ -168,6 +168,7 @@ export default {
       getBaseLayers: 'map/getBaseLayers',
       getCurrAreaRotation: 'map/getCurrAreaRotation',
       getNewAreaRotation: 'map/getNewAreaRotation',
+      getCurrentTabValue: 'map/getCurrentTabValue',
     }),
     currentZoomLevel() {
       if (view && view.controls) {
@@ -187,6 +188,9 @@ export default {
     },
     newAreaRotation() {
       return this.getNewAreaRotation
+    },
+    currentTabValue() {
+      return this.getCurrentTabValue
     }
   },
   watch: {
@@ -196,6 +200,7 @@ export default {
     this.$evtBus.on('onToggleLayerVisibility', this.toggleLayerVisibility)
     this.$evtBus.on('onChangeLayerOpacity', this.changeLayerOpacity)
     this.$evtBus.on('onOpenMockup', this.openMockup)
+    this.$evtBus.on('onGotoMockupList', this.goToMockupList)
 
     // ===== Init iTowns vars =====
     // Placement in Lyon - France
@@ -276,6 +281,7 @@ export default {
       setAreaSelected: 'map/setAreaSelected',
       setSelectedBbox: 'map/setSelectedBbox',
       fetchProjectsList: 'project/fetchProjectsList',
+      setCurrentTabValue: 'map/setCurrentTabValue',
     }),
     toggleLayerVisibility(layerId) {
       if(view) {
@@ -295,6 +301,8 @@ export default {
       console.log(bbox)
       // Convert Bbox to Poly
       const polyShape = convertBboxToPolygon(bbox)
+      console.log(polyShape)
+
       // Extrude
       const extrudeSettings = {
         steps: 2,
@@ -305,21 +313,44 @@ export default {
         bevelOffset: 0,
         bevelSegments: 1
       }
-
-      // Add to scene
       const geometry = new itowns.THREE.ExtrudeGeometry( polyShape, extrudeSettings )
+
+      // Configure Mesh
       const material = new itowns.THREE.MeshBasicMaterial( { color: 0x00ff00 } )
       const polyMesh = new itowns.THREE.Mesh( geometry, material )
+      
+      // DEBUG
+      polyMesh.scale.x = 10000000
+      polyMesh.scale.y = 10000000
+      polyMesh.scale.z = 10000000
+
+      // DEBUG {x: 4442012.25200313, y: 375787.078901488, z: 4546509.211445926}
+      polyMesh.position.x = 4442012.25200313
+      polyMesh.position.y = 375787.078901488
+      polyMesh.position.z = 4546509.211445926
+
+      // TODO: Get Poly real position
+      // const offset = new itowns.THREE.Vector3()
+      // polyMesh.geometry.computeBoundingBox()
+      // polyMesh.geometry.boundingBox.getCenter(offset)
+      // console.log('polyMesh.geometry.boundingBox')
+      // console.log(polyMesh.geometry.boundingBox)
+      // console.log(offset)
+
+      // Add to scene
       view.scene.add(polyMesh)
-      // Trigger boolean to next step (sidebar)
       console.log(polyMesh)
-      // Goto poly position
+
+      // TODO: Trigger boolean to next step (sidebar)
+      
+      // TODO: Goto poly position
       // const polyPlacement = {
       //   coord: new itowns.Coordinates('EPSG:4326', polyMesh.position.x, polyMesh.position.y, polyMesh.position.z),
       //     range: 5000,
       // }
+      // let convertCoord = new itowns.Coordinates('EPSG:2154', { x: 4442012.25200313, y: 375787.078901488, z: 4546509.211445926 }).as('EPSG:4978') //- 2154 ?
       // const polyPlacement = {
-      //   coord: new itowns.Coordinates('EPSG:4326', 1,1,1),
+      //   coord: convertCoord,
       //     range: 5000,
       // }
       // this.lookAtCoordinate(polyPlacement)
@@ -365,15 +396,7 @@ export default {
     },
     async voxelize() {
       if (selectedArea) {
-
-        // DEBUG
-        const box = new itowns.THREE.Box3();
-        box.setFromObject(selectedArea);
-
-        const helper = new itowns.THREE.Box3Helper( box, 0xffff00 );
-        view.scene.add( helper );
-
-
+        // Clone geometry to voxelize
         const clonedGeometry = selectedArea.geometry.clone();
         clonedGeometry.computeBoundingBox()
 
@@ -382,18 +405,46 @@ export default {
 
         const coordsMin = new itowns.Coordinates('EPSG:4978', bbMin).as('EPSG:2154')
         const coordsMax = new itowns.Coordinates('EPSG:4978', bbMax).as('EPSG:2154')
+        
         this.selectedBbox = coordsMax.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMin.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
         // ! OLD BBOX not inverted
         // this.selectedBbox = coordsMin.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMax.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
+        
         this.setSelectedBbox(this.selectedBbox)
+        console.log(this.selectedBbox)
 
         // Api call for voxelize
-        this.voxelizeBbox(this.selectedBbox).then((objContent) =>  {
-          objToMesh(objContent).then((mesh) => {
+        this.voxelizeBbox(this.selectedBbox)
+        .then((objContent) =>  {
+          objToMesh(objContent)
+          .then((mesh) => {
             this.setVoxelizedMesh(mesh);
             this.$refs.sidebarComponent.endVoxelisation();
-          });
-        });
+          })
+        })
+        .catch((e) => {
+          // Is area empty of building ?
+          if (e.response.data.isEmpty) {
+            this.$notify({
+              title: 'Erreur lors de la création',
+              text: "Une erreur s'est produite lors de la création. La zone séléctionnée ne contient peut-être pas de bâtiment ? Merci de recommencer ce processus.",
+              type: 'error',
+              duration: 10000
+            })
+            // Clean selected Area + redirect step 0 sidebar
+            this.$evtBus.emit('onResetStepperPos')
+          } else {
+            this.$notify({
+              title: 'Erreur lors de la création',
+              text: "Une erreur s'est produite lors de la création. Merci de recommencer ce processus.",
+              type: 'error',
+              duration: 10000
+            })
+            // Clean selected Area + redirect step 0 sidebar
+            this.$evtBus.emit('onResetStepperPos')
+          }
+        })
+
         // ! Useless ?
         // await this.$axios.post('/dataprocess/bbox', {
         //   bbox: this.selectedBbox,
@@ -435,9 +486,17 @@ export default {
     },
     clickOnNavbarItem(value) {
       if (value == this.currentTabValue) {
-        this.closeNavbarItem()
+        // this.closeNavbarItem()
+        this.setCurrentTabValue(null)
       } else {
-        this.currentTabValue = value
+        this.setCurrentTabValue(value)
+        // this.currentTabValue = value
+
+        // Reset Area for Step1
+        this.removeSelectedArea()
+        this.resetAreaStore()
+        this.$evtBus.emit('onResetArea')
+
         // Specific get mockup list
         if (this.currentTabValue === 3) {
           this.fetchProjectsList()
@@ -950,27 +1009,21 @@ export default {
       // GoTo coordinate
       this.lookAtCoordinate(result, 1500)
 
-      // Set Geometry in scene (h, L, l)
+      // Build Geometry (h, L, l) + material
       const geometry = new itowns.THREE.BoxGeometry(100, this.nbPlatesHorizontal * 100, this.nbPlatesVertical * 100);
-      // DEBUG
-      // const texture = new itowns.THREE.TextureLoader().load(require('../assets/atlas.png'))
-      // texture.colorSpace = itowns.THREE.SRGBColorSpace
-      // texture.magFilter = itowns.THREE.NearestFilter
-      // selectedArea = new itowns.THREE.Mesh(geometry, new itowns.THREE.MeshLambertMaterial( { map: texture, side: itowns.THREE.DoubleSide } ))
-      
       const material = new itowns.THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.4, transparent: true });
       selectedArea = new itowns.THREE.Mesh(geometry, material);
-      selectedArea.position.set(result.x, result.y, result.z)
       
+      // Set Mesh properties : pos + rotate
+      selectedArea.position.set(result.x, result.y, result.z)
       selectedArea.rotation.set(Math.PI / 1, Math.PI / 4, Math.PI / 1)
       selectedArea.rotateX(MathUtils.degToRad(-180))
-      // console.log(selectedArea)
 
       // Set area rotation in Store (in Deg)
       const currRotateXDeg = MathUtils.radToDeg(selectedArea.rotation.x) // Convert Rad to Deg
       this.setCurrAreaRotation(currRotateXDeg)
 
-      // Set variables
+      // Set variables to Sidebar
       this.selectedArea = selectedArea;
       this.setAreaDropped(true)
 
@@ -978,6 +1031,8 @@ export default {
       // Filling the selectedArea's metadata (used to get the selectedArea with raycaster)
       selectedArea.name = 'selectedAreaCube'
       selectedArea.userData = { draggable: true, name: 'CUBE' }
+
+      // Add mesh to scene
       view.scene.add(selectedArea);
       
       // ! Used to force the re-rendering ?
@@ -985,16 +1040,15 @@ export default {
       view.notifyChange(true);
     },
     travelToSelectedArea() {
-      if (!selectedArea) {
-        return
+      if (selectedArea) {
+        // Go To area
+        this.ongoingTravel = true;
+        this.lookAtCoordinate(this.selectedAreaCoordinate, 1500)
+        this.ongoingTravel = false;
+        
+        // Disable area selection
+        this.setAreaSelectionActive(false)
       }
-      // Go To area
-      this.ongoingTravel = true;
-      this.lookAtCoordinate(this.selectedAreaCoordinate, 1500)
-      this.ongoingTravel = false;
-      
-      // Disable area selection
-      this.setAreaSelectionActive(false)
     },
   },
 }

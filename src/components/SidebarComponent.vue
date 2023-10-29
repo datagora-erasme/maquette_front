@@ -39,6 +39,7 @@
                     type="number"
                     prepend-icon="mdi-arrow-expand-horizontal"
                     :rules="[onlyNumbers, rangeValidationHorizontal]"
+                    @keyup.enter="checkPlatesNumber()"
                   />
                 </v-col>
                 <v-col class="pa-0 pb-2" cols="5">
@@ -52,6 +53,7 @@
                     type="number"
                     prepend-icon="mdi-arrow-expand-vertical"
                     :rules="[onlyNumbers, rangeValidationVertical]"
+                    @keyup.enter="checkPlatesNumber()"
                   />
                 </v-col>
               </v-row>
@@ -177,7 +179,7 @@
               </div>
             </div>
           </v-row>
-          <v-row v-if="currentStep === 2" class="step3 w-100 d-flex justify-center" style="height: calc(100vh - 124.38px)">
+          <v-row v-if="currentStep === 2" class="step3 d-flex justify-center" style="height: calc(100vh - 124.38px); width: 390px">
             <v-col class="title-buttons-container w-100 d-flex flex-column align-center justify-space-around">
               <h2 class="mockup-ready-title">
                 Votre maquette est prête !
@@ -527,6 +529,8 @@ export default {
   mounted() {
     // ===== Bind Events =====
     this.$evtBus.on('onResetSliderRotation', this.resetSliderRotation);
+    this.$evtBus.on('onResetArea', this.resetMockupSelection);
+    this.$evtBus.on('onResetStepperPos', this.resetMockupSelection);
   },
   methods: {
     ...mapActions({
@@ -541,7 +545,8 @@ export default {
       fetchProjectsList: 'project/fetchProjectsList',
       saveProject: 'project/saveProject',
       updateProject: 'project/updateProject',
-      deleteProject: 'project/deleteProject'
+      deleteProject: 'project/deleteProject',
+      setCurrentTabValue: 'map/setCurrentTabValue'
     }),
     computeAreaRotation(newRotation) {
       this.setNewAreaRotation(newRotation) // in Deg
@@ -566,7 +571,6 @@ export default {
     },
     saveNewMockup() {
       this.$refs.formMockup.validate().then((response) => {
-        console.log(response)
         if (response.valid) {
           // Build mockup Obj (get position of area ?)
           var newMockupObj = {
@@ -576,7 +580,6 @@ export default {
             nb_plaques_v: this.nbPlatesVertical,
             ratio: 1
           }
-          console.log(newMockupObj)
           // Save
           this.saveProject(newMockupObj)
           .then((response) => {
@@ -587,14 +590,14 @@ export default {
               title: 'Nouvelle maquette sauvegardée',
               text: 'Votre nouvelle maquette à bien été ajoutée à votre compte',
               type: 'success'
-            });
+            })
           }).catch((e) => {
             // Notify
             this.$notify({
               title: 'Erreur lors de la sauvegarde',
               text: "Une erreur s'est produite lors de l'enregistrement des données",
               type: 'error'
-            });
+            })
           })
         }
       })
@@ -693,7 +696,9 @@ export default {
     },
     redirectMockupList() {
       this.resetMockupSelection()
-      // TODO: Change step
+      // Change step & refetch
+      this.setCurrentTabValue(3)
+      this.fetchProjectsList()
     },
     downloadArea() {
       this.$emit('onDownloadArea')
@@ -787,6 +792,7 @@ export default {
   position: fixed;
   left: 55px;
   top: 0;
+  width: 400px;
   max-width: 400px;
   height: 100%;
   z-index: 10;

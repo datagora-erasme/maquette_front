@@ -120,14 +120,6 @@ export default {
       // Clipping setup:
       clipShadows: true,
     });
-    const materialWire = new THREE.MeshPhongMaterial({ 
-      color: 0x000000,
-      shininess: 1,
-      side: THREE.DoubleSide,
-      // Clipping setup:
-      clipShadows: true,
-      wireframe: true,
-    });
 
     // Add Mockup Mesh to Scene
     const mesh = new THREE.Mesh(rawVoxelizedMesh.geometry, material)
