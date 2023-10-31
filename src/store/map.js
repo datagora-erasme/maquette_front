@@ -20,6 +20,7 @@ const map = {
     areaDropped: false,
     areaSelected: false,
     selectedBbox: null,
+    selectedPos: null,
     currentTabValue: null,
   }),
   getters: {
@@ -64,6 +65,9 @@ const map = {
     },
     getSelectedBbox(state) {
       return state.selectedBbox
+    },
+    getSelectedPos(state) {
+      return state.selectedPos
     },
     getCurrentTabValue(state) {
       return state.currentTabValue
@@ -111,6 +115,9 @@ const map = {
     },
     SET_SELECTED_BBOX(state, newBbox) {
       state.selectedBbox = newBbox
+    },
+    SET_SELECTED_POS(state, newPos) {
+      state.selectedPos = newPos
     },
     SET_CURRENT_TAB_VALUE(state, newValue) {
       state.currentTabValue = newValue
@@ -214,6 +221,9 @@ const map = {
     },
     setSelectedBbox({ commit }, newBbox) {
       commit('SET_SELECTED_BBOX', newBbox)
+    },
+    setSelectedPos({ commit }, newPos) {
+      commit('SET_SELECTED_POS', newPos)
     },
     setCurrentTabValue({ commit }, newValue) {
       commit('SET_CURRENT_TAB_VALUE', newValue)

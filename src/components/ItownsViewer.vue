@@ -157,7 +157,7 @@ export default {
       ongoingTravel: false,
       isUserInfoActive: false,
       dragging: false,
-      selectedAreaCoordinate: null,
+      // selectedAreaCoordinate: null,
     }
   },
   computed: {
@@ -169,6 +169,7 @@ export default {
       getCurrAreaRotation: 'map/getCurrAreaRotation',
       getNewAreaRotation: 'map/getNewAreaRotation',
       getCurrentTabValue: 'map/getCurrentTabValue',
+      getSelectedPos: 'map/getSelectedPos',
     }),
     currentZoomLevel() {
       if (view && view.controls) {
@@ -191,9 +192,10 @@ export default {
     },
     currentTabValue() {
       return this.getCurrentTabValue
+    },
+    selectedAreaCoordinate() {
+      return this.getSelectedPos
     }
-  },
-  watch: {
   },
   mounted() {
     // ===== Bind Events =====
@@ -280,6 +282,7 @@ export default {
       setAreaDropped: 'map/setAreaDropped',
       setAreaSelected: 'map/setAreaSelected',
       setSelectedBbox: 'map/setSelectedBbox',
+      setSelectedPos: 'map/setSelectedPos',
       fetchProjectsList: 'project/fetchProjectsList',
       setCurrentTabValue: 'map/setCurrentTabValue',
     }),
@@ -296,67 +299,6 @@ export default {
         currLayer.opacity = newLayerOp.opacity / 100
         view.notifyChange()
       }
-    },
-    openMockup(bbox) {
-      console.log(bbox)
-      // Convert Bbox to Poly
-      const polyShape = convertBboxToPolygon(bbox)
-      console.log(polyShape)
-
-      // Extrude
-      const extrudeSettings = {
-        steps: 2,
-        depth: 16,
-        bevelEnabled: true,
-        bevelThickness: 1,
-        bevelSize: 1,
-        bevelOffset: 0,
-        bevelSegments: 1
-      }
-      const geometry = new itowns.THREE.ExtrudeGeometry( polyShape, extrudeSettings )
-
-      // Configure Mesh
-      const material = new itowns.THREE.MeshBasicMaterial( { color: 0x00ff00 } )
-      const polyMesh = new itowns.THREE.Mesh( geometry, material )
-      
-      // DEBUG
-      polyMesh.scale.x = 10000000
-      polyMesh.scale.y = 10000000
-      polyMesh.scale.z = 10000000
-
-      // DEBUG {x: 4442012.25200313, y: 375787.078901488, z: 4546509.211445926}
-      polyMesh.position.x = 4442012.25200313
-      polyMesh.position.y = 375787.078901488
-      polyMesh.position.z = 4546509.211445926
-
-      // TODO: Get Poly real position
-      // const offset = new itowns.THREE.Vector3()
-      // polyMesh.geometry.computeBoundingBox()
-      // polyMesh.geometry.boundingBox.getCenter(offset)
-      // console.log('polyMesh.geometry.boundingBox')
-      // console.log(polyMesh.geometry.boundingBox)
-      // console.log(offset)
-
-      // Add to scene
-      view.scene.add(polyMesh)
-      console.log(polyMesh)
-
-      // TODO: Trigger boolean to next step (sidebar)
-      
-      // TODO: Goto poly position
-      // const polyPlacement = {
-      //   coord: new itowns.Coordinates('EPSG:4326', polyMesh.position.x, polyMesh.position.y, polyMesh.position.z),
-      //     range: 5000,
-      // }
-      // let convertCoord = new itowns.Coordinates('EPSG:2154', { x: 4442012.25200313, y: 375787.078901488, z: 4546509.211445926 }).as('EPSG:4978') //- 2154 ?
-      // const polyPlacement = {
-      //   coord: convertCoord,
-      //     range: 5000,
-      // }
-      // this.lookAtCoordinate(polyPlacement)
-    },
-    resetMockupSelection() {
-      this.removeSelectedArea()
     },
     openUserInfo() {
       this.isUserInfoActive = true;
@@ -1000,13 +942,14 @@ export default {
       // Get target coordinate
       const target = new itowns.Coordinates('EPSG:4978', 0, 0, 0);
       const result = view.pickCoordinates(event, target);
-      // console.log('pick selectedArea')
-      // console.log(result)
+      console.log('pick selectedArea')
+      console.log(result)
 
-      // Keep coordinate
-      this.selectedAreaCoordinate = result
+      // Keep coordinates
+      this.setSelectedPos(result)
+      //OLD this.selectedAreaCoordinate = result
 
-      // GoTo coordinate
+      // GoTo coordinates
       this.lookAtCoordinate(result, 1500)
 
       // Build Geometry (h, L, l) + material
@@ -1049,6 +992,94 @@ export default {
         // Disable area selection
         this.setAreaSelectionActive(false)
       }
+    },
+    openMockup(areaBboxPos) {
+      const areaJsonBboxPos = JSON.parse(areaBboxPos)
+      console.log(areaJsonBboxPos)
+
+      // Convert Bbox to Poly
+      const polyShape = convertBboxToPolygon(areaJsonBboxPos.bbox)
+      console.log(polyShape)
+
+      // ! Extrude
+      // const extrudeSettings = {
+      //   steps: 2,
+      //   depth: 16,
+      //   bevelEnabled: true,
+      //   bevelThickness: 1,
+      //   bevelSize: 1,
+      //   bevelOffset: 0,
+      //   bevelSegments: 1
+      // }
+      // const geometry = new itowns.THREE.ExtrudeGeometry( polyShape, extrudeSettings )
+
+      // ! Configure Mesh
+      // const material = new itowns.THREE.MeshBasicMaterial( { color: 0x00ff00 } )
+      // const polyMesh = new itowns.THREE.Mesh( geometry, material )
+      
+      // DEBUG
+      // polyMesh.scale.x = 10000000
+      // polyMesh.scale.y = 10000000
+      // polyMesh.scale.z = 10000000
+
+      // ! Set pos of new mesh
+      // DEBUG {x: 4442012.25200313, y: 375787.078901488, z: 4546509.211445926}
+      // polyMesh.position.x = 4442012.25200313
+      // polyMesh.position.y = 375787.078901488
+      // polyMesh.position.z = 4546509.211445926
+
+      // polyMesh.position.x = areaJsonBboxPos.pos.x
+      // polyMesh.position.y = areaJsonBboxPos.pos.y
+      // polyMesh.position.z = areaJsonBboxPos.pos.z
+      // ! Last try
+      // polyMesh.position.set(areaJsonBboxPos.pos.x, areaJsonBboxPos.pos.y, areaJsonBboxPos.pos.z)
+
+      // DEBUG mesh en dur
+      const geom = new itowns.THREE.BoxGeometry(100, 100, 100);
+      const mat = new itowns.THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.4, transparent: true });
+      var mesDur = new itowns.THREE.Mesh(geom, mat);
+      
+      // Set Mesh properties : pos + rotate
+      // mesDur.position.set(4442012.25200313, 375787.078901488, 4546509.211445926)
+      mesDur.position.set(4441865.150187417, 375812.67610067065, 4546651.963041471)
+      // mesDur.position.set(areaJsonBboxPos.x, areaJsonBboxPos.y, areaJsonBboxPos.z)
+      mesDur.rotation.set(Math.PI / 1, Math.PI / 4, Math.PI / 1)
+      mesDur.rotateX(MathUtils.degToRad(-180))
+
+      view.scene.add(mesDur)
+
+      // TODO: Get Poly real position
+      // const offset = new itowns.THREE.Vector3()
+      // polyMesh.geometry.computeBoundingBox()
+      // polyMesh.geometry.boundingBox.getCenter(offset)
+      // console.log('polyMesh.geometry.boundingBox')
+      // console.log(polyMesh.geometry.boundingBox)
+      // console.log(offset)
+
+      // Add to scene
+      // view.scene.add(polyMesh)
+      // console.log(polyMesh)
+
+      // ! Trigger render
+      mesDur.updateMatrixWorld()
+      view.notifyChange()
+
+      // TODO: Trigger boolean to next step (sidebar)
+      
+      // TODO: Goto poly position
+      // const polyPlacement = {
+      //   coord: new itowns.Coordinates('EPSG:4326', polyMesh.position.x, polyMesh.position.y, polyMesh.position.z),
+      //     range: 5000,
+      // }
+      // let convertCoord = new itowns.Coordinates('EPSG:2154', { x: 4442012.25200313, y: 375787.078901488, z: 4546509.211445926 }).as('EPSG:4978') //- 2154 ?
+      // const polyPlacement = {
+      //   coord: convertCoord,
+      //     range: 5000,
+      // }
+      // this.lookAtCoordinate(areaJsonBboxPos.pos, 1500)
+    },
+    resetMockupSelection() {
+      this.removeSelectedArea()
     },
   },
 }

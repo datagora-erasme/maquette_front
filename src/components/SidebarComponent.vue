@@ -489,6 +489,7 @@ export default {
       getAreaDropped: 'map/getAreaDropped',
       getAreaSelected: 'map/getAreaSelected',
       getSelectedBbox: 'map/getSelectedBbox',
+      getSelectedPos: 'map/getSelectedPos',
       getProjectsList: 'project/getProjectsList',
     }),
     currAreaRotation() {
@@ -503,8 +504,11 @@ export default {
     isAreaSelected() {
       return this.getAreaSelected
     },
-    currentBbox() {
+    currentAreaBbox() {
       return this.getSelectedBbox
+    },
+    currentAreaPos() {
+      return this.getSelectedPos
     },
     allMockupList() {
       return this.getProjectsList
@@ -572,14 +576,20 @@ export default {
     saveNewMockup() {
       this.$refs.formMockup.validate().then((response) => {
         if (response.valid) {
-          // Build mockup Obj (get position of area ?)
+          // Build bbox & pos object
+          var bboxPosJson = {
+            bbox: this.currentAreaBbox,
+            pos: this.currentAreaPos
+          }
+          // Build mockup Obj
           var newMockupObj = {
-            bbox: this.currentBbox,
+            bbox: JSON.stringify(bboxPosJson),
             name: this.newMockupName,
             nb_plaques_h: this.nbPlatesHorizontal,
             nb_plaques_v: this.nbPlatesVertical,
             ratio: 1
           }
+
           // Save
           this.saveProject(newMockupObj)
           .then((response) => {
@@ -614,7 +624,7 @@ export default {
     openMockup(index) {
       // Get current Mockup
       var currMockupBbox = this.allMockupList[index].bbox
-      // TODO: Trigger Event and send Bbox to ItownsViewer
+      // Trigger Event and send Bbox to ItownsViewer
       this.$evtBus.emit('onOpenMockup', currMockupBbox)
     },
     editMockup(index) {
