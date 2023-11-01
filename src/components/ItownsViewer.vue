@@ -83,16 +83,17 @@
         ref="sidebarComponent"
         :current-tab-value="currentTabValue"
         :ongoing-travel="ongoingTravel"
-        @onResetMockupSelection="resetMockupSelection"
-        @onCloseNavbar="closeNavbarItem"
+        @onCloseNavbar="closeNavbarItem()"
         @onStartSelection="startSelection()"
+        @onResetMockupSelection="resetMockupSelection()"
         @onRemoveSelectedArea="removeSelectedArea()"
+        @onResetOpenedMockup="resetOpenedMockup()"
         @onTravelToSelectedArea="travelToSelectedArea()"
-        @onPlatesSelected="onPlatesSelected"
-        @onStep1="voxelize"
-        @onShowPreview="showPreview"
-        @onHidePreview="hidePreview"
-        @onDownloadArea="downloadArea"
+        @onPlatesSelected="onPlatesSelected()"
+        @onStep1="voxelize()"
+        @onShowPreview="showPreview()"
+        @onHidePreview="hidePreview()"
+        @onDownloadArea="downloadArea()"
         @onRotateSelectedArea="rotateSelectedArea()"
       />
       <!-- :selected-area="currentSelectedArea" -->
@@ -129,6 +130,7 @@ var lyonPlacement
 var lyonPlacementSmall
 var coordMouse
 var selectedArea = null
+var openedMockupArea = null
 var scaler
 const raycaster = new itowns.THREE.Raycaster(); // create once
 const clickMouse = new itowns.THREE.Vector2();  // create once
@@ -147,7 +149,6 @@ export default {
       rail: true,
       viewerDivWidth: window.innerWidth - 50,
       navbarWidth: 55,
-      // currentTabValue: null,
       nbPlatesHorizontal: null,
       nbPlatesVertical: null,
       isPreviewActive: false,
@@ -157,7 +158,6 @@ export default {
       ongoingTravel: false,
       isUserInfoActive: false,
       dragging: false,
-      // selectedAreaCoordinate: null,
     }
   },
   computed: {
@@ -307,28 +307,8 @@ export default {
       this.isUserInfoActive = false;
     },
     async downloadArea() {
-      // ! TODO: Refacto
-      if (this.selectedBbox) {
-        await this.$axios.get('https://geoserver-planta.exo-dev.fr/geoserver/Metropole/ows', {
-          params: {
-            service: 'WFS',
-            version: '1.0.0',
-            request: 'GetFeature',
-            typeName: 'Metropole:bati',
-            outputFormat: 'json',
-            srsName: 'EPSG:2154',
-            bbox: this.selectedBbox,
-            startIndex: 0,
-          }
-        }).then(() => {
-          // const blob = new Blob([atob(response.data.data)], { type: 'text/plain' });
-          // const downloadUrl = URL.createObjectURL(blob);
-          // const downloadLink = document.createElement('a');
-          // downloadLink.href = downloadUrl;
-          // downloadLink.download = 'myfile.obj'; // Change the file name as desired
-          // downloadLink.click();
-        })
-      }
+      // !
+      // TODO: Refacto
     },
     showPreview() {
       this.isPreviewActive = true;
@@ -959,7 +939,7 @@ export default {
       
       // Set Mesh properties : pos + rotate
       selectedArea.position.set(result.x, result.y, result.z)
-      selectedArea.rotation.set(Math.PI / 1, Math.PI / 4, Math.PI / 1)
+      selectedArea.rotation.set(Math.PI / 1, Math.PI / 4, Math.PI / 1.02)
       selectedArea.rotateX(MathUtils.degToRad(-180))
 
       // Set area rotation in Store (in Deg)
@@ -993,90 +973,54 @@ export default {
         this.setAreaSelectionActive(false)
       }
     },
-    openMockup(areaBboxPos) {
-      const areaJsonBboxPos = JSON.parse(areaBboxPos)
-      console.log(areaJsonBboxPos)
+    openMockup(currMockup) {
+      // ! Reset previous Mesh on scene
+      this.resetOpenedMockup()
 
-      // Convert Bbox to Poly
-      const polyShape = convertBboxToPolygon(areaJsonBboxPos.bbox)
-      console.log(polyShape)
+      // ! Get mockup props and cast to JSON
+      const areaJsonProps = JSON.parse(currMockup.bbox)
+      // console.log(areaJsonProps)
 
-      // ! Extrude
-      // const extrudeSettings = {
-      //   steps: 2,
-      //   depth: 16,
-      //   bevelEnabled: true,
-      //   bevelThickness: 1,
-      //   bevelSize: 1,
-      //   bevelOffset: 0,
-      //   bevelSegments: 1
-      // }
-      // const geometry = new itowns.THREE.ExtrudeGeometry( polyShape, extrudeSettings )
-
-      // ! Configure Mesh
-      // const material = new itowns.THREE.MeshBasicMaterial( { color: 0x00ff00 } )
-      // const polyMesh = new itowns.THREE.Mesh( geometry, material )
+      // ! Build mockup new Mesh
+      const geom = new itowns.THREE.BoxGeometry(100, currMockup.nb_plaques_h * 100, currMockup.nb_plaques_v * 100);
+      const mat = new itowns.THREE.MeshBasicMaterial({ color: 0xCB4335, opacity: 0.4, transparent: true });
+      var boxMockup = new itowns.THREE.Mesh(geom, mat);
       
+      // ! Set Mesh pos
+      boxMockup.position.set(areaJsonProps.pos.x, areaJsonProps.pos.y, areaJsonProps.pos.z)
       // DEBUG
-      // polyMesh.scale.x = 10000000
-      // polyMesh.scale.y = 10000000
-      // polyMesh.scale.z = 10000000
-
-      // ! Set pos of new mesh
-      // DEBUG {x: 4442012.25200313, y: 375787.078901488, z: 4546509.211445926}
-      // polyMesh.position.x = 4442012.25200313
-      // polyMesh.position.y = 375787.078901488
-      // polyMesh.position.z = 4546509.211445926
-
-      // polyMesh.position.x = areaJsonBboxPos.pos.x
-      // polyMesh.position.y = areaJsonBboxPos.pos.y
-      // polyMesh.position.z = areaJsonBboxPos.pos.z
-      // ! Last try
-      // polyMesh.position.set(areaJsonBboxPos.pos.x, areaJsonBboxPos.pos.y, areaJsonBboxPos.pos.z)
-
-      // DEBUG mesh en dur
-      const geom = new itowns.THREE.BoxGeometry(100, 100, 100);
-      const mat = new itowns.THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.4, transparent: true });
-      var mesDur = new itowns.THREE.Mesh(geom, mat);
+      // boxMockup.position.set(4441865.150187417, 375812.67610067065, 4546651.963041471)
       
-      // Set Mesh properties : pos + rotate
-      // mesDur.position.set(4442012.25200313, 375787.078901488, 4546509.211445926)
-      mesDur.position.set(4441865.150187417, 375812.67610067065, 4546651.963041471)
-      // mesDur.position.set(areaJsonBboxPos.x, areaJsonBboxPos.y, areaJsonBboxPos.z)
-      mesDur.rotation.set(Math.PI / 1, Math.PI / 4, Math.PI / 1)
-      mesDur.rotateX(MathUtils.degToRad(-180))
+      // ! Set Mesh Rotation
+      boxMockup.rotation.set(Math.PI / 1, Math.PI / 4, Math.PI / 1.02)
+      boxMockup.rotateX(MathUtils.degToRad(areaJsonProps.rotation))
+      // DEBUG
+      // boxMockup.rotateX(MathUtils.degToRad(-180))
 
-      view.scene.add(mesDur)
-
-      // TODO: Get Poly real position
-      // const offset = new itowns.THREE.Vector3()
-      // polyMesh.geometry.computeBoundingBox()
-      // polyMesh.geometry.boundingBox.getCenter(offset)
-      // console.log('polyMesh.geometry.boundingBox')
-      // console.log(polyMesh.geometry.boundingBox)
-      // console.log(offset)
-
-      // Add to scene
-      // view.scene.add(polyMesh)
-      // console.log(polyMesh)
+      // ! Add to scene
+      view.scene.add(boxMockup)
+      
+      // ! Save Mesh to manipulate after
+      openedMockupArea = boxMockup
 
       // ! Trigger render
-      mesDur.updateMatrixWorld()
+      boxMockup.updateMatrixWorld()
       view.notifyChange()
 
-      // TODO: Trigger boolean to next step (sidebar)
+      // ! Goto poly position
+      const polyMockupCoord = new itowns.Coordinates(areaJsonProps.pos.crs, areaJsonProps.pos.x, areaJsonProps.pos.y, areaJsonProps.pos.z)
+      this.lookAtCoordinate(polyMockupCoord, 1500)
       
-      // TODO: Goto poly position
-      // const polyPlacement = {
-      //   coord: new itowns.Coordinates('EPSG:4326', polyMesh.position.x, polyMesh.position.y, polyMesh.position.z),
-      //     range: 5000,
-      // }
-      // let convertCoord = new itowns.Coordinates('EPSG:2154', { x: 4442012.25200313, y: 375787.078901488, z: 4546509.211445926 }).as('EPSG:4978') //- 2154 ?
-      // const polyPlacement = {
-      //   coord: convertCoord,
-      //     range: 5000,
-      // }
-      // this.lookAtCoordinate(areaJsonBboxPos.pos, 1500)
+      // TODO: Trigger boolean to next step (sidebar)
+      this.setCurrentTabValue(1)
+      this.$evtBus.emit('onOpenedMockupStep')
+    },
+    resetOpenedMockup() {
+      if (openedMockupArea) {
+        view.scene.remove(openedMockupArea)
+        openedMockupArea = null
+        view.notifyChange(true)
+      }
     },
     resetMockupSelection() {
       this.removeSelectedArea()

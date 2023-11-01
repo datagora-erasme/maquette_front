@@ -492,9 +492,6 @@ export default {
       getSelectedPos: 'map/getSelectedPos',
       getProjectsList: 'project/getProjectsList',
     }),
-    currAreaRotation() {
-      return this.getCurrAreaRotation
-    },
     isAreaSelectionActive() {
       return this.getAreaSelectionActive
     },
@@ -509,6 +506,9 @@ export default {
     },
     currentAreaPos() {
       return this.getSelectedPos
+    },
+    currAreaRotation() {
+      return this.getCurrAreaRotation
     },
     allMockupList() {
       return this.getProjectsList
@@ -532,9 +532,10 @@ export default {
   },
   mounted() {
     // ===== Bind Events =====
-    this.$evtBus.on('onResetSliderRotation', this.resetSliderRotation);
-    this.$evtBus.on('onResetArea', this.resetMockupSelection);
-    this.$evtBus.on('onResetStepperPos', this.resetMockupSelection);
+    this.$evtBus.on('onResetSliderRotation', this.resetSliderRotation)
+    this.$evtBus.on('onResetArea', this.resetMockupSelection)
+    this.$evtBus.on('onResetStepperPos', this.resetMockupSelection)
+    this.$evtBus.on('onOpenedMockupStep', this.openedMockupStep)
   },
   methods: {
     ...mapActions({
@@ -567,8 +568,10 @@ export default {
       this.$emit('onCloseNavbar')
     },
     generateAndDownloadCSV() {
-      this.generateHeightMap({ mesh: this.voxelizedMesh, platesX: this.plates.x, platesY: this.plates.y }).then((heightMap) => {
-        this.generateCSVString({ heightMap, platesX: this.plates.x }).then((csvString) => {
+      this.generateHeightMap({ mesh: this.voxelizedMesh, platesX: this.plates.x, platesY: this.plates.y })
+      .then((heightMap) => {
+        this.generateCSVString({ heightMap, platesX: this.plates.x })
+        .then((csvString) => {
           this.downloadCSV({ csvString, name: 'Lego' });
         });
       });
@@ -579,7 +582,8 @@ export default {
           // Build bbox & pos object
           var bboxPosJson = {
             bbox: this.currentAreaBbox,
-            pos: this.currentAreaPos
+            pos: this.currentAreaPos,
+            rotation: this.currAreaRotation,
           }
           // Build mockup Obj
           var newMockupObj = {
@@ -613,19 +617,27 @@ export default {
       })
     },
     resetMockupSelection() {
-      this.currentStep = 0;
+      this.currentStep = 0
       this.clearPlatesNumber()
       this.cancelSelection()
       // Reset Mockup form
       this.newMockupName = null
       this.newMockupSend = false
       this.$emit('onResetMockupSelection')
+      this.$emit('onResetOpenedMockup')
     },
     openMockup(index) {
       // Get current Mockup
-      var currMockupBbox = this.allMockupList[index].bbox
+      var currMockup = this.allMockupList[index]
       // Trigger Event and send Bbox to ItownsViewer
-      this.$evtBus.emit('onOpenMockup', currMockupBbox)
+      this.$evtBus.emit('onOpenMockup', currMockup)
+    },
+    openedMockupStep() {
+      this.currentStep = 2
+      this.setAreaSelectionActive(true)
+      this.setAreaDropped(true)
+      this.setAreaSelected(true)
+      this.newMockupSend = true
     },
     editMockup(index) {
       this.editMockupDialog = true
