@@ -89,11 +89,11 @@
         @onRemoveSelectedArea="removeSelectedArea()"
         @onResetOpenedMockup="resetOpenedMockup()"
         @onTravelToSelectedArea="travelToSelectedArea()"
-        @onPlatesSelected="onPlatesSelected()"
-        @onStep1="voxelize()"
-        @onShowPreview="showPreview()"
-        @onHidePreview="hidePreview()"
-        @onDownloadArea="downloadArea()"
+        @onPlatesSelected="onPlatesSelected"
+        @onStep1="voxelize"
+        @onShowPreview="showPreview"
+        @onHidePreview="hidePreview"
+        @onDownloadArea="downloadArea"
         @onRotateSelectedArea="rotateSelectedArea()"
       />
       <!-- :selected-area="currentSelectedArea" -->
@@ -318,16 +318,44 @@ export default {
     },
     async voxelize() {
       if (selectedArea) {
-        // Clone geometry to voxelize
+        // DEBUG
+        console.log('enter voxelize')
+        console.log(selectedArea)
+
+        // ! Clone geometry to voxelize
         const clonedGeometry = selectedArea.geometry.clone();
         clonedGeometry.computeBoundingBox()
+        console.log('cloned geom')
+        console.log(clonedGeometry)
+        
+        // ! Try HARD to comute direct in selectedArea -> Not in coord
+        console.log('new compute')
+        selectedArea.geometry.computeBoundingBox()
+        console.log(selectedArea)
 
+        var bbox = new itowns.THREE.Box3().setFromObject(selectedArea)
+        console.log('bbox from obj')
+        console.log(bbox)
+        // TODO: Create 2 box for min and max + material + add to scene
+
+        // Try 2
+        // var helper = new itowns.THREE.BoundingBoxHelper(selectedArea, 0xff0000);
+        // helper.update();
+        // // If you want a visible bounding box
+        // scene.add(helper);
+        // // If you just want the numbers
+        // console.log(helper.box.min);
+        // console.log(helper.box.max);
+
+        // ! Geolocalize bbox point ??
         const bbMin = clonedGeometry.boundingBox.min.clone().applyMatrix4(selectedArea.matrixWorld)
         const bbMax = clonedGeometry.boundingBox.max.clone().applyMatrix4(selectedArea.matrixWorld)
 
+        // ! Convert to 2154 coords
         const coordsMin = new itowns.Coordinates('EPSG:4978', bbMin).as('EPSG:2154')
         const coordsMax = new itowns.Coordinates('EPSG:4978', bbMax).as('EPSG:2154')
         
+        // ! Build complete BBOX (inverted ?)
         this.selectedBbox = coordsMax.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMin.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
         // ! OLD BBOX not inverted
         // this.selectedBbox = coordsMin.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMax.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
@@ -335,12 +363,14 @@ export default {
         this.setSelectedBbox(this.selectedBbox)
         console.log(this.selectedBbox)
 
-        // Api call for voxelize
+        // ! Api call to voxelize
         this.voxelizeBbox(this.selectedBbox)
         .then((objContent) =>  {
           objToMesh(objContent)
           .then((mesh) => {
+            // Set data in Store
             this.setVoxelizedMesh(mesh);
+            // TODO: Refacto - Goto next Step
             this.$refs.sidebarComponent.endVoxelisation();
           })
         })
