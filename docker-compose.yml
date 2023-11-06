@@ -1,0 +1,9 @@
+version: "3.9"
+services:
+  frontend:
+    build: . 
+    image: erasme/maquette_augmentee_frontend:latest
+    container_name: maquette_augmentee_frontend
+    ports:
+      - "8000:80"
+      
