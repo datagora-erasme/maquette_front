@@ -316,126 +316,6 @@ export default {
     hidePreview() {
       this.isPreviewActive = false;
     },
-    async voxelize() {
-      if (selectedArea) {
-        // DEBUG
-        console.log('enter voxelize')
-        console.log(selectedArea)
-
-        // ! Clone geometry to voxelize
-        const clonedGeometry = selectedArea.geometry.clone();
-        clonedGeometry.computeBoundingBox()
-        console.log('cloned geom')
-        console.log(clonedGeometry)
-        
-        // ! Try HARD to comute direct in selectedArea -> Not in coord
-        console.log('new compute')
-        selectedArea.geometry.computeBoundingBox()
-        console.log(selectedArea)
-
-        var bbox = new itowns.THREE.Box3().setFromObject(selectedArea)
-        console.log('bbox from obj')
-        console.log(bbox)
-        // TODO: Create 2 box for min and max + material + add to scene
-
-        // Try 2
-        // var helper = new itowns.THREE.BoundingBoxHelper(selectedArea, 0xff0000);
-        // helper.update();
-        // // If you want a visible bounding box
-        // scene.add(helper);
-        // // If you just want the numbers
-        // console.log(helper.box.min);
-        // console.log(helper.box.max);
-
-        // ! Geolocalize bbox point ??
-        const bbMin = clonedGeometry.boundingBox.min.clone().applyMatrix4(selectedArea.matrixWorld)
-        const bbMax = clonedGeometry.boundingBox.max.clone().applyMatrix4(selectedArea.matrixWorld)
-
-        // ! Convert to 2154 coords
-        const coordsMin = new itowns.Coordinates('EPSG:4978', bbMin).as('EPSG:2154')
-        const coordsMax = new itowns.Coordinates('EPSG:4978', bbMax).as('EPSG:2154')
-        
-        // ! Build complete BBOX (inverted ?)
-        this.selectedBbox = coordsMax.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMin.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
-        // ! OLD BBOX not inverted
-        // this.selectedBbox = coordsMin.x.toString() + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + coordsMax.x.toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
-        
-        this.setSelectedBbox(this.selectedBbox)
-        console.log(this.selectedBbox)
-
-        // ! Api call to voxelize
-        this.voxelizeBbox(this.selectedBbox)
-        .then((objContent) =>  {
-          objToMesh(objContent)
-          .then((mesh) => {
-            // Set data in Store
-            this.setVoxelizedMesh(mesh);
-            // TODO: Refacto - Goto next Step
-            this.$refs.sidebarComponent.endVoxelisation();
-          })
-        })
-        .catch((e) => {
-          // Is area empty of building ?
-          if (e.response.data.isEmpty) {
-            this.$notify({
-              title: 'Erreur lors de la création',
-              text: "Une erreur s'est produite lors de la création. La zone séléctionnée ne contient peut-être pas de bâtiment ? Merci de recommencer ce processus.",
-              type: 'error',
-              duration: 10000
-            })
-            // Clean selected Area + redirect step 0 sidebar
-            this.$evtBus.emit('onResetStepperPos')
-          } else {
-            this.$notify({
-              title: 'Erreur lors de la création',
-              text: "Une erreur s'est produite lors de la création. Merci de recommencer ce processus.",
-              type: 'error',
-              duration: 10000
-            })
-            // Clean selected Area + redirect step 0 sidebar
-            this.$evtBus.emit('onResetStepperPos')
-          }
-        })
-
-        // ! Useless ?
-        // await this.$axios.post('/dataprocess/bbox', {
-        //   bbox: this.selectedBbox,
-        //   ratio: 5
-        // }).then((response) => {
-        //   this.$refs.sidebarComponent.endVoxelisation();
-        //   this.selectedAreaVoxelized = atob(response.data.data)
-        //   const blob = new Blob([atob(response.data.data)], { type: 'text/plain' });
-        //   const downloadUrl = URL.createObjectURL(blob);
-        //   const downloadLink = document.createElement('a');
-        //   downloadLink.href = downloadUrl;
-        //   downloadLink.download = 'myfile.obj'; // TODO: Change the file name with maquette project name choose by user
-        //   this.setCurrentMockupDownloadLink(downloadLink);
-        //   objDownloadUrlToMesh(downloadLink).then((mesh) => {
-        //     console.log(mesh)
-        //     console.log(this.selectedPlates);
-        //     const heightMap = createHeightMapFromMeshUsingWorkers(mesh, this.selectedPlates.x, this.selectedPlates.y);
-        //     // generateCSVwithHeightMap(heightMap, 'CSV_OMG');
-
-        // await this.$axios.post('/dataprocess/bbox', {
-        //   bbox: this.selectedBbox,
-        //   ratio: 5
-        // }).then((response) => {
-        //   this.$refs.sidebarComponent.endVoxelisation();
-        //   this.setVoxelizedMeshObjContent(atob(response.data.data))
-        //   objToMesh(atob(response.data.data)).then((mesh) => {
-        //     this.setVoxelizedMesh(mesh);
-        //     console.log(mesh);
-        //     // this.generateHeightMap({ mesh, platesX: this.selectedPlates.x, platesY: this.selectedPlates.y }).then((heightMap) => {
-        //     //   this.generateCSVString({ heightMap,platesX: this.selectedPlates.x }).then((csvString) => {
-        //     //     this.downloadCSV({ csvString, name: 'CSV_FINAL' });
-        //     //   });
-        //     // });
-        //   });
-        // })
-        // console.log(this.selectedBbox)
-        // console.log('Bounding Box : ', coordsMin.x, coordsMax.y, coordsMax.x, coordsMin.y)
-      }
-    },
     clickOnNavbarItem(value) {
       if (value == this.currentTabValue) {
         // this.closeNavbarItem()
@@ -968,8 +848,9 @@ export default {
       selectedArea = new itowns.THREE.Mesh(geometry, material);
       
       // Set Mesh properties : pos + rotate
-      selectedArea.position.set(result.x, result.y, result.z)
+      selectedArea.position.set(result.x, result.y, result.z) //50
       selectedArea.rotation.set(Math.PI / 1, Math.PI / 4, Math.PI / 1.02)
+      // ! Disable ????
       selectedArea.rotateX(MathUtils.degToRad(-180))
 
       // Set area rotation in Store (in Deg)
@@ -980,7 +861,7 @@ export default {
       this.selectedArea = selectedArea;
       this.setAreaDropped(true)
 
-      // TODO: Remove ? USELESS ?
+      // TODO: Remove ? check raycast to CSV ?
       // Filling the selectedArea's metadata (used to get the selectedArea with raycaster)
       selectedArea.name = 'selectedAreaCube'
       selectedArea.userData = { draggable: true, name: 'CUBE' }
@@ -1001,6 +882,132 @@ export default {
         
         // Disable area selection
         this.setAreaSelectionActive(false)
+      }
+    },
+    async voxelize() {
+      if (selectedArea) {
+        // DEBUG
+        // console.log('enter voxelize')
+        // console.log(selectedArea)
+
+        // ! Clone geometry to voxelize
+        const clonedGeometry = selectedArea.geometry.clone();
+        clonedGeometry.computeBoundingBox()
+        
+        // DEBUG
+        // console.log('cloned geom')
+        // console.log(clonedGeometry)
+
+        // ! Geolocalize bbox point
+        const bbMin = clonedGeometry.boundingBox.min.clone().applyMatrix4(selectedArea.matrixWorld)
+        const bbMax = clonedGeometry.boundingBox.max.clone().applyMatrix4(selectedArea.matrixWorld)
+        
+        // DEBUG
+        // console.log('bbMin / bbMax')
+        // console.log(bbMin)
+        // console.log(bbMax)
+
+        // TODO: Create 2 box for min and max + material + add to scene
+        // ! NEW - DEBUG BBOX IN SCENE
+        // const geomBB = new itowns.THREE.BoxGeometry(10, 10, 10);
+        // const matBB = new itowns.THREE.MeshBasicMaterial({ color: 0xCB4335, opacity: 0.4, transparent: true });
+        // const meshBB1 = new itowns.THREE.Mesh(geomBB, matBB);
+        // const meshBB2 = new itowns.THREE.Mesh(geomBB, matBB);
+        // meshBB1.position.set(bbMin.x, bbMin.y, bbMin.z)
+        // meshBB2.position.set(bbMax.x, bbMax.y, bbMax.z)
+        // // Add mesh to scene
+        // view.scene.add(meshBB1)
+        // view.scene.add(meshBB2)
+        // // ! Used to force the re-rendering ?
+        // meshBB1.updateMatrixWorld()
+        // meshBB2.updateMatrixWorld() 
+        // view.notifyChange(true)
+
+        // ! Convert to 2154 coords
+        const coordsMin = new itowns.Coordinates('EPSG:4978', bbMin).as('EPSG:2154')
+        const coordsMax = new itowns.Coordinates('EPSG:4978', bbMax).as('EPSG:2154')
+        
+        // ! Take old BBOX with min/max
+        this.selectedBbox = (Math.min(coordsMax.x, coordsMin.x)) + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + (Math.max(coordsMax.x, coordsMin.x)).toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
+        
+        // DEBUG
+        console.log('selectedBbox')
+        console.log(this.selectedBbox)
+
+        // ! Set in Store
+        this.setSelectedBbox(this.selectedBbox)
+
+        // ! Api call to voxelize
+        this.voxelizeBbox(this.selectedBbox)
+        .then((objContent) =>  {
+          objToMesh(objContent)
+          .then((mesh) => {
+            // Set data in Store
+            this.setVoxelizedMesh(mesh);
+            // TODO: Refacto - Goto next Step
+            this.$refs.sidebarComponent.endVoxelisation();
+          })
+        })
+        .catch((e) => {
+          // Is area empty of building ?
+          if (e.response.data.isEmpty) {
+            this.$notify({
+              title: 'Erreur lors de la création',
+              text: "Une erreur s'est produite lors de la création. La zone séléctionnée ne contient peut-être pas de bâtiment ? Merci de recommencer ce processus.",
+              type: 'error',
+              duration: 10000
+            })
+            // Clean selected Area + redirect step 0 sidebar
+            this.$evtBus.emit('onResetStepperPos')
+          } else {
+            this.$notify({
+              title: 'Erreur lors de la création',
+              text: "Une erreur s'est produite lors de la création. Merci de recommencer ce processus.",
+              type: 'error',
+              duration: 10000
+            })
+            // Clean selected Area + redirect step 0 sidebar
+            this.$evtBus.emit('onResetStepperPos')
+          }
+        })
+
+        // ! Useless ?
+        // await this.$axios.post('/dataprocess/bbox', {
+        //   bbox: this.selectedBbox,
+        //   ratio: 5
+        // }).then((response) => {
+        //   this.$refs.sidebarComponent.endVoxelisation();
+        //   this.selectedAreaVoxelized = atob(response.data.data)
+        //   const blob = new Blob([atob(response.data.data)], { type: 'text/plain' });
+        //   const downloadUrl = URL.createObjectURL(blob);
+        //   const downloadLink = document.createElement('a');
+        //   downloadLink.href = downloadUrl;
+        //   downloadLink.download = 'myfile.obj'; // TODO: Change the file name with maquette project name choose by user
+        //   this.setCurrentMockupDownloadLink(downloadLink);
+        //   objDownloadUrlToMesh(downloadLink).then((mesh) => {
+        //     console.log(mesh)
+        //     console.log(this.selectedPlates);
+        //     const heightMap = createHeightMapFromMeshUsingWorkers(mesh, this.selectedPlates.x, this.selectedPlates.y);
+        //     // generateCSVwithHeightMap(heightMap, 'CSV_OMG');
+
+        // await this.$axios.post('/dataprocess/bbox', {
+        //   bbox: this.selectedBbox,
+        //   ratio: 5
+        // }).then((response) => {
+        //   this.$refs.sidebarComponent.endVoxelisation();
+        //   this.setVoxelizedMeshObjContent(atob(response.data.data))
+        //   objToMesh(atob(response.data.data)).then((mesh) => {
+        //     this.setVoxelizedMesh(mesh);
+        //     console.log(mesh);
+        //     // this.generateHeightMap({ mesh, platesX: this.selectedPlates.x, platesY: this.selectedPlates.y }).then((heightMap) => {
+        //     //   this.generateCSVString({ heightMap,platesX: this.selectedPlates.x }).then((csvString) => {
+        //     //     this.downloadCSV({ csvString, name: 'CSV_FINAL' });
+        //     //   });
+        //     // });
+        //   });
+        // })
+        // console.log(this.selectedBbox)
+        // console.log('Bounding Box : ', coordsMin.x, coordsMax.y, coordsMax.x, coordsMin.y)
       }
     },
     openMockup(currMockup) {

@@ -122,18 +122,37 @@ const generateHeightMap = (mesh, platesX, platesY) => {
     for (let i = 0; i < maxWorkers; i++) {
       workers.push(createWorker());
     }
+
+    // Rotate before ??
     const geometryBuffer = mesh.geometry;
     geometryBuffer.computeBoundingBox(); //Generate Bounding box of the geometry
     const legoPerPlate = 32;
     const maxLegoHeight = 15; // Max lego height for the higher buildings in the geometry
     const bbMockUp = geometryBuffer.boundingBox;
+    console.log('bbMockup')
+    console.log(bbMockUp)
+    
+    // ! Negative number ?
     const widthMockUp = bbMockUp.max.x - bbMockUp.min.x;
     const heightMockUp = bbMockUp.max.y - bbMockUp.min.y;
     const totalNumberOfLegosX = platesX * legoPerPlate;
+    console.log('Mockup Details')
+    console.log(widthMockUp)
+    console.log(heightMockUp)
+    console.log(totalNumberOfLegosX)
+    
     // TODO  : Update step distance according to number of voxels given by backend
     const stepDistanceX = widthMockUp / legoPerPlate / platesX; // Step to launch a ray
     const stepDistanceY = heightMockUp / legoPerPlate / platesY; // Step to launch a ray
+    console.log('stepDistance')
+    console.log(stepDistanceX)
+    console.log(stepDistanceY)
+    
+    // ! Compute for ratio
     const maxZMockup = bbMockUp.max.z;
+    console.log('maxZMockup')
+    console.log(maxZMockup)
+    
     const raycastArray = new Array(
       (platesY * legoPerPlate) * (platesX * legoPerPlate)
     );
@@ -222,15 +241,20 @@ const generateCSV = (heightMap, platesX) => {
   
   //? The following code mirrors the content of the CSV's rows in
   //? order to make the mockup look like the 3D model.
-  const rows = csvContent.trim().split('\n');
-  const reversedRows = rows.map((row) => {
-    const columns = row.split(';');
-    return columns.reverse();
-  });
-
-  csvContent = reversedRows
-    .map((row) => row.join(';'))
-    .join('\n');
+  // const rows = csvContent.trim().split('\n');
+  // const reversedRows = rows.map((row) => {
+    //   const columns = row.split(';');
+  //   return columns.reverse();
+  // });
+  
+  // csvContent = reversedRows
+  //   .map((row) => row.join(';'))
+  //   .join('\n');
+  
+  // ! NEW revert of rows
+  const rows = csvContent.trim().split('\n')
+  const reversedRows = rows.reverse()
+  csvContent = reversedRows.join('\n')
 
   // TODO : Maybe split the CSV here according to the number of plates selected.
 

@@ -21,7 +21,7 @@
             activator="parent"
             location="bottom"
           >
-            Clic gauche : Rotation<br>Clic droit : Déplacement
+            Clic gauche : Rotation<br>Clic droit : Déplacement<br>Molette : Zoom
           </v-tooltip>
         </v-btn>
         <div class="d-flex flex-row align-center">

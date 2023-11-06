@@ -121,28 +121,33 @@
                   <br><br>
                 </div>
                 <div v-if="isAreaDropped && !isAreaSelected && isPlatesSelected">
-                  <!-- <div v-if="!isAreaSelected"> -->
-                  Appliquer une rotation à la zone séléctionnée :
-                  <v-slider
-                    v-model="sliderValue"
-                    class="align-center"
-                    :max="sliderMax"
-                    :min="sliderMin"
-                    hide-details
-                  >
-                    <template #append>
-                      <div style="width: 70px">
-                        {{ sliderValue.toFixed(1) }}°
-                      </div>
-                    </template>
-                  </v-slider>
-                  <br>
-                  <!-- </div> -->
+                  <div>
+                    Votre zone est séléctionnée. <br>Vous pouvez cliquer à nouveau sur la carte pour la déplacer ou "Valider votre sélection".
+                  </div>
+                  <!-- ! DISABLE FOR THE MOMENT -->
+                  <div v-if="false">
+                    Appliquer une rotation à la zone séléctionnée :
+                    <v-slider
+                      v-model="sliderValue"
+                      class="align-center"
+                      :max="sliderMax"
+                      :min="sliderMin"
+                      hide-details
+                    >
+                      <template #append>
+                        <div style="width: 70px">
+                          {{ sliderValue.toFixed(1) }}°
+                        </div>
+                      </template>
+                    </v-slider>
+                    <br>
+                  </div>
                   <v-btn
                     :loading="ongoingTravel"
                     density="comfortable"
                     color="#1B5E20"
                     min-width="230"
+                    class="mt-2"
                     style="color: white"
                     @click="endSelection()"
                   >
@@ -563,9 +568,15 @@ export default {
       } else if (document.exitFullscreen) {
         document.exitFullscreen();
       }
-      // ! Need to replace
+      // ! Need to replace - REFACTO
       this.$emit('onTravelToSelectedArea')
       this.$emit('onCloseNavbar')
+      // ! Hide all widgets
+      // widgets-scale - widgets-navigation - widgets-searchbar
+      document.getElementById('widgets-scale').style.display = 'none';
+      document.getElementById('widgets-navigation').style.display = 'none';
+      document.getElementById('widgets-searchbar').style.display = 'none';
+      // TODO: Find all display style to re-set
     },
     generateAndDownloadCSV() {
       this.generateHeightMap({ mesh: this.voxelizedMesh, platesX: this.plates.x, platesY: this.plates.y })
