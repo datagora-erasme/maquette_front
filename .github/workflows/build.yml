@@ -9,7 +9,7 @@ on:
       - 'docker-ci'
 
 jobs:
-  backend:
+  frontend:
     runs-on: ubuntu-latest
     steps:
       -
