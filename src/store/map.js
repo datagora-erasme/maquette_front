@@ -22,6 +22,7 @@ const map = {
     selectedBbox: null,
     selectedPos: null,
     currentTabValue: null,
+    isFullscreen: false,
   }),
   getters: {
     getCurrentMockupDownloadLink(state) {
@@ -72,6 +73,9 @@ const map = {
     getCurrentTabValue(state) {
       return state.currentTabValue
     },
+    getIsFullscreen(state) {
+      return state.isFullscreen
+    }
   },
   mutations: {
     SET_PLATES_X(state, platesX) {
@@ -121,6 +125,9 @@ const map = {
     },
     SET_CURRENT_TAB_VALUE(state, newValue) {
       state.currentTabValue = newValue
+    },
+    SET_IS_FULLSCREEN(state, newState) {
+      state.isFullscreen = newState
     }
   },
   actions: {
@@ -227,6 +234,9 @@ const map = {
     },
     setCurrentTabValue({ commit }, newValue) {
       commit('SET_CURRENT_TAB_VALUE', newValue)
+    },
+    setIsFullscreen({ commit }, newState) {
+      commit('SET_IS_FULLSCREEN', newState)
     },
   },
 };

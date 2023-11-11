@@ -1,5 +1,5 @@
 <template>
-  <div v-if="currentTabValue !== null" class="sidebar-container pa-0">
+  <div v-if="currentTabValue !== null && !isFullscreen" class="sidebar-container pa-0">
     <v-card v-if="currentTabValue == 1" class="sidebar-cards py-5 px-7">
       <v-row class="d-flex justify-center">
         <v-col class="sidebar-title-col pa-0">
@@ -278,12 +278,14 @@
       <v-row class="d-flex justify-center">
         <v-col class="pa-0">
           <h3 class="sidebar-title py-2">
-            Panel de projection de la maquette
+            Projection d'une maquette
           </h3>
         </v-col>
       </v-row>
       <v-row>
         <v-col class="projection-panel d-flex flex-column justify-center align-center">
+          Avant de lancer le mode projection, vous devez créer ou ouvrir une maquette existante.
+          <br><br>
           <v-btn
             :stacked="$vuetify.display.height > 722"
             color="#1B5E20"
@@ -364,6 +366,29 @@
           </div>
         </v-list>
       </v-card-text>
+    </v-card>
+    <v-card v-if="currentTabValue == 4" class="sidebar-cards py-5 px-7">
+      <v-row class="d-flex justify-center">
+        <v-col class="pa-0">
+          <h3 class="sidebar-title py-2">
+            Aide et crédits
+          </h3>
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col class="projection-panel d-flex flex-column justify-center align-center">
+          Commande pour se déplacer sur la carte :
+          <br><br>
+          Clic gauche : Déplacer la caméra
+          Left-Click: camera translation (drag)
+          Right-Click: camera translation (pan)
+          Ctrl + Left-Click: camera rotation (orbit)
+          Spacebar / Wheel-Click: smart zoom
+          Mouse Wheel: zoom in/out
+          T: orient camera to a top view
+          Y: move camera to start position
+        </v-col>
+      </v-row>
     </v-card>
     <!-- Edit Mockup Dialog -->
     <v-dialog
@@ -446,16 +471,15 @@
 <script>
 import StepperComponent from './StepperComponent.vue'
 import { mapActions, mapGetters } from 'vuex'
-import { convertBboxToPolygon } from '../utils/threeUtils'
 
 export default {
   name: 'SidebarComponent',
   components: { StepperComponent },
   props: {
-    currentTabValue: {
-      type: Number,
-      required: true,
-    },
+    // currentTabValue: {
+    //   type: Number,
+    //   required: true,
+    // },
     ongoingTravel: {
       type: Boolean,
       required: true,
@@ -489,6 +513,7 @@ export default {
     ...mapGetters({
       voxelizedMesh: 'map/getVoxelizedMesh',
       plates: 'map/getPlates',
+      getCurrentTabValue: 'map/getCurrentTabValue',
       getCurrAreaRotation: 'map/getCurrAreaRotation',
       getAreaSelectionActive: 'map/getAreaSelectionActive',
       getAreaDropped: 'map/getAreaDropped',
@@ -496,7 +521,11 @@ export default {
       getSelectedBbox: 'map/getSelectedBbox',
       getSelectedPos: 'map/getSelectedPos',
       getProjectsList: 'project/getProjectsList',
+      getIsFullscreen: 'map/getIsFullscreen',
     }),
+    currentTabValue() {
+      return this.getCurrentTabValue
+    },
     isAreaSelectionActive() {
       return this.getAreaSelectionActive
     },
@@ -517,6 +546,9 @@ export default {
     },
     allMockupList() {
       return this.getProjectsList
+    },
+    isFullscreen() {
+      return this.getIsFullscreen
     }
   },
   watch: {
@@ -556,27 +588,40 @@ export default {
       saveProject: 'project/saveProject',
       updateProject: 'project/updateProject',
       deleteProject: 'project/deleteProject',
-      setCurrentTabValue: 'map/setCurrentTabValue'
+      setCurrentTabValue: 'map/setCurrentTabValue',
+      setIsFullscreen: 'map/setIsFullscreen'
     }),
     computeAreaRotation(newRotation) {
       this.setNewAreaRotation(newRotation) // in Deg
       this.$emit('onRotateSelectedArea')
     },
     startSlideShow() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-      } else if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
+      // Enable navigator fullscreen
+      document.documentElement.requestFullscreen()
+
       // ! Need to replace - REFACTO
-      this.$emit('onTravelToSelectedArea')
+      this.$emit('onTravelForProjection')
       this.$emit('onCloseNavbar')
+
       // ! Hide all widgets
-      // widgets-scale - widgets-navigation - widgets-searchbar
-      document.getElementById('widgets-scale').style.display = 'none';
-      document.getElementById('widgets-navigation').style.display = 'none';
-      document.getElementById('widgets-searchbar').style.display = 'none';
-      // TODO: Find all display style to re-set
+      document.getElementById('widgets-scale').style.display = 'none'
+      document.getElementById('widgets-navigation').style.display = 'none'
+      document.getElementById('widgets-searchbar').style.display = 'none'
+      
+      // Enable fullscreen in Store (v-if btn of exit + sidebar)
+      this.setIsFullscreen(true)
+    },
+    endSlideShow() {
+      // Disable navigator fullscreen
+      document.exitFullscreen()
+
+      // Restore display of all widget
+      document.getElementById('widgets-scale').style.display = 'flex' // flex
+      document.getElementById('widgets-navigation').style.display = 'flex' // flex
+      document.getElementById('widgets-searchbar').style.display = 'block' // block
+      
+      // Disable fullscreen in Store
+      this.setIsFullscreen(false)
     },
     generateAndDownloadCSV() {
       this.generateHeightMap({ mesh: this.voxelizedMesh, platesX: this.plates.x, platesY: this.plates.y })
@@ -602,7 +647,9 @@ export default {
             name: this.newMockupName,
             nb_plaques_h: this.nbPlatesHorizontal,
             nb_plaques_v: this.nbPlatesVertical,
-            ratio: 1
+            ratio: 1,
+            csv_id: 2, // TODO: Change
+            model_id: 2, // TODO: Change
           }
 
           // Save

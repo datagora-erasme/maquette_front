@@ -218,8 +218,9 @@ export default {
   },
   watch: {
     iTownsBaseLayers() {
-      // TEMP DEBUG
-      console.log('trigger update baseLayers')
+      // DEBUG
+      // console.log('trigger update baseLayers')
+      
       if(!this.allBaseLayers.length) {
         this.computeBaseLayers()
       }
