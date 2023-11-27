@@ -209,7 +209,6 @@ export default {
     init() {
       this.fetchUserInfo().then((response) => {
         this.editUserInfos = this.currentUserInfo
-        console.log(this.editUserInfos)
       })
     },
     handleLogout() {
@@ -275,9 +274,4 @@ export default {
 .text-fields-container {
   max-height: 50px;
 }
-
-.user-info-buttons-container {
-
-}
-
 </style>

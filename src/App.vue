@@ -20,6 +20,7 @@
     <notifications position="bottom right" />
     <Aside v-if="isLoggedIn" />
     <AsideBtn v-if="isLoggedIn" />
+    <SlideshowExitBtn v-if="isFullscreen" />
     <Notifications position="bottom right" />
   </div>
 </template>
@@ -28,6 +29,7 @@
 import ItownsViewer from './components/ItownsViewer.vue'
 import AsideBtn from './components/AsideBtn.vue'
 import Aside from './components/Aside.vue'
+import SlideshowExitBtn from './components/SlideshowExitBtn.vue'
 import SignIn from './components/SignIn.vue'
 import CSVLoadingScreen from './components/CSVLoadingScreen.vue'
 import PasswordRecuperation from './components/PasswordRecuperation.vue'
@@ -44,6 +46,7 @@ export default {
     PasswordModification,
     AsideBtn,
     Aside,
+    SlideshowExitBtn,
     SignIn
   },
   data() {
@@ -57,13 +60,17 @@ export default {
       isCSVGenerationOngoing: 'map/getIsCSVGenerationOngoing',
       ongoingPasswordRecuperation: 'authentication/getOngoingPasswordRecuperation',
       ongoingPasswordModification: 'authentication/getOngoingPasswordModification',
-      getAsideStatus: 'aside/getAsideStatus'
+      getAsideStatus: 'aside/getAsideStatus',
+      getIsFullscreen: 'map/getIsFullscreen'
     }),
     isLoggedIn() {
       return this.isUserLoggedIn
     },
     asideStatus() {
       return this.getAsideStatus
+    },
+    isFullscreen() {
+      return this.getIsFullscreen
     }
   },
   watch: {

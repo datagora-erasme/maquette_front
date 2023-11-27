@@ -77,6 +77,24 @@ export default {
   // texture.magFilter = itowns.THREE.NearestFilter
   // selectedArea = new itowns.THREE.Mesh(geometry, new itowns.THREE.MeshLambertMaterial( { map: texture, side: itowns.THREE.DoubleSide } ))
 
+
+  // TODO: Create 2 box for min and max + material + add to scene
+  // ! NEW - DEBUG BBOX IN SCENE
+  // const geomBB = new itowns.THREE.BoxGeometry(10, 10, 10);
+  // const matBB = new itowns.THREE.MeshBasicMaterial({ color: 0xCB4335, opacity: 0.4, transparent: true });
+  // const meshBB1 = new itowns.THREE.Mesh(geomBB, matBB);
+  // const meshBB2 = new itowns.THREE.Mesh(geomBB, matBB);
+  // meshBB1.position.set(bbMin.x, bbMin.y, bbMin.z)
+  // meshBB2.position.set(bbMax.x, bbMax.y, bbMax.z)
+  // // Add mesh to scene
+  // view.scene.add(meshBB1)
+  // view.scene.add(meshBB2)
+  // // ! Used to force the re-rendering ?
+  // meshBB1.updateMatrixWorld()
+  // meshBB2.updateMatrixWorld() 
+  // view.notifyChange(true)
+
+
   // !
     function intersect(pos) {
       raycaster.setFromCamera(pos, view.camera.camera3D);

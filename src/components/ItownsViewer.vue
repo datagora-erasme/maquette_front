@@ -7,106 +7,111 @@
     <v-dialog v-model="isUserInfoActive" class="user-info-dialog">
       <user-info @onCloseUserInfo="closeUserInfo" />
     </v-dialog>
-    <v-row class="screen-row">
-      <v-col class="navbar-container pa-0" :style="{ 'max-width': navbarWidth + 'px' }">
-        <v-card>
-          <v-layout>
-            <v-navigation-drawer
-              v-model="drawer"
-              :rail="true"
-              permanent
-            >
-              <v-list-item
-                :prepend-avatar="require('../assets/logo_metropole_favicon.jpg')"
-                title="Logo Métropole de Lyon"
-                nav
-              />
 
-              <v-divider />
+    <!-- Navbar -->
+    <div v-if="!isFullscreen" class="navbar-container pa-0">
+      <v-card>
+        <v-layout style="width: 56px !important;">
+          <v-navigation-drawer
+            v-model="drawer"
+            :rail="true"
+            permanent
+            style="width: 56px !important; height: 100%"
+          >
+            <v-list-item
+              :prepend-avatar="require('../assets/logo_metropole_favicon.jpg')"
+              title="Logo Métropole de Lyon"
+              nav
+            />
 
-              <v-list density="compact" nav>
-                <v-tooltip text="Construire une maquette">
-                  <template #activator="{ props }">
-                    <v-list-item
-                      v-bind="props"
-                      prepend-icon="mdi-toy-brick"
-                      title="Construire une maquette"
-                      value="1"
-                      @click="clickOnNavbarItem(1)"
-                    /> 
-                  </template>
-                </v-tooltip>
-                <v-tooltip text="Consulter mes maquettes">
-                  <template #activator="{ props }">
-                    <v-list-item
-                      v-bind="props"
-                      prepend-icon="mdi-list-box"
-                      title="Mes maquettes"
-                      value="3"
-                      @click="clickOnNavbarItem(3)"
-                    />
-                  </template>
-                </v-tooltip>
-                <v-tooltip text="Mode projection">
-                  <template #activator="{ props }">
-                    <!-- TODO: Disable if maq was not load -->
-                    <!-- :disabled="!getSelectedArea" -->
-                    <v-list-item
-                      v-bind="props"
-                      prepend-icon="mdi-video-box"
-                      title="Projection de la maquette"
-                      value="2"
-                      @click="clickOnNavbarItem(2)"
-                    />
-                  </template>
-                </v-tooltip>
-                
-                <v-tooltip text="Mon compte">
-                  <template #activator="{ props }">
-                    <v-list-item
-                      v-bind="props"
-                      prepend-icon="mdi-account"
-                      title="Mon compte"
-                      value="99"
-                      style="transform: scaleX(-1)"
-                      @click="openUserInfo()"
-                    />
-                  </template>
-                </v-tooltip>
-              </v-list>
-            </v-navigation-drawer>
-          </v-layout>
-        </v-card>
-      </v-col>
-      <sidebar-component
-        v-if="currentTabValue"
-        ref="sidebarComponent"
-        :current-tab-value="currentTabValue"
-        :ongoing-travel="ongoingTravel"
-        @onCloseNavbar="closeNavbarItem()"
-        @onStartSelection="startSelection()"
-        @onResetMockupSelection="resetMockupSelection()"
-        @onRemoveSelectedArea="removeSelectedArea()"
-        @onResetOpenedMockup="resetOpenedMockup()"
-        @onTravelToSelectedArea="travelToSelectedArea()"
-        @onPlatesSelected="onPlatesSelected"
-        @onStep1="voxelize"
-        @onShowPreview="showPreview"
-        @onHidePreview="hidePreview"
-        @onDownloadArea="downloadArea"
-        @onRotateSelectedArea="rotateSelectedArea()"
-      />
-      <!-- :selected-area="currentSelectedArea" -->
-      <v-col class="viewerDiv-container pa-0" :style="{ width: viewerDivWidth + 'px' }">
-        <div id="viewerDiv" class="viewer" />
-      </v-col>
-      
-      <div v-if="showDebug" id="info-div">
-        DEBUG :
-        <br>
-        <div class="debugInfos" v-html="debugInfos" />
-      </div>
-    </v-row>
+            <v-divider />
+
+            <v-list density="compact" nav>
+              <v-tooltip text="Construire une maquette">
+                <template #activator="{ props }">
+                  <v-list-item
+                    v-bind="props"
+                    prepend-icon="mdi-toy-brick"
+                    title="Construire une maquette"
+                    @click="clickOnNavbarItem(1)"
+                  /> 
+                </template>
+              </v-tooltip>
+              <v-tooltip text="Consulter mes maquettes">
+                <template #activator="{ props }">
+                  <v-list-item
+                    v-bind="props"
+                    prepend-icon="mdi-list-box"
+                    title="Mes maquettes"
+                    @click="clickOnNavbarItem(3)"
+                  />
+                </template>
+              </v-tooltip>
+              <v-tooltip text="Mode projection">
+                <template #activator="{ props }">
+                  <!-- TODO: Disable if maq was not load -->
+                  <!-- :disabled="!getSelectedArea" -->
+                  <v-list-item
+                    v-bind="props"
+                    prepend-icon="mdi-video-box"
+                    title="Projection de la maquette"
+                    @click="clickOnNavbarItem(2)"
+                  />
+                </template>
+              </v-tooltip>
+              <v-tooltip text="Mon compte">
+                <template #activator="{ props }">
+                  <v-list-item
+                    v-bind="props"
+                    prepend-icon="mdi-account"
+                    title="Mon compte"
+                    @click="openUserInfo()"
+                  />
+                </template>
+              </v-tooltip>
+              <v-tooltip text="Aide et crédits">
+                <template #activator="{ props }">
+                  <v-list-item
+                    v-bind="props"
+                    prepend-icon="mdi-help-circle-outline"
+                    title="Aide et crédit"
+                    class="help-nav-item"
+                    @click="clickOnNavbarItem(4)"
+                  />
+                </template>
+              </v-tooltip>
+            </v-list>
+          </v-navigation-drawer>
+        </v-layout>
+      </v-card>
+    </div>
+
+    <!-- Viewer Div (override by JS) -->
+    <div id="viewerDiv" class="viewer" />
+    <sidebar-component
+      v-if="currentTabValue"
+      ref="sidebarComponent"
+      :ongoing-travel="ongoingTravel"
+      @onCloseNavbar="closeNavbarItem()"
+      @onStartSelection="startSelection()"
+      @onResetMockupSelection="resetMockupSelection()"
+      @onRemoveSelectedArea="removeSelectedArea()"
+      @onResetOpenedMockup="resetOpenedMockup()"
+      @onTravelToSelectedArea="travelToSelectedArea()"
+      @onTravelForProjection="travelForProjection()"
+      @onPlatesSelected="onPlatesSelected"
+      @onStep1="voxelize"
+      @onShowPreview="showPreview"
+      @onHidePreview="hidePreview"
+      @onDownloadArea="downloadArea"
+      @onRotateSelectedArea="rotateSelectedArea()"
+    />
+
+    <!-- <div v-if="showDebug" id="info-div">
+      DEBUG :
+      <br>
+      <div class="debugInfos" v-html="debugInfos" />
+    </div> -->
   </v-container>
 </template>
 
@@ -114,8 +119,6 @@
 import { mapActions, mapGetters } from 'vuex'
 import * as itowns from '@/node_modules/itowns/dist/itowns'
 import * as itowns_widgets from '@/node_modules/itowns/dist/itowns_widgets'
-import * as colorLayersOrdering from '@/node_modules/itowns/lib/Renderer/ColorLayersOrdering.js'
-import { gsap, Power2 } from 'gsap'
 import SidebarComponent from './SidebarComponent.vue'
 import PreviewComponent from './PreviewComponent.vue'
 import UserInfo from './UserInfo.vue'
@@ -147,7 +150,7 @@ export default {
       debugInfos: null,
       drawer: true,
       rail: true,
-      viewerDivWidth: window.innerWidth - 50,
+      // viewerDivWidth: window.innerWidth - 50,
       navbarWidth: 55,
       nbPlatesHorizontal: null,
       nbPlatesVertical: null,
@@ -170,6 +173,7 @@ export default {
       getNewAreaRotation: 'map/getNewAreaRotation',
       getCurrentTabValue: 'map/getCurrentTabValue',
       getSelectedPos: 'map/getSelectedPos',
+      getIsFullscreen: 'map/getIsFullscreen',
     }),
     currentZoomLevel() {
       if (view && view.controls) {
@@ -193,8 +197,11 @@ export default {
     currentTabValue() {
       return this.getCurrentTabValue
     },
-    selectedAreaCoordinate() {
+    selectedPos() {
       return this.getSelectedPos
+    },
+    isFullscreen() {
+      return this.getIsFullscreen
     }
   },
   mounted() {
@@ -202,7 +209,8 @@ export default {
     this.$evtBus.on('onToggleLayerVisibility', this.toggleLayerVisibility)
     this.$evtBus.on('onChangeLayerOpacity', this.changeLayerOpacity)
     this.$evtBus.on('onOpenMockup', this.openMockup)
-    this.$evtBus.on('onGotoMockupList', this.goToMockupList)
+    this.$evtBus.on('onShowOpenedMockup', this.showOpenedMockup)
+    this.$evtBus.on('onRefreshMap', this.refreshMap)
 
     // ===== Init iTowns vars =====
     // Placement in Lyon - France
@@ -215,8 +223,10 @@ export default {
         range: 3000,
     }
     viewerDiv = document.getElementById('viewerDiv')
-    console.log('viewerDiv')
-    console.log(viewerDiv)
+    
+    // DEBUG
+    // console.log('viewerDiv')
+    // console.log(viewerDiv)
 
     // ===== Init View =====
     view = new itowns.GlobeView(viewerDiv, lyonPlacement)
@@ -242,30 +252,30 @@ export default {
 
     // Global init Event
     view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function m() {
-      console.info('-Globe initialized-')
-        // ===== Reload view Extent =====
-        this.getViewCurrentExtent()
-        // ===== Init Data and add layer to iTowns =====
-        this.loadFdpData(view)
-        // ===== Add 3D Building =====
-        this.addIGNBuildingLayer()
-        // ===== Show Debug =====
-        this.showDebugInfos()
-        // ===== Show All Layers =====
-        this.showAllLayers()
+      // ! Init OK
+      // console.info('-Globe initialized-')
+      // ! ===== Reload view Extent =====
+      this.getViewCurrentExtent()
+      // ! ===== Init Data and add layer to iTowns =====
+      this.loadFdpData(view)
+      // ! ===== Add 3D Building =====
+      this.addIGNBuildingLayer()
+      // ! ===== Show Debug =====
+      // this.showDebugInfos()
+      // ! ===== Show All Layers =====
+      this.showAllLayers()
 
-        // ## Add Wheel Event listener ##
-        viewerDiv.addEventListener('wheel', this.handleMouseMove)
+      // ## Add Mouse Event listener ##
+      viewerDiv.addEventListener('mousedown', this.handleMouseDown)
+      viewerDiv.addEventListener('mouseup', this.handleMouseUp)
+      viewerDiv.addEventListener('mousemove', this.handleMouseDrag)
 
-        // ## Add Mouse Event listener ##
-        viewerDiv.addEventListener('mousedown', this.handleMouseDown)
-        viewerDiv.addEventListener('mousemove', this.handleMouseMove)
-        viewerDiv.addEventListener('mouseup', this.handleMouseUp)
+      // ! For debugging pos
+      // viewerDiv.addEventListener('mousemove', this.handleMouseMove)
+      // ## Add Wheel Event listener ##
+      // viewerDiv.addEventListener('wheel', this.handleMouseMove)
 
-        // ## Add Click Event listener ##
-        // viewerDiv.addEventListener('click', this.handleClick)
     }.bind(this))
-
   },
   methods: {
     ...mapActions({
@@ -300,6 +310,9 @@ export default {
         view.notifyChange()
       }
     },
+    refreshMap() {
+      view.notifyChange()
+    },
     openUserInfo() {
       this.isUserInfoActive = true;
     },
@@ -322,23 +335,27 @@ export default {
         this.setCurrentTabValue(null)
       } else {
         this.setCurrentTabValue(value)
-        // this.currentTabValue = value
 
-        // Reset Area for Step1
-        this.removeSelectedArea()
-        this.resetAreaStore()
-        this.$evtBus.emit('onResetArea')
+        // Do this if it's not projection
+        if (this.currentTabValue !== 2) {
+          // Reset Area for Step1
+          this.removeSelectedArea()
+          this.resetAreaStore()
+          this.$evtBus.emit('onResetArea')
+        }
 
-        // Specific get mockup list
+        // Specific to mockup list tab
         if (this.currentTabValue === 3) {
           this.fetchProjectsList()
         }
       }
     },
     closeNavbarItem() {
-      this.currentTabValue = null
-      this.removeSelectedArea()
-      this.resetAreaStore()
+      if (this.currentTabValue !== 2) {
+        this.setCurrentTabValue(null)
+        this.removeSelectedArea()
+        this.resetAreaStore()
+      }
     },
     onPlatesSelected(plates) {
       this.nbPlatesHorizontal = plates.horizontal;
@@ -350,19 +367,24 @@ export default {
       console.log('== view DEBUG ==', view)
     },
     showAllLayers() {
-      // DEBUG Show layers
-      console.log('== allViewLayers DEBUG ==')
+      // ! Add all Layers in Store
       var allViewLayers = view.getLayers()
       this.setBaseLayers(allViewLayers)
-      console.log(allViewLayers)
 
-      allViewLayers.forEach(layer => {
-        console.log(layer.id, layer.crs, layer)
-      })
+      // DEBUG Show layers
+      // console.log('== allViewLayers DEBUG ==')
+      // console.log(allViewLayers)
+      // allViewLayers.forEach(layer => {
+      //   console.log(layer.id, layer.crs, layer)
+      // })
     },
     addCustomProjections() {
       // Define crs projection that we will use (taken from https://epsg.io/2154, Proj4js section)
       itowns.proj4.defs('EPSG:2154', '+proj=lcc +lat_0=46.5 +lon_0=3 +lat_1=49 +lat_2=44 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs')
+    },
+    handleMouseDrag(event) {
+      // Enable drag boolean
+      this.dragging = true
     },
     handleMouseMove(event) {
       // DEBUG
@@ -376,7 +398,7 @@ export default {
       coordMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
       coordMouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-      // TODO: Detect handle only on viewer Itowns
+      // Detect mouse move
       if (coordMouse.x && coordMouse.y) {
         const target = new itowns.Coordinates('EPSG:2154', 0, 0, 0);
         const result = view.pickCoordinates(event, target);
@@ -399,19 +421,17 @@ export default {
       this.dragging = false
     },
     handleMouseUp(event) {
-      // Check drag boolean
+      // DEBUG
       // console.log('mouse up')
       // console.log(this.dragging ? 'drag': 'click')
+
+      // Check drag boolean
       if (this.dragging === false) {
         // Add selectedArea
         if(this.$refs.sidebarComponent && this.$refs.sidebarComponent.isAreaSelectionActive) {
           this.selectArea(event);
           return;
         }
-
-        // ! USELESS ?
-        // Trying to detect the selectedArea
-        // this.raycast(event)
       }
     },
     intersectArea(areaSelected, min, max) {
@@ -711,10 +731,11 @@ export default {
       // Finally add layer
       view.addLayer(wfsBuildingLayer)
     },
-    lookAtCoordinate(coordinates, range) {
+    lookAtCoordinate(coordinates, range, tilt) {
       view.controls.lookAtCoordinate({ 
         coord: coordinates, 
-        range: range ? range:20000, 
+        tilt: tilt ? tilt : 100,
+        range: range ? range : 20000, 
         heading: 0 
       })
     },
@@ -807,6 +828,9 @@ export default {
       }
       this.$evtBus.emit('onResetSliderRotation', true)
     },
+    resetMockupSelection() {
+      this.removeSelectedArea()
+    },
     rotateSelectedArea() {
       // Get cube in scene
       const sceneCube = view.scene.getObjectByName( 'selectedAreaCube' )
@@ -832,12 +856,13 @@ export default {
       // Get target coordinate
       const target = new itowns.Coordinates('EPSG:4978', 0, 0, 0);
       const result = view.pickCoordinates(event, target);
-      console.log('pick selectedArea')
-      console.log(result)
+      
+      // DEBUG
+      // console.log('pick selectedArea')
+      // console.log(result)
 
       // Keep coordinates
       this.setSelectedPos(result)
-      //OLD this.selectedAreaCoordinate = result
 
       // GoTo coordinates
       this.lookAtCoordinate(result, 1500)
@@ -877,12 +902,25 @@ export default {
       if (selectedArea) {
         // Go To area
         this.ongoingTravel = true;
-        this.lookAtCoordinate(this.selectedAreaCoordinate, 1500)
+        this.lookAtCoordinate(this.selectedPos, 1500)
         this.ongoingTravel = false;
         
         // Disable area selection
         this.setAreaSelectionActive(false)
       }
+    },
+    travelForProjection() {
+      // TODO: Compute range with plate ?
+
+      if (this.selectedPos) {
+        // Go To area
+        this.ongoingTravel = true;
+        this.lookAtCoordinate(this.selectedPos, 150, 89.5)
+        this.ongoingTravel = false;
+      }
+
+      // TODO: Hide opened Mockup area
+      this.hideOpenedMockup()
     },
     async voxelize() {
       if (selectedArea) {
@@ -907,22 +945,6 @@ export default {
         // console.log(bbMin)
         // console.log(bbMax)
 
-        // TODO: Create 2 box for min and max + material + add to scene
-        // ! NEW - DEBUG BBOX IN SCENE
-        // const geomBB = new itowns.THREE.BoxGeometry(10, 10, 10);
-        // const matBB = new itowns.THREE.MeshBasicMaterial({ color: 0xCB4335, opacity: 0.4, transparent: true });
-        // const meshBB1 = new itowns.THREE.Mesh(geomBB, matBB);
-        // const meshBB2 = new itowns.THREE.Mesh(geomBB, matBB);
-        // meshBB1.position.set(bbMin.x, bbMin.y, bbMin.z)
-        // meshBB2.position.set(bbMax.x, bbMax.y, bbMax.z)
-        // // Add mesh to scene
-        // view.scene.add(meshBB1)
-        // view.scene.add(meshBB2)
-        // // ! Used to force the re-rendering ?
-        // meshBB1.updateMatrixWorld()
-        // meshBB2.updateMatrixWorld() 
-        // view.notifyChange(true)
-
         // ! Convert to 2154 coords
         const coordsMin = new itowns.Coordinates('EPSG:4978', bbMin).as('EPSG:2154')
         const coordsMax = new itowns.Coordinates('EPSG:4978', bbMax).as('EPSG:2154')
@@ -931,8 +953,8 @@ export default {
         this.selectedBbox = (Math.min(coordsMax.x, coordsMin.x)) + ', ' + (Math.min(coordsMax.y, coordsMin.y)).toString() + ', ' + (Math.max(coordsMax.x, coordsMin.x)).toString() + ', ' + (Math.max(coordsMax.y, coordsMin.y)).toString();
         
         // DEBUG
-        console.log('selectedBbox')
-        console.log(this.selectedBbox)
+        // console.log('selectedBbox')
+        // console.log(this.selectedBbox)
 
         // ! Set in Store
         this.setSelectedBbox(this.selectedBbox)
@@ -1044,13 +1066,29 @@ export default {
       boxMockup.updateMatrixWorld()
       view.notifyChange()
 
+      // ! Save SelectedArea
+      selectedArea = boxMockup
+
       // ! Goto poly position
       const polyMockupCoord = new itowns.Coordinates(areaJsonProps.pos.crs, areaJsonProps.pos.x, areaJsonProps.pos.y, areaJsonProps.pos.z)
       this.lookAtCoordinate(polyMockupCoord, 1500)
       
-      // TODO: Trigger boolean to next step (sidebar)
+      // ! Trigger boolean to next step (sidebar)
       this.setCurrentTabValue(1)
       this.$evtBus.emit('onOpenedMockupStep')
+    },
+    hideOpenedMockup() {
+      if (openedMockupArea) {
+        view.scene.remove(openedMockupArea)
+        view.notifyChange(true)
+      }
+    },
+    showOpenedMockup() {
+      if (openedMockupArea) {
+        view.scene.add(openedMockupArea)
+        view.notifyChange(true)
+      }
+      // TODO: Travel with range up ?
     },
     resetOpenedMockup() {
       if (openedMockupArea) {
@@ -1059,14 +1097,11 @@ export default {
         view.notifyChange(true)
       }
     },
-    resetMockupSelection() {
-      this.removeSelectedArea()
-    },
   },
 }
 </script>
 
-<style>
+<style lang="scss">
 html, body {
   overflow: hidden !important;
 }
@@ -1074,6 +1109,20 @@ html, body {
 .screen-row {
   margin: 0 !important;
   width: 100% !important;
+  /* height: 100%; */
+}
+
+.navbar-container {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 56px !important;
+  max-width: 56px !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  padding: 0px;
+  z-index: 1000;
 }
 
 #wrapper-div {
@@ -1088,18 +1137,10 @@ html, body {
   width: 100%;
 }
 
-.navbar-container {
-  /* max-width: 300px !important; */
-  display: inline-block;
-  padding: 0px;
-}
-
 .viewerDiv-container {
   padding: 0px;
+  width: calc(100vw - 50px) !important;
 }
-
-/* .debugInfos {
-} */
 
 #info-div {
   display: flex;
@@ -1109,7 +1150,7 @@ html, body {
   text-align: left;
   position: absolute;
   top: 40%;
-  right: -2000px;  /* //! Temporary value to remove debug from screen without causing bugs */
+  right: 10px;
   height: 250px;
   width: 550px;
   padding: 10px;
@@ -1130,5 +1171,16 @@ html, body {
   flex-direction: column;
   justify-content: center;
   align-content: center !important; 
+}
+
+.help-nav-item {
+  position: fixed !important; 
+  bottom: 5px;
+  width: 40px !important;
+  // margin: 0 !important;
+
+  .mdi {
+    margin: 0 !important;
+  }
 }
 </style>
