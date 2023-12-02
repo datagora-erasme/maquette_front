@@ -4,7 +4,7 @@
       <img
         :src="require('../assets/logo_metropole.png')"
         class="logo-connection-step"
-        alt="Logo Métropole"
+        alt="Logo Métropole de Lyon"
       >
     </div>
 

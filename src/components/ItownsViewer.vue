@@ -1178,9 +1178,10 @@ html, body {
   bottom: 5px;
   width: 40px !important;
   // margin: 0 !important;
-
+  
   .mdi {
     margin: 0 !important;
+    color: #1976D3;
   }
 }
 </style>

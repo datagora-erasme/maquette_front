@@ -367,7 +367,7 @@
         </v-list>
       </v-card-text>
     </v-card>
-    <v-card v-if="currentTabValue == 4" class="sidebar-cards py-5 px-7">
+    <v-card v-if="currentTabValue == 4" class="sidebar-cards py-5 px-3">
       <v-row class="d-flex justify-center">
         <v-col class="pa-0">
           <h3 class="sidebar-title py-2">
@@ -375,18 +375,82 @@
           </h3>
         </v-col>
       </v-row>
-      <v-row>
-        <v-col class="projection-panel d-flex flex-column justify-center align-center">
-          Commande pour se déplacer sur la carte :
-          <br><br>
-          Clic gauche : Déplacer la caméra
-          Left-Click: camera translation (drag)
-          Right-Click: camera translation (pan)
-          Ctrl + Left-Click: camera rotation (orbit)
-          Spacebar / Wheel-Click: smart zoom
-          Mouse Wheel: zoom in/out
-          T: orient camera to a top view
-          Y: move camera to start position
+      <v-row class="help-panel-row">
+        <v-col class="help-panel">
+          <h4 class="w-100 text-center">
+            Commandes sur la carte
+          </h4>
+          <br>
+          <span>
+            <v-kbd>Clic gauche</v-kbd> : <br>Déplacer la caméra
+          </span><br><br>
+          <span>
+            <v-kbd>Clic droit</v-kbd> : <br>Déplacer la caméra (panoramique)
+          </span><br><br>
+          <span>
+            <v-kbd>CTRL</v-kbd> + <v-kbd>Clic gauche</v-kbd> : <br>Rotation de l'orbite de la caméra
+          </span><br><br>
+          <span>
+            <v-kbd>Clic molette</v-kbd> ou <v-kbd>Molette haut-bas</v-kbd> : <br>Zoom avant et arrière
+          </span><br><br>
+
+          <h4 class="w-100 text-center">
+            A propos
+          </h4>
+          <br>
+          <v-row>
+            <v-col class="d-flex justify-center align-center">
+              <img
+                :src="require('../assets/logo_metropole.png')"
+                alt="Logo Métropole de Lyon"
+                width="160"
+              >
+            </v-col>
+            <v-col class="d-flex justify-center align-center">
+              <img
+                :src="require('../assets/univ_lyon_1.png')"
+                alt="Logo Université Lyon 1"
+                width="160"
+              >
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col class="d-flex justify-center align-center">
+              <img
+                :src="require('../assets/datagora.png')"
+                alt="Logo Datagora"
+                width="70"
+              >
+            </v-col>
+            <v-col class="d-flex justify-center align-center">
+              <img
+                :src="require('../assets/exo-dev.png')"
+                alt="Logo Exo-Dev"
+              >
+            </v-col>
+          </v-row>
+          <br>
+          <div class="text-justify">
+            Le projet de Maquette augmentée est né lors d'une expérimentation dans le cadre du projet <b>MAM : Médiation et Modélisation Augmentée</b>. Différents ateliers ont été organisés en collaboration avec le <b>LabEx IMU, ERASME Urban Lab et l'École Urbaine de Lyon</b>.
+          </div>
+          <br>
+          <div class="text-justify">
+            Le projet consiste en la création d'une maquette d'un quartier urbain réalisée en Lego à partir d'une plateforme web. Cette maquette est destinée à être installée dans les lieux publics et utilisée dans le cadre d'une médiation ou d'un conseil de quartier.
+          </div>
+          <br>
+          <div class="text-right">
+            <v-btn 
+              append-icon="mdi-open-in-new"
+              variant="outlined"
+              density="comfortable"
+              color="#194275"
+              href="https://datagora.erasme.org/projets/maquette-augmentee-vegetalisation/"
+              target="_blank"
+            >
+              En savoir plus
+            </v-btn>
+          </div>
+          <br>
         </v-col>
       </v-row>
     </v-card>
@@ -919,6 +983,17 @@ export default {
   flex-direction: column !important;
   justify-content: center !important;
   align-items: center !important;
+}
+
+/* Help and credits */
+.help-panel-row {
+  overflow-y: auto;
+  height: 100%;
+}
+.help-panel {
+  overflow-y: auto;
+  height: calc(100% - 15px) !important;
+  text-align: left;
 }
 
 /* Mockup List */
