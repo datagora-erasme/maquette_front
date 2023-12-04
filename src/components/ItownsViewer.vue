@@ -211,6 +211,7 @@ export default {
     this.$evtBus.on('onOpenMockup', this.openMockup)
     this.$evtBus.on('onShowOpenedMockup', this.showOpenedMockup)
     this.$evtBus.on('onRefreshMap', this.refreshMap)
+    this.$evtBus.on('onResetMapLocation', this.resetMapLocation)
 
     // ===== Init iTowns vars =====
     // Placement in Lyon - France
@@ -809,6 +810,15 @@ export default {
           placeholder: 'Cherchez un emplacement en France 🔎',
       })
     },
+    resetMapLocation() {
+      console.log('pass by resetMapLocation')
+      if (this.selectedPos) {
+        this.lookAtCoordinate(this.selectedPos, 1500)
+      } else {
+        // Set placement on Lyon + zoom
+        view.controls.lookAtCoordinate(lyonPlacementSmall)
+      }
+    },
     startSelection() {
       // Set placement on Lyon + zoom
       view.controls.lookAtCoordinate(lyonPlacementSmall)
@@ -910,6 +920,8 @@ export default {
       }
     },
     travelForProjection() {
+      console.log('this.selectedPos travel proj')
+      console.log(this.selectedPos)
       // TODO: Compute range with plate ?
 
       if (this.selectedPos) {
@@ -1068,10 +1080,14 @@ export default {
 
       // ! Save SelectedArea
       selectedArea = boxMockup
-
+      
+      
       // ! Goto poly position
       const polyMockupCoord = new itowns.Coordinates(areaJsonProps.pos.crs, areaJsonProps.pos.x, areaJsonProps.pos.y, areaJsonProps.pos.z)
       this.lookAtCoordinate(polyMockupCoord, 1500)
+      
+      // ! Set pos for proj
+      this.setSelectedPos(polyMockupCoord)
       
       // ! Trigger boolean to next step (sidebar)
       this.setCurrentTabValue(1)

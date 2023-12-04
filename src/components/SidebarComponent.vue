@@ -184,14 +184,13 @@
               </div>
             </div>
           </v-row>
-          <v-row v-if="currentStep === 2" class="step3 d-flex justify-center" style="height: calc(100vh - 124.38px); width: 390px">
+          <v-row v-if="currentStep === 2" class="step3 d-flex justify-center">
             <v-col class="title-buttons-container w-100 d-flex flex-column align-center justify-space-around">
               <h2 class="mockup-ready-title">
                 Votre maquette est prête !
               </h2>
-              <!-- <v-card class="buttons-card pa-0 d-flex flex-column justif-center"> -->
               <v-row class="d-flex align-center pa-0">
-                <v-col class="py-0 px-1 d-flex flex-column justify-space-evenly align-center">
+                <v-col class="py-0 px-0 d-flex flex-column justify-space-evenly align-center">
                   <v-btn
                     color="#414288"
                     class="last-step-buttons mb-3"
@@ -214,7 +213,7 @@
                   </v-btn>
                   <v-btn
                     color="#414288"
-                    class="last-step-buttons"
+                    class="last-step-buttons mb-3"
                     prepend-icon="mdi-cloud-download"
                     height="50"
                     block
@@ -223,9 +222,18 @@
                   >
                     <span class="py-2">Télécharger l'emprise<br> géographique</span>
                   </v-btn>
+                  <v-btn
+                    color="#1B5E20"
+                    class="last-step-buttons"
+                    prepend-icon="mdi-video-box"
+                    height="50"
+                    block
+                    @click="startSlideShow()"
+                  >
+                    <span class="py-2">Projeter<br> cette maquette</span>
+                  </v-btn>
                 </v-col>
               </v-row>
-              <!-- </v-card> -->
               <v-form ref="formMockup" on-submit="return false;">
                 <div v-if="!newMockupSend">
                   <div class="w-100 mb-2">
@@ -262,11 +270,19 @@
                 </div>
                 <v-btn
                   color="#37474F"
-                  class="new-mockup-button"
+                  class="new-mockup-button mb-2"
                   prepend-icon="mdi-arrow-left"
                   @click="resetMockupSelection()"
                 >
                   Créer une nouvelle maquette
+                </v-btn>
+                <v-btn
+                  color="#37474F"
+                  class="new-mockup-button"
+                  prepend-icon="mdi-arrow-left"
+                  @click="exit()"
+                >
+                  Quitter
                 </v-btn>
               </v-form>
             </v-col>
@@ -291,6 +307,7 @@
             color="#1B5E20"
             min-width="330"
             style="color: white"
+            :disabled="!currentAreaPos"
             @click="startSlideShow()"
           >
             Lancer le mode projection
@@ -660,6 +677,9 @@ export default {
       this.$emit('onRotateSelectedArea')
     },
     startSlideShow() {
+      // Set area position in store
+
+
       // Enable navigator fullscreen
       document.documentElement.requestFullscreen()
 
@@ -674,18 +694,6 @@ export default {
       
       // Enable fullscreen in Store (v-if btn of exit + sidebar)
       this.setIsFullscreen(true)
-    },
-    endSlideShow() {
-      // Disable navigator fullscreen
-      document.exitFullscreen()
-
-      // Restore display of all widget
-      document.getElementById('widgets-scale').style.display = 'flex' // flex
-      document.getElementById('widgets-navigation').style.display = 'flex' // flex
-      document.getElementById('widgets-searchbar').style.display = 'block' // block
-      
-      // Disable fullscreen in Store
-      this.setIsFullscreen(false)
     },
     generateAndDownloadCSV() {
       this.generateHeightMap({ mesh: this.voxelizedMesh, platesX: this.plates.x, platesY: this.plates.y })
@@ -740,6 +748,22 @@ export default {
     },
     resetMockupSelection() {
       this.currentStep = 0
+      this.clearPlatesNumber()
+      this.cancelSelection()
+      // Reset Mockup form
+      this.newMockupName = null
+      this.newMockupSend = false
+      this.$emit('onResetMockupSelection')
+      this.$emit('onResetOpenedMockup')
+    },
+    exit() {
+      // Close navbar
+      this.$emit('onCloseNavbar')
+      
+      // Reset map position
+      this.$emit('onStartSelection')
+
+      // Clear all
       this.clearPlatesNumber()
       this.cancelSelection()
       // Reset Mockup form
@@ -963,10 +987,6 @@ export default {
 .title-buttons-container {
   height: 75vh;
 }
-.buttons-card {
-  width: 70%;
-  height: 35%;
-}
 .last-step-buttons {
   color: white !important; 
   width: 90%;
@@ -974,6 +994,11 @@ export default {
 .new-mockup-button {
   color: white !important; 
   width: 100%;
+}
+
+.step3 {
+  height: calc(100vh - 124.38px); 
+  width: 390px;
 }
 
 /* Projection */

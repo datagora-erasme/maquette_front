@@ -9,7 +9,7 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex'
+import { mapActions } from 'vuex'
 
 export default {
   name: 'AsideBtn',
@@ -33,11 +33,16 @@ export default {
       // Disable fullscreen in Store
       this.setIsFullscreen(false)
 
-      // Show again Opened Mockup
-      this.$emit('onShowOpenedMockup')
+      // TODO: Show again Opened Mockup
+      // this.$emit('onShowOpenedMockup')
+      this.$evtBus.emit('onShowOpenedMockup')
+
+      // TODO: Reset position ?
+      this.$evtBus.emit('onResetMapLocation')
 
       // Refresh map
-      this.$emit('onRefreshMap')
+      this.$evtBus.emit('onRefreshMap')
+      // this.$emit('onRefreshMap')
     },
   }
 }
