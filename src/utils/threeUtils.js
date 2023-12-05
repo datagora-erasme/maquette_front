@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import * as THREE from 'three';
 
 // This is the first implementation that took ~8 secondes to execute.
@@ -379,10 +380,81 @@ const convertBboxToPolygon = (bbox) => {
   return polygon
 };
 
+/**
+ * Convert BBOX coordinates to GeoJSON coordinates.
+ * @param {String} bbox : Desired BBOX.
+ * @returns {String} GeoJson computed.
+ */
+const convertBboxToGeoJSON = (bbox) => {
+  // Split bbox coordinates
+  const bboxArray = bbox.split(',')
+  // Get min/max from coord
+  const bboxAminX = bboxArray[0]
+  const bboxAminY = bboxArray[1]
+  const bboxAmaxX = bboxArray[2]
+  const bboxAmaxY = bboxArray[3]
+  // Build Polygon
+  const geojson = 
+  {
+    "type": "FeatureCollection",
+    "name": "geojson",
+    "crs": {
+      "type": "name",
+      "properties": {
+        "name": "urn:ogc:def:crs:EPSG::2154"
+      }
+    },
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "id": 1
+        },
+        "geometry": {
+          "type": "MultiPolygon",
+          "coordinates": [
+            [
+              [
+                [
+                  parseFloat(bboxAminX),
+                  parseFloat(bboxAminY)
+                ],
+                [
+                  parseFloat(bboxAminX),
+                  parseFloat(bboxAmaxY)
+                ],
+                [
+                  parseFloat(bboxAmaxX),
+                  parseFloat(bboxAmaxY)
+                ],
+                [
+                  parseFloat(bboxAmaxX),
+                  parseFloat(bboxAminY)
+                ],
+                [
+                  parseFloat(bboxAminX),
+                  parseFloat(bboxAminY)
+                ]
+              ]
+            ]
+          ]
+        }
+      }
+    ]
+  }
+  
+  // DEBUG
+  console.log(geojson)
+  
+  // Return
+  return geojson
+};
+
 
 export {
   objToMesh,
   generateHeightMap,
   generateCSV,
   convertBboxToPolygon,
+  convertBboxToGeoJSON
 };

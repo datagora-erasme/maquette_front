@@ -189,51 +189,77 @@
               <h2 class="mockup-ready-title">
                 Votre maquette est prête !
               </h2>
-              <v-row class="d-flex align-center pa-0">
-                <v-col class="py-0 px-0 d-flex flex-column justify-space-evenly align-center">
-                  <v-btn
-                    color="#414288"
-                    class="last-step-buttons mb-3"
-                    prepend-icon="mdi-printer-3d"
-                    height="50"
-                    block
-                    @click="showMockup"
-                  >
-                    Afficher le rendu 3D
-                  </v-btn>
-                  <v-btn
-                    color="#414288"
-                    class="last-step-buttons mb-3"
-                    prepend-icon="mdi-file-excel"
-                    height="50"
-                    block
-                    @click="generateAndDownloadCSV"
-                  >
-                    <span class="py-2">Générer le guide<br> de montage</span>
-                  </v-btn>
-                  <v-btn
-                    color="#414288"
-                    class="last-step-buttons mb-3"
-                    prepend-icon="mdi-cloud-download"
-                    height="50"
-                    block
-                    disabled
-                    @click="downloadArea"
-                  >
-                    <span class="py-2">Télécharger l'emprise<br> géographique</span>
-                  </v-btn>
-                  <v-btn
-                    color="#1B5E20"
-                    class="last-step-buttons"
-                    prepend-icon="mdi-video-box"
-                    height="50"
-                    block
-                    @click="startSlideShow()"
-                  >
-                    <span class="py-2">Projeter<br> cette maquette</span>
-                  </v-btn>
-                </v-col>
-              </v-row>
+              <!-- <v-row class="d-flex align-center pa-0" style="width=500px;">
+                <v-col class="py-0 px-0 d-flex flex-column justify-space-evenly align-center"> -->
+              <div>
+                <v-btn
+                  color="#414288"
+                  class="last-step-buttons mb-3"
+                  prepend-icon="mdi-printer-3d"
+                  height="50"
+                  width="320"
+                  block
+                  @click="showMockup"
+                >
+                  Afficher le rendu 3D
+                </v-btn>
+                <v-row class="pa-0">
+                  <v-col class="pr-0">
+                    <!-- TODO: V-if pour générer et télécharger -->
+                    <v-btn
+                      color="#414288"
+                      class="last-step-buttons mb-3"
+                      prepend-icon="mdi-file-excel"
+                      height="50"
+                      block
+                      @click="generateAndDownloadCSV"
+                    >
+                      <span class="py-2">Générer le guide<br> de montage</span>
+                    </v-btn>
+                  </v-col>
+                  <v-col cols="3" class="px-0">
+                    <!-- TODO: V-if pour delete si généré -->
+                    <v-btn
+                      color="red-darken-2"
+                      icon="mdi-trash-can"
+                      height="50"
+                      width="50"
+                      @click="generateAndDownloadCSV"
+                    >
+                      <v-icon icon="mdi-trash-can" />
+                      <v-tooltip
+                        activator="parent"
+                        location="end"
+                      >
+                        Supprimer le guide
+                      </v-tooltip>
+                    </v-btn>
+                  </v-col>
+                </v-row>
+                <v-btn
+                  color="#414288"
+                  class="last-step-buttons mb-3"
+                  prepend-icon="mdi-cloud-download"
+                  height="50"
+                  block
+                  disabled
+                  @click="downloadArea"
+                >
+                  <span class="py-2">Télécharger l'emprise<br> géographique</span>
+                </v-btn>
+                <v-btn
+                  color="#1B5E20"
+                  class="last-step-buttons"
+                  prepend-icon="mdi-video-box"
+                  height="50"
+                  block
+                  @click="startSlideShow()"
+                >
+                  <span class="py-2">Projeter<br> cette maquette</span>
+                </v-btn>
+              </div>
+              <!-- </v-col>
+              </v-row> -->
               <v-form ref="formMockup" on-submit="return false;">
                 <div v-if="!newMockupSend">
                   <div class="w-100 mb-2">
@@ -720,8 +746,9 @@ export default {
             nb_plaques_h: this.nbPlatesHorizontal,
             nb_plaques_v: this.nbPlatesVertical,
             ratio: 1,
-            csv_id: 2, // TODO: Change
-            model_id: 2, // TODO: Change
+            // csv_id: 2, // TODO: Change
+            // model_id: 2, // TODO: Change
+            // emprise_id: 2, // TODO: Change
           }
 
           // Save

@@ -122,7 +122,7 @@ import * as itowns_widgets from '@/node_modules/itowns/dist/itowns_widgets'
 import SidebarComponent from './SidebarComponent.vue'
 import PreviewComponent from './PreviewComponent.vue'
 import UserInfo from './UserInfo.vue'
-import { objToMesh, convertBboxToPolygon } from '../utils/threeUtils'
+import { objToMesh, convertBboxToGeoJSON } from '../utils/threeUtils'
 import { MathUtils } from 'three'
 
 // Global vars...
@@ -133,7 +133,8 @@ var lyonPlacement
 var lyonPlacementSmall
 var coordMouse
 var selectedArea = null
-var openedMockupArea = null
+var openedMockupMesh = null
+var openedMockupObj = null
 var scaler
 const raycaster = new itowns.THREE.Raycaster(); // create once
 const clickMouse = new itowns.THREE.Vector2();  // create once
@@ -212,6 +213,7 @@ export default {
     this.$evtBus.on('onShowOpenedMockup', this.showOpenedMockup)
     this.$evtBus.on('onRefreshMap', this.refreshMap)
     this.$evtBus.on('onResetMapLocation', this.resetMapLocation)
+    this.$evtBus.on('onResetArea', this.resetOpenedMockup)
 
     // ===== Init iTowns vars =====
     // Placement in Lyon - France
@@ -342,6 +344,7 @@ export default {
           // Reset Area for Step1
           this.removeSelectedArea()
           this.resetAreaStore()
+          // Reset openedMockup
           this.$evtBus.emit('onResetArea')
         }
 
@@ -920,19 +923,26 @@ export default {
       }
     },
     travelForProjection() {
-      console.log('this.selectedPos travel proj')
-      console.log(this.selectedPos)
-      // TODO: Compute range with plate ?
-
       if (this.selectedPos) {
         // Go To area
         this.ongoingTravel = true;
-        this.lookAtCoordinate(this.selectedPos, 150, 89.5)
+
+        var newZoom = 160
+        if (openedMockupObj.nb_plaques_h > 1 || openedMockupObj.nb_plaques_v > 1) {
+          // TODO: nb_plaque h & v x distance (zoom)
+          if (openedMockupObj.nb_plaques_h > openedMockupObj.nb_plaques_v) {
+            newZoom = openedMockupObj.nb_plaques_h * newZoom
+          } else {
+            newZoom = openedMockupObj.nb_plaques_v * newZoom
+          }
+        }
+
+        this.lookAtCoordinate(this.selectedPos, newZoom, 89.5)
         this.ongoingTravel = false;
       }
 
-      // TODO: Hide opened Mockup area
-      this.hideOpenedMockup()
+      // ! Hide opened Mockup area
+      // this.hideOpenedMockup()
     },
     async voxelize() {
       if (selectedArea) {
@@ -1052,6 +1062,9 @@ export default {
       const areaJsonProps = JSON.parse(currMockup.bbox)
       // console.log(areaJsonProps)
 
+      // TODO: Try hard convert to geoJson polygon
+      convertBboxToGeoJSON(areaJsonProps.bbox)
+
       // ! Build mockup new Mesh
       const geom = new itowns.THREE.BoxGeometry(100, currMockup.nb_plaques_h * 100, currMockup.nb_plaques_v * 100);
       const mat = new itowns.THREE.MeshBasicMaterial({ color: 0xCB4335, opacity: 0.4, transparent: true });
@@ -1072,7 +1085,7 @@ export default {
       view.scene.add(boxMockup)
       
       // ! Save Mesh to manipulate after
-      openedMockupArea = boxMockup
+      openedMockupMesh = boxMockup
 
       // ! Trigger render
       boxMockup.updateMatrixWorld()
@@ -1081,35 +1094,41 @@ export default {
       // ! Save SelectedArea
       selectedArea = boxMockup
       
-      
       // ! Goto poly position
       const polyMockupCoord = new itowns.Coordinates(areaJsonProps.pos.crs, areaJsonProps.pos.x, areaJsonProps.pos.y, areaJsonProps.pos.z)
       this.lookAtCoordinate(polyMockupCoord, 1500)
       
-      // ! Set pos for proj
+      // ! Save pos in store for proj
       this.setSelectedPos(polyMockupCoord)
+      
+      // TODO: Save mockup obj in global var
+      openedMockupObj = currMockup
       
       // ! Trigger boolean to next step (sidebar)
       this.setCurrentTabValue(1)
       this.$evtBus.emit('onOpenedMockupStep')
     },
     hideOpenedMockup() {
-      if (openedMockupArea) {
-        view.scene.remove(openedMockupArea)
+      if (openedMockupMesh) {
+        view.scene.remove(openedMockupMesh)
         view.notifyChange(true)
       }
     },
     showOpenedMockup() {
-      if (openedMockupArea) {
-        view.scene.add(openedMockupArea)
+      console.log('openedMockupMesh')
+      console.log(openedMockupMesh)
+      if (openedMockupMesh) {
+        view.scene.add(openedMockupMesh)
         view.notifyChange(true)
+
+        // Travel with range up
+        this.lookAtCoordinate(this.selectedPos, 1500)
       }
-      // TODO: Travel with range up ?
     },
     resetOpenedMockup() {
-      if (openedMockupArea) {
-        view.scene.remove(openedMockupArea)
-        openedMockupArea = null
+      if (openedMockupMesh) {
+        view.scene.remove(openedMockupMesh)
+        openedMockupMesh = null
         view.notifyChange(true)
       }
     },

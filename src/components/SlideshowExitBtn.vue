@@ -34,7 +34,6 @@ export default {
       this.setIsFullscreen(false)
 
       // TODO: Show again Opened Mockup
-      // this.$emit('onShowOpenedMockup')
       this.$evtBus.emit('onShowOpenedMockup')
 
       // TODO: Reset position ?
