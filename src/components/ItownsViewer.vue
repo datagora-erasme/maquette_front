@@ -922,18 +922,30 @@ export default {
         this.setAreaSelectionActive(false)
       }
     },
-    travelForProjection() {
+    travelForProjection(plates) {
       if (this.selectedPos) {
         // Go To area
         this.ongoingTravel = true;
 
         var newZoom = 160
-        if (openedMockupObj.nb_plaques_h > 1 || openedMockupObj.nb_plaques_v > 1) {
-          // TODO: nb_plaque h & v x distance (zoom)
-          if (openedMockupObj.nb_plaques_h > openedMockupObj.nb_plaques_v) {
-            newZoom = openedMockupObj.nb_plaques_h * newZoom
-          } else {
-            newZoom = openedMockupObj.nb_plaques_v * newZoom
+
+        if (openedMockupObj) {
+          if (openedMockupObj.nb_plaques_h > 1 || openedMockupObj.nb_plaques_v > 1) {
+            // nb_plates h & v x distance (zoom)
+            if (openedMockupObj.nb_plaques_h > openedMockupObj.nb_plaques_v) {
+              newZoom = openedMockupObj.nb_plaques_h * newZoom
+            } else {
+              newZoom = openedMockupObj.nb_plaques_v * newZoom
+            }
+          }
+        } else {
+          if (plates.x > 1 || plates.y > 1) {
+            // nb_plates h & v x distance (zoom)
+            if (plates.x > plates.y) {
+              newZoom = plates.x * newZoom
+            } else {
+              newZoom = plates.y * newZoom
+            }
           }
         }
 

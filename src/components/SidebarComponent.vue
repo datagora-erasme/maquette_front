@@ -703,14 +703,13 @@ export default {
       this.$emit('onRotateSelectedArea')
     },
     startSlideShow() {
-      // Set area position in store
-
+      // ?? Set area position in store
 
       // Enable navigator fullscreen
       document.documentElement.requestFullscreen()
 
       // ! Need to replace - REFACTO
-      this.$emit('onTravelForProjection')
+      this.$emit('onTravelForProjection', this.plates)
       this.$emit('onCloseNavbar')
 
       // ! Hide all widgets
