@@ -298,6 +298,7 @@ export default {
       setSelectedPos: 'map/setSelectedPos',
       fetchProjectsList: 'project/fetchProjectsList',
       setCurrentTabValue: 'map/setCurrentTabValue',
+      setOpenedMockup: 'map/setOpenedMockup',
     }),
     toggleLayerVisibility(layerId) {
       if(view) {
@@ -953,7 +954,7 @@ export default {
         this.ongoingTravel = false;
       }
 
-      // ! Hide opened Mockup area
+      // TODO: Hide opened Mockup area
       // this.hideOpenedMockup()
     },
     async voxelize() {
@@ -996,10 +997,17 @@ export default {
         // ! Api call to voxelize
         this.voxelizeBbox(this.selectedBbox)
         .then((objContent) =>  {
+          console.log('objContent')
+          console.log(objContent)
+
           objToMesh(objContent)
           .then((mesh) => {
+            console.log('mesh')
+            console.log(mesh)
+
             // Set data in Store
-            this.setVoxelizedMesh(mesh);
+            this.setVoxelizedMesh(mesh)
+
             // TODO: Refacto - Goto next Step
             this.$refs.sidebarComponent.endVoxelisation();
           })
@@ -1026,44 +1034,6 @@ export default {
             this.$evtBus.emit('onResetStepperPos')
           }
         })
-
-        // ! Useless ?
-        // await this.$axios.post('/dataprocess/bbox', {
-        //   bbox: this.selectedBbox,
-        //   ratio: 5
-        // }).then((response) => {
-        //   this.$refs.sidebarComponent.endVoxelisation();
-        //   this.selectedAreaVoxelized = atob(response.data.data)
-        //   const blob = new Blob([atob(response.data.data)], { type: 'text/plain' });
-        //   const downloadUrl = URL.createObjectURL(blob);
-        //   const downloadLink = document.createElement('a');
-        //   downloadLink.href = downloadUrl;
-        //   downloadLink.download = 'myfile.obj'; // TODO: Change the file name with maquette project name choose by user
-        //   this.setCurrentMockupDownloadLink(downloadLink);
-        //   objDownloadUrlToMesh(downloadLink).then((mesh) => {
-        //     console.log(mesh)
-        //     console.log(this.selectedPlates);
-        //     const heightMap = createHeightMapFromMeshUsingWorkers(mesh, this.selectedPlates.x, this.selectedPlates.y);
-        //     // generateCSVwithHeightMap(heightMap, 'CSV_OMG');
-
-        // await this.$axios.post('/dataprocess/bbox', {
-        //   bbox: this.selectedBbox,
-        //   ratio: 5
-        // }).then((response) => {
-        //   this.$refs.sidebarComponent.endVoxelisation();
-        //   this.setVoxelizedMeshObjContent(atob(response.data.data))
-        //   objToMesh(atob(response.data.data)).then((mesh) => {
-        //     this.setVoxelizedMesh(mesh);
-        //     console.log(mesh);
-        //     // this.generateHeightMap({ mesh, platesX: this.selectedPlates.x, platesY: this.selectedPlates.y }).then((heightMap) => {
-        //     //   this.generateCSVString({ heightMap,platesX: this.selectedPlates.x }).then((csvString) => {
-        //     //     this.downloadCSV({ csvString, name: 'CSV_FINAL' });
-        //     //   });
-        //     // });
-        //   });
-        // })
-        // console.log(this.selectedBbox)
-        // console.log('Bounding Box : ', coordsMin.x, coordsMax.y, coordsMax.x, coordsMin.y)
       }
     },
     openMockup(currMockup) {
@@ -1075,7 +1045,7 @@ export default {
       // console.log(areaJsonProps)
 
       // TODO: Try hard convert to geoJson polygon
-      convertBboxToGeoJSON(areaJsonProps.bbox)
+      // convertBboxToGeoJSON(areaJsonProps.bbox)
 
       // ! Build mockup new Mesh
       const geom = new itowns.THREE.BoxGeometry(100, currMockup.nb_plaques_h * 100, currMockup.nb_plaques_v * 100);
@@ -1115,6 +1085,7 @@ export default {
       
       // TODO: Save mockup obj in global var
       openedMockupObj = currMockup
+      this.setOpenedMockup(currMockup)
       
       // ! Trigger boolean to next step (sidebar)
       this.setCurrentTabValue(1)

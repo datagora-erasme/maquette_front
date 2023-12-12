@@ -212,7 +212,7 @@
                       prepend-icon="mdi-file-excel"
                       height="50"
                       block
-                      @click="generateAndDownloadCSV"
+                      @click="generateAndSaveCSV"
                     >
                       <span class="py-2">Générer le guide<br> de montage</span>
                     </v-btn>
@@ -221,17 +221,16 @@
                     <!-- TODO: V-if pour delete si généré -->
                     <v-btn
                       color="red-darken-2"
-                      icon="mdi-trash-can"
                       height="50"
                       width="50"
-                      @click="generateAndDownloadCSV"
+                      @click="deleteCSV"
                     >
-                      <v-icon icon="mdi-trash-can" />
+                      <v-icon icon="mdi-trash-can" class="fs-25" />
                       <v-tooltip
                         activator="parent"
                         location="end"
                       >
-                        Supprimer le guide
+                        Supprimer ce fichier
                       </v-tooltip>
                     </v-btn>
                   </v-col>
@@ -578,15 +577,13 @@
 <script>
 import StepperComponent from './StepperComponent.vue'
 import { mapActions, mapGetters } from 'vuex'
+import { objToMesh, convertBboxToGeoJSON } from '../utils/threeUtils'
+import * as THREE from 'three'
 
 export default {
   name: 'SidebarComponent',
   components: { StepperComponent },
   props: {
-    // currentTabValue: {
-    //   type: Number,
-    //   required: true,
-    // },
     ongoingTravel: {
       type: Boolean,
       required: true,
@@ -610,6 +607,10 @@ export default {
       editMockupId: null,
       editMockupNewName: null,
       deleteMockupDialog: false,
+      currentMockupSavedId: null,
+      currentMockupMesh: null,
+      currentMockupXPlates: null,
+      currentMockupYPlates: null,
       rules: {
         required: value => !!value || 'Champs obligatoire',
         max20: value => value.length <= 20 || 'Max 20 caractères',
@@ -629,6 +630,7 @@ export default {
       getSelectedPos: 'map/getSelectedPos',
       getProjectsList: 'project/getProjectsList',
       getIsFullscreen: 'map/getIsFullscreen',
+      getOpenedMockup: 'map/getOpenedMockup',
     }),
     currentTabValue() {
       return this.getCurrentTabValue
@@ -656,7 +658,10 @@ export default {
     },
     isFullscreen() {
       return this.getIsFullscreen
-    }
+    },
+    openedMockup() {
+      return this.getOpenedMockup
+    },
   },
   watch: {
     ongoingTravel() {
@@ -696,7 +701,11 @@ export default {
       updateProject: 'project/updateProject',
       deleteProject: 'project/deleteProject',
       setCurrentTabValue: 'map/setCurrentTabValue',
-      setIsFullscreen: 'map/setIsFullscreen'
+      setIsFullscreen: 'map/setIsFullscreen',
+      setOpenedMockup: 'map/setOpenedMockup',
+      setCSVGenerationState: 'map/setCSVGenerationState',
+      saveDocument: 'document/saveDocument',
+      fetchDocument: 'document/fetchDocument',
     }),
     computeAreaRotation(newRotation) {
       this.setNewAreaRotation(newRotation) // in Deg
@@ -720,12 +729,104 @@ export default {
       // Enable fullscreen in Store (v-if btn of exit + sidebar)
       this.setIsFullscreen(true)
     },
-    generateAndDownloadCSV() {
-      this.generateHeightMap({ mesh: this.voxelizedMesh, platesX: this.plates.x, platesY: this.plates.y })
+    // TODO: Remove
+    // generateAndDownloadCSV() {
+    //   this.generateHeightMap({ mesh: this.voxelizedMesh, platesX: this.plates.x, platesY: this.plates.y })
+    //   .then((heightMap) => {
+    //     this.generateCSVString({ heightMap, platesX: this.plates.x })
+    //     .then((csvString) => {
+    //       this.downloadCSV({ csvString, name: 'Lego' });
+    //     });
+    //   });
+    // },
+    generateAndSaveCSV() {
+      // IF openedMockup > get voxelized data Else keep for later
+      if (this.openedMockup) {
+        // Set plate numbers
+        this.currentMockupXPlates = this.openedMockup.nb_plaques_h
+        this.currentMockupYPlates = this.openedMockup.nb_plaques_v
+
+        // Get Mesh file
+        this.fetchDocument(this.openedMockup.model.id)
+        .then((response) => {
+          // Decode response
+          var decodedMesh = JSON.parse(atob(response.data.data))
+          console.log('decodedMesh')
+          console.log(decodedMesh)
+          console.log(typeof(decodedMesh))
+          
+          console.log(decodedMesh.geometries[0])
+          console.log(decodedMesh.materials[0])
+
+          const mesh = new THREE.Mesh(decodedMesh.geometries[0], decodedMesh.materials[0])
+
+          // Set in data variables
+          this.currentMockupMesh = mesh
+
+          // Finally generate
+          this.generateOnlyCSV()
+        })
+      } else {
+        this.currentMockupMesh = this.voxelizedMesh
+        this.currentMockupXPlates = this.plates.x
+        this.currentMockupYPlates = this.plates.y
+
+        // Finally generate
+        this.generateOnlyCSV()
+      }
+    },
+    generateOnlyCSV() {
+      this.generateHeightMap({ mesh: this.currentMockupMesh, platesX: this.currentMockupXPlates, platesY: this.currentMockupYPlates })
       .then((heightMap) => {
-        this.generateCSVString({ heightMap, platesX: this.plates.x })
+        this.generateCSVString({ heightMap, platesX: this.currentMockupXPlates })
         .then((csvString) => {
-          this.downloadCSV({ csvString, name: 'Lego' });
+          const csvName = 'generated_mockup.csv'
+
+          // TODO: If opened mockup id > save Else keep file to save later
+          if (this.openedMockup) {
+            // Create document obj
+            var newDoc = {
+              data: csvString,
+              file_name: csvName,
+              title: csvName,
+              type: 'CSV'
+            }
+            // Save file in database
+            this.saveDocument(newDoc)
+            .then((responseDoc) => {
+              // Disable Loading
+              this.setCSVGenerationState(false)
+              
+              // Prepare Data
+              this.currentMockupSavedId = this.openedMockup.id
+              var patchedMockup = {
+                id: this.currentMockupSavedId,
+                model_id: responseDoc.data.id
+              }
+              // Patch mockup
+              this.updateProject(patchedMockup)
+              
+              // Notify
+              this.$notify({
+                title: 'Document sauvegardé',
+                text: 'Votre guide à bien été ajoutée sur votre maquette',
+                type: 'success'
+              })
+            }).catch((e) => {
+              // Disable Loading
+              this.setCSVGenerationState(false)
+              // Notify
+              this.$notify({
+                title: 'Erreur lors de la sauvegarde',
+                text: "Une erreur s'est produite lors de l'enregistrement des documents",
+                type: 'error'
+              })
+            })
+
+          } else {
+            // TODO: Keep file to later
+          }
+
         });
       });
     },
@@ -752,9 +853,47 @@ export default {
 
           // Save
           this.saveProject(newMockupObj)
-          .then((response) => {
+          .then((responseMockup) => {
             // Switch form
             this.newMockupSend = true
+
+            // Save Mockup ID
+            this.currentMockupSavedId = responseMockup.data.id
+
+            // ! Save all file in database
+            // TODO: IF CSV > save / IF Emprise > Save
+            
+            // Prepare Model Obj
+            var meshName = 'generated_mesh.obj'
+            var encodedMesh = btoa(JSON.stringify(this.voxelizedMesh))
+            var newDoc = {
+              data: encodedMesh,
+              file_name: meshName,
+              title: meshName,
+              type: 'Mesh'
+            }
+            
+            // SAVE Model
+            this.saveDocument(newDoc)
+            .then((responseDoc) => {
+              // Prepare Data
+              var patchedMockup = {
+                id: this.currentMockupSavedId,
+                model_id: responseDoc.data.id
+              }
+              // Patch mockup
+              this.updateProject(patchedMockup)
+              // TODO: Then for other doc ?
+
+            }).catch((e) => {
+              // Notify
+              this.$notify({
+                title: 'Erreur lors de la sauvegarde',
+                text: "Une erreur s'est produite lors de l'enregistrement des documents",
+                type: 'error'
+              })
+            })
+
             // Notify
             this.$notify({
               title: 'Nouvelle maquette sauvegardée',
@@ -776,6 +915,8 @@ export default {
       this.currentStep = 0
       this.clearPlatesNumber()
       this.cancelSelection()
+      // Reset Opened Mockup
+      this.setOpenedMockup(null)
       // Reset Mockup form
       this.newMockupName = null
       this.newMockupSend = false

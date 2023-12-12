@@ -3,6 +3,7 @@ import authentication from './authentication';
 import aside from './aside';
 import map from './map';
 import project from './project';
+import document from './document';
 
 const store = createStore({
   modules: {
@@ -10,6 +11,7 @@ const store = createStore({
     aside,
     map,
     project,
+    document,
   },
 });
 
