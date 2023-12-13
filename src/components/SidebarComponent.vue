@@ -199,11 +199,13 @@
                   height="50"
                   width="320"
                   block
+                  :disabled="openedMockup"
                   @click="showMockup"
                 >
                   Afficher le rendu 3D
                 </v-btn>
-                <v-row class="pa-0">
+                <!-- class="pa-0" -->
+                <v-row class="row-spe-103">
                   <v-col class="pr-0">
                     <!-- TODO: V-if pour générer et télécharger -->
                     <v-btn
@@ -212,12 +214,13 @@
                       prepend-icon="mdi-file-excel"
                       height="50"
                       block
-                      @click="generateAndSaveCSV"
+                      :disabled="openedMockup"
+                      @click="generateAndDownloadCSV"
                     >
                       <span class="py-2">Générer le guide<br> de montage</span>
                     </v-btn>
                   </v-col>
-                  <v-col cols="3" class="px-0">
+                  <v-col v-if="false" cols="3" class="px-0">
                     <!-- TODO: V-if pour delete si généré -->
                     <v-btn
                       color="red-darken-2"
@@ -332,11 +335,16 @@
             color="#1B5E20"
             min-width="330"
             style="color: white"
-            :disabled="!currentAreaPos"
+            :disabled="!openedMockup"
             @click="startSlideShow()"
           >
             Lancer le mode projection
           </v-btn>
+          <br>
+          <div v-if="openedMockup">
+            Maquette ouverte :
+            <b>{{ openedMockup.name }}</b>
+          </div>
         </v-col>
       </v-row>
     </v-card>
@@ -730,15 +738,15 @@ export default {
       this.setIsFullscreen(true)
     },
     // TODO: Remove
-    // generateAndDownloadCSV() {
-    //   this.generateHeightMap({ mesh: this.voxelizedMesh, platesX: this.plates.x, platesY: this.plates.y })
-    //   .then((heightMap) => {
-    //     this.generateCSVString({ heightMap, platesX: this.plates.x })
-    //     .then((csvString) => {
-    //       this.downloadCSV({ csvString, name: 'Lego' });
-    //     });
-    //   });
-    // },
+    generateAndDownloadCSV() {
+      this.generateHeightMap({ mesh: this.voxelizedMesh, platesX: this.plates.x, platesY: this.plates.y })
+      .then((heightMap) => {
+        this.generateCSVString({ heightMap, platesX: this.plates.x })
+        .then((csvString) => {
+          this.downloadCSV({ csvString, name: 'Lego' });
+        });
+      });
+    },
     generateAndSaveCSV() {
       // IF openedMockup > get voxelized data Else keep for later
       if (this.openedMockup) {
@@ -1228,5 +1236,9 @@ export default {
 }
 .fs-25 {
   font-size: 25px !important;
+}
+
+.row-spe-103 {
+  width: 103%
 }
 </style>

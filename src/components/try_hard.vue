@@ -22,6 +22,37 @@ export default {
   //https://geoserver-planta.exo-dev.fr/geoserver/Metropole/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Metropole%3Abati&maxFeatures=50&outputFormat=application%2Fjson
   // EPSG:4326
 
+  // ! Calque layer - WIP
+  var calque = require('../datas/Calque.json')
+  var calqueSource = new itowns.WMTSSource(calque.source)
+  var calqueLayer = new itowns.ColorLayer('CalqueLayer', {
+    name: 'Calque de plantabilité',
+    protocol: 'wmts',
+    source: calqueSource,
+    opacity: 1,
+  })
+  calqueLayer.visible = true
+  view.addLayer(calqueLayer)
+
+  // ! WMS Calque planta of Metropole de Lyon --> Not working...
+  // var wmsCalqueLyonSource = new itowns.WMSSource({
+  //   url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/wms',
+  //   protocol: 'wmts',
+  //   version: '1.1.0',
+  //   name: 'calque_plantabilite_metropole',
+  //   format: 'image/jpeg',
+  //   projection: 'EPSG:4326',
+  //   extent: currentExtent,
+  // })
+  // const wmsCalqueLyonLayer = new itowns.ColorLayer('Lyon_Calque', {
+  //   name: 'Calque Lyon',
+  //   source: wmsCalqueLyonSource,
+  //   transparent: true,
+  //   opacity: 1,
+  // });
+  // wmsCalqueLyonLayer.visible = true
+  // view.addLayer(wmsCalqueLyonLayer);
+
   // ! Useless ?
     // Define crs projection that we will use (taken from https://epsg.io/3946, Proj4js section)
     // itowns.proj4.defs('EPSG:3946', '+proj=lcc +lat_1=45.25 +lat_2=46.75 +lat_0=46 +lon_0=3 +x_0=1700000 +y_0=5200000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs')
