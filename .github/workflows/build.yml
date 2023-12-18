@@ -37,6 +37,6 @@ jobs:
           push: true
           context: .
           build-args: |
-            "VUE_APP_API_BASE_URL=${{ secrets.VUE_APP_API_BASE_URL }}"
+            "VUE_APP_API_BASE_URL=https://api-maquette.datagora.erasme.org/api"
           # based on branch push tag latest for main and dev for dev
           tags: erasme/maquette_augmentee_frontend:${{ github.ref == 'refs/heads/main' && 'latest' || 'dev' }}
