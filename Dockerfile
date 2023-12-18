@@ -1,5 +1,6 @@
 FROM node:lts-alpine as build
-
+ARG VUE_APP_API_BASE_URL
+ENV VUE_APP_API_BASE_URL=$VUE_APP_API_BASE_URL
 WORKDIR /app
 
 COPY ./ /app/
