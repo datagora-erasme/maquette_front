@@ -7,7 +7,7 @@
 
 # About this project
 
-The augmented model project was born during an experiment as part of the MAM project: Mediation and Augmented Modeling. Various workshops were organized in collaboration with LabEx IMU, ERASME Urban Lab and the École Urbaine de Lyon.
+The augmented mockup project was born during an experiment as part of the MAM project: Mediation and Augmented Modeling. Various workshops were organized in collaboration with LabEx IMU, ERASME Urban Lab and the École Urbaine de Lyon.
 
 The project consists of a model of a city district made from Lego and created from a web platform. This model is intended to be installed in public places and used in the context of mediation or neighborhood council.
 
@@ -46,6 +46,19 @@ Voxelization is the process of converting a continuous 3D object into a grid of 
 
 
 ## Project Setup
+
+### Prerequisites
+This project run in Node 16.19.1
+
+You need to install Node and NPM first
+https://docs.npmjs.com/downloading-and-installing-node-js-and-npm
+
+Then install Yarn
+```
+npm install --global yarn
+```
+
+### Install node modules
 ```
 yarn install
 ```

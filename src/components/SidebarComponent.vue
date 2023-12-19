@@ -184,48 +184,84 @@
               </div>
             </div>
           </v-row>
-          <v-row v-if="currentStep === 2" class="step3 d-flex justify-center" style="height: calc(100vh - 124.38px); width: 390px">
+          <v-row v-if="currentStep === 2" class="step3 d-flex justify-center">
             <v-col class="title-buttons-container w-100 d-flex flex-column align-center justify-space-around">
               <h2 class="mockup-ready-title">
                 Votre maquette est prête !
               </h2>
-              <!-- <v-card class="buttons-card pa-0 d-flex flex-column justif-center"> -->
-              <v-row class="d-flex align-center pa-0">
-                <v-col class="py-0 px-1 d-flex flex-column justify-space-evenly align-center">
-                  <v-btn
-                    color="#414288"
-                    class="last-step-buttons mb-3"
-                    prepend-icon="mdi-printer-3d"
-                    height="50"
-                    block
-                    @click="showMockup"
-                  >
-                    Afficher le rendu 3D
-                  </v-btn>
-                  <v-btn
-                    color="#414288"
-                    class="last-step-buttons mb-3"
-                    prepend-icon="mdi-file-excel"
-                    height="50"
-                    block
-                    @click="generateAndDownloadCSV"
-                  >
-                    <span class="py-2">Générer le guide<br> de montage</span>
-                  </v-btn>
-                  <v-btn
-                    color="#414288"
-                    class="last-step-buttons"
-                    prepend-icon="mdi-cloud-download"
-                    height="50"
-                    block
-                    disabled
-                    @click="downloadArea"
-                  >
-                    <span class="py-2">Télécharger l'emprise<br> géographique</span>
-                  </v-btn>
-                </v-col>
-              </v-row>
-              <!-- </v-card> -->
+              <!-- <v-row class="d-flex align-center pa-0" style="width=500px;">
+                <v-col class="py-0 px-0 d-flex flex-column justify-space-evenly align-center"> -->
+              <div>
+                <v-btn
+                  color="#414288"
+                  class="last-step-buttons mb-3"
+                  prepend-icon="mdi-printer-3d"
+                  height="50"
+                  width="320"
+                  block
+                  :disabled="openedMockup"
+                  @click="showMockup"
+                >
+                  Afficher le rendu 3D
+                </v-btn>
+                <!-- class="pa-0" -->
+                <v-row class="row-spe-103">
+                  <v-col class="pr-0">
+                    <!-- TODO: V-if pour générer et télécharger -->
+                    <v-btn
+                      color="#414288"
+                      class="last-step-buttons mb-3"
+                      prepend-icon="mdi-file-excel"
+                      height="50"
+                      block
+                      :disabled="openedMockup"
+                      @click="generateAndDownloadCSV"
+                    >
+                      <span class="py-2">Générer le guide<br> de montage</span>
+                    </v-btn>
+                  </v-col>
+                  <v-col v-if="false" cols="3" class="px-0">
+                    <!-- TODO: V-if pour delete si généré -->
+                    <v-btn
+                      color="red-darken-2"
+                      height="50"
+                      width="50"
+                      @click="deleteCSV"
+                    >
+                      <v-icon icon="mdi-trash-can" class="fs-25" />
+                      <v-tooltip
+                        activator="parent"
+                        location="end"
+                      >
+                        Supprimer ce fichier
+                      </v-tooltip>
+                    </v-btn>
+                  </v-col>
+                </v-row>
+                <v-btn
+                  color="#414288"
+                  class="last-step-buttons mb-3"
+                  prepend-icon="mdi-cloud-download"
+                  height="50"
+                  block
+                  disabled
+                  @click="downloadArea"
+                >
+                  <span class="py-2">Télécharger l'emprise<br> géographique</span>
+                </v-btn>
+                <v-btn
+                  color="#1B5E20"
+                  class="last-step-buttons"
+                  prepend-icon="mdi-video-box"
+                  height="50"
+                  block
+                  @click="startSlideShow()"
+                >
+                  <span class="py-2">Projeter<br> cette maquette</span>
+                </v-btn>
+              </div>
+              <!-- </v-col>
+              </v-row> -->
               <v-form ref="formMockup" on-submit="return false;">
                 <div v-if="!newMockupSend">
                   <div class="w-100 mb-2">
@@ -262,11 +298,19 @@
                 </div>
                 <v-btn
                   color="#37474F"
-                  class="new-mockup-button"
+                  class="new-mockup-button mb-2"
                   prepend-icon="mdi-arrow-left"
                   @click="resetMockupSelection()"
                 >
                   Créer une nouvelle maquette
+                </v-btn>
+                <v-btn
+                  color="#37474F"
+                  class="new-mockup-button"
+                  prepend-icon="mdi-arrow-left"
+                  @click="exit()"
+                >
+                  Quitter
                 </v-btn>
               </v-form>
             </v-col>
@@ -291,10 +335,16 @@
             color="#1B5E20"
             min-width="330"
             style="color: white"
+            :disabled="!openedMockup"
             @click="startSlideShow()"
           >
             Lancer le mode projection
           </v-btn>
+          <br>
+          <div v-if="openedMockup">
+            Maquette ouverte :
+            <b>{{ openedMockup.name }}</b>
+          </div>
         </v-col>
       </v-row>
     </v-card>
@@ -367,7 +417,7 @@
         </v-list>
       </v-card-text>
     </v-card>
-    <v-card v-if="currentTabValue == 4" class="sidebar-cards py-5 px-7">
+    <v-card v-if="currentTabValue == 4" class="sidebar-cards py-5 px-3">
       <v-row class="d-flex justify-center">
         <v-col class="pa-0">
           <h3 class="sidebar-title py-2">
@@ -375,18 +425,82 @@
           </h3>
         </v-col>
       </v-row>
-      <v-row>
-        <v-col class="projection-panel d-flex flex-column justify-center align-center">
-          Commande pour se déplacer sur la carte :
-          <br><br>
-          Clic gauche : Déplacer la caméra
-          Left-Click: camera translation (drag)
-          Right-Click: camera translation (pan)
-          Ctrl + Left-Click: camera rotation (orbit)
-          Spacebar / Wheel-Click: smart zoom
-          Mouse Wheel: zoom in/out
-          T: orient camera to a top view
-          Y: move camera to start position
+      <v-row class="help-panel-row">
+        <v-col class="help-panel">
+          <h4 class="w-100 text-center">
+            Commandes sur la carte
+          </h4>
+          <br>
+          <span>
+            <v-kbd>Clic gauche</v-kbd> : <br>Déplacer la caméra
+          </span><br><br>
+          <span>
+            <v-kbd>Clic droit</v-kbd> : <br>Déplacer la caméra (panoramique)
+          </span><br><br>
+          <span>
+            <v-kbd>CTRL</v-kbd> + <v-kbd>Clic gauche</v-kbd> : <br>Rotation de l'orbite de la caméra
+          </span><br><br>
+          <span>
+            <v-kbd>Clic molette</v-kbd> ou <v-kbd>Molette haut-bas</v-kbd> : <br>Zoom avant et arrière
+          </span><br><br>
+
+          <h4 class="w-100 text-center">
+            A propos
+          </h4>
+          <br>
+          <v-row>
+            <v-col class="d-flex justify-center align-center">
+              <img
+                :src="require('../assets/logo_metropole.png')"
+                alt="Logo Métropole de Lyon"
+                width="160"
+              >
+            </v-col>
+            <v-col class="d-flex justify-center align-center">
+              <img
+                :src="require('../assets/univ_lyon_1.png')"
+                alt="Logo Université Lyon 1"
+                width="160"
+              >
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col class="d-flex justify-center align-center">
+              <img
+                :src="require('../assets/datagora.png')"
+                alt="Logo Datagora"
+                width="70"
+              >
+            </v-col>
+            <v-col class="d-flex justify-center align-center">
+              <img
+                :src="require('../assets/exo-dev.png')"
+                alt="Logo Exo-Dev"
+              >
+            </v-col>
+          </v-row>
+          <br>
+          <div class="text-justify">
+            Le projet de Maquette augmentée est né lors d'une expérimentation dans le cadre du projet <b>MAM : Médiation et Modélisation Augmentée</b>. Différents ateliers ont été organisés en collaboration avec le <b>LabEx IMU, ERASME Urban Lab et l'École Urbaine de Lyon</b>.
+          </div>
+          <br>
+          <div class="text-justify">
+            Le projet consiste en la création d'une maquette d'un quartier urbain réalisée en Lego à partir d'une plateforme web. Cette maquette est destinée à être installée dans les lieux publics et utilisée dans le cadre d'une médiation ou d'un conseil de quartier.
+          </div>
+          <br>
+          <div class="text-right">
+            <v-btn 
+              append-icon="mdi-open-in-new"
+              variant="outlined"
+              density="comfortable"
+              color="#194275"
+              href="https://datagora.erasme.org/projets/maquette-augmentee-vegetalisation/"
+              target="_blank"
+            >
+              En savoir plus
+            </v-btn>
+          </div>
+          <br>
         </v-col>
       </v-row>
     </v-card>
@@ -471,15 +585,13 @@
 <script>
 import StepperComponent from './StepperComponent.vue'
 import { mapActions, mapGetters } from 'vuex'
+import { objToMesh, convertBboxToGeoJSON } from '../utils/threeUtils'
+import * as THREE from 'three'
 
 export default {
   name: 'SidebarComponent',
   components: { StepperComponent },
   props: {
-    // currentTabValue: {
-    //   type: Number,
-    //   required: true,
-    // },
     ongoingTravel: {
       type: Boolean,
       required: true,
@@ -503,6 +615,10 @@ export default {
       editMockupId: null,
       editMockupNewName: null,
       deleteMockupDialog: false,
+      currentMockupSavedId: null,
+      currentMockupMesh: null,
+      currentMockupXPlates: null,
+      currentMockupYPlates: null,
       rules: {
         required: value => !!value || 'Champs obligatoire',
         max20: value => value.length <= 20 || 'Max 20 caractères',
@@ -522,6 +638,7 @@ export default {
       getSelectedPos: 'map/getSelectedPos',
       getProjectsList: 'project/getProjectsList',
       getIsFullscreen: 'map/getIsFullscreen',
+      getOpenedMockup: 'map/getOpenedMockup',
     }),
     currentTabValue() {
       return this.getCurrentTabValue
@@ -549,7 +666,10 @@ export default {
     },
     isFullscreen() {
       return this.getIsFullscreen
-    }
+    },
+    openedMockup() {
+      return this.getOpenedMockup
+    },
   },
   watch: {
     ongoingTravel() {
@@ -589,18 +709,24 @@ export default {
       updateProject: 'project/updateProject',
       deleteProject: 'project/deleteProject',
       setCurrentTabValue: 'map/setCurrentTabValue',
-      setIsFullscreen: 'map/setIsFullscreen'
+      setIsFullscreen: 'map/setIsFullscreen',
+      setOpenedMockup: 'map/setOpenedMockup',
+      setCSVGenerationState: 'map/setCSVGenerationState',
+      saveDocument: 'document/saveDocument',
+      fetchDocument: 'document/fetchDocument',
     }),
     computeAreaRotation(newRotation) {
       this.setNewAreaRotation(newRotation) // in Deg
       this.$emit('onRotateSelectedArea')
     },
     startSlideShow() {
+      // ?? Set area position in store
+
       // Enable navigator fullscreen
       document.documentElement.requestFullscreen()
 
       // ! Need to replace - REFACTO
-      this.$emit('onTravelForProjection')
+      this.$emit('onTravelForProjection', this.plates)
       this.$emit('onCloseNavbar')
 
       // ! Hide all widgets
@@ -611,24 +737,104 @@ export default {
       // Enable fullscreen in Store (v-if btn of exit + sidebar)
       this.setIsFullscreen(true)
     },
-    endSlideShow() {
-      // Disable navigator fullscreen
-      document.exitFullscreen()
-
-      // Restore display of all widget
-      document.getElementById('widgets-scale').style.display = 'flex' // flex
-      document.getElementById('widgets-navigation').style.display = 'flex' // flex
-      document.getElementById('widgets-searchbar').style.display = 'block' // block
-      
-      // Disable fullscreen in Store
-      this.setIsFullscreen(false)
-    },
+    // TODO: Remove
     generateAndDownloadCSV() {
       this.generateHeightMap({ mesh: this.voxelizedMesh, platesX: this.plates.x, platesY: this.plates.y })
       .then((heightMap) => {
         this.generateCSVString({ heightMap, platesX: this.plates.x })
         .then((csvString) => {
           this.downloadCSV({ csvString, name: 'Lego' });
+        });
+      });
+    },
+    generateAndSaveCSV() {
+      // IF openedMockup > get voxelized data Else keep for later
+      if (this.openedMockup) {
+        // Set plate numbers
+        this.currentMockupXPlates = this.openedMockup.nb_plaques_h
+        this.currentMockupYPlates = this.openedMockup.nb_plaques_v
+
+        // Get Mesh file
+        this.fetchDocument(this.openedMockup.model.id)
+        .then((response) => {
+          // Decode response
+          var decodedMesh = JSON.parse(atob(response.data.data))
+          console.log('decodedMesh')
+          console.log(decodedMesh)
+          console.log(typeof(decodedMesh))
+          
+          console.log(decodedMesh.geometries[0])
+          console.log(decodedMesh.materials[0])
+
+          const mesh = new THREE.Mesh(decodedMesh.geometries[0], decodedMesh.materials[0])
+
+          // Set in data variables
+          this.currentMockupMesh = mesh
+
+          // Finally generate
+          this.generateOnlyCSV()
+        })
+      } else {
+        this.currentMockupMesh = this.voxelizedMesh
+        this.currentMockupXPlates = this.plates.x
+        this.currentMockupYPlates = this.plates.y
+
+        // Finally generate
+        this.generateOnlyCSV()
+      }
+    },
+    generateOnlyCSV() {
+      this.generateHeightMap({ mesh: this.currentMockupMesh, platesX: this.currentMockupXPlates, platesY: this.currentMockupYPlates })
+      .then((heightMap) => {
+        this.generateCSVString({ heightMap, platesX: this.currentMockupXPlates })
+        .then((csvString) => {
+          const csvName = 'generated_mockup.csv'
+
+          // TODO: If opened mockup id > save Else keep file to save later
+          if (this.openedMockup) {
+            // Create document obj
+            var newDoc = {
+              data: csvString,
+              file_name: csvName,
+              title: csvName,
+              type: 'CSV'
+            }
+            // Save file in database
+            this.saveDocument(newDoc)
+            .then((responseDoc) => {
+              // Disable Loading
+              this.setCSVGenerationState(false)
+              
+              // Prepare Data
+              this.currentMockupSavedId = this.openedMockup.id
+              var patchedMockup = {
+                id: this.currentMockupSavedId,
+                model_id: responseDoc.data.id
+              }
+              // Patch mockup
+              this.updateProject(patchedMockup)
+              
+              // Notify
+              this.$notify({
+                title: 'Document sauvegardé',
+                text: 'Votre guide à bien été ajoutée sur votre maquette',
+                type: 'success'
+              })
+            }).catch((e) => {
+              // Disable Loading
+              this.setCSVGenerationState(false)
+              // Notify
+              this.$notify({
+                title: 'Erreur lors de la sauvegarde',
+                text: "Une erreur s'est produite lors de l'enregistrement des documents",
+                type: 'error'
+              })
+            })
+
+          } else {
+            // TODO: Keep file to later
+          }
+
         });
       });
     },
@@ -648,15 +854,54 @@ export default {
             nb_plaques_h: this.nbPlatesHorizontal,
             nb_plaques_v: this.nbPlatesVertical,
             ratio: 1,
-            csv_id: 2, // TODO: Change
-            model_id: 2, // TODO: Change
+            // csv_id: 2, // TODO: Change
+            // model_id: 2, // TODO: Change
+            // emprise_id: 2, // TODO: Change
           }
 
           // Save
           this.saveProject(newMockupObj)
-          .then((response) => {
+          .then((responseMockup) => {
             // Switch form
             this.newMockupSend = true
+
+            // Save Mockup ID
+            this.currentMockupSavedId = responseMockup.data.id
+
+            // ! Save all file in database
+            // TODO: IF CSV > save / IF Emprise > Save
+            
+            // Prepare Model Obj
+            var meshName = 'generated_mesh.obj'
+            var encodedMesh = btoa(JSON.stringify(this.voxelizedMesh))
+            var newDoc = {
+              data: encodedMesh,
+              file_name: meshName,
+              title: meshName,
+              type: 'Mesh'
+            }
+            
+            // SAVE Model
+            this.saveDocument(newDoc)
+            .then((responseDoc) => {
+              // Prepare Data
+              var patchedMockup = {
+                id: this.currentMockupSavedId,
+                model_id: responseDoc.data.id
+              }
+              // Patch mockup
+              this.updateProject(patchedMockup)
+              // TODO: Then for other doc ?
+
+            }).catch((e) => {
+              // Notify
+              this.$notify({
+                title: 'Erreur lors de la sauvegarde',
+                text: "Une erreur s'est produite lors de l'enregistrement des documents",
+                type: 'error'
+              })
+            })
+
             // Notify
             this.$notify({
               title: 'Nouvelle maquette sauvegardée',
@@ -676,6 +921,24 @@ export default {
     },
     resetMockupSelection() {
       this.currentStep = 0
+      this.clearPlatesNumber()
+      this.cancelSelection()
+      // Reset Opened Mockup
+      this.setOpenedMockup(null)
+      // Reset Mockup form
+      this.newMockupName = null
+      this.newMockupSend = false
+      this.$emit('onResetMockupSelection')
+      this.$emit('onResetOpenedMockup')
+    },
+    exit() {
+      // Close navbar
+      this.$emit('onCloseNavbar')
+      
+      // Reset map position
+      this.$emit('onStartSelection')
+
+      // Clear all
       this.clearPlatesNumber()
       this.cancelSelection()
       // Reset Mockup form
@@ -899,10 +1162,6 @@ export default {
 .title-buttons-container {
   height: 75vh;
 }
-.buttons-card {
-  width: 70%;
-  height: 35%;
-}
 .last-step-buttons {
   color: white !important; 
   width: 90%;
@@ -912,6 +1171,11 @@ export default {
   width: 100%;
 }
 
+.step3 {
+  height: calc(100vh - 124.38px); 
+  width: 390px;
+}
+
 /* Projection */
 .projection-panel {
   height: 100%;
@@ -919,6 +1183,17 @@ export default {
   flex-direction: column !important;
   justify-content: center !important;
   align-items: center !important;
+}
+
+/* Help and credits */
+.help-panel-row {
+  overflow-y: auto;
+  height: 100%;
+}
+.help-panel {
+  overflow-y: auto;
+  height: calc(100% - 15px) !important;
+  text-align: left;
 }
 
 /* Mockup List */
@@ -961,5 +1236,9 @@ export default {
 }
 .fs-25 {
   font-size: 25px !important;
+}
+
+.row-spe-103 {
+  width: 103%
 }
 </style>

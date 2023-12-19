@@ -1,0 +1,147 @@
+{
+  "id": "Calque",
+  "source": {
+    "url": "https://geoserver-planta.exo-dev.fr/geoserver/gwc/service/wmts",
+    "crs": "EPSG:4326",
+    "projection": "EPSG:4326",
+    "format": "image/jpeg",
+    "mimetype": "image/jpeg",
+    "style": "style_calque_planta",
+    "name": "Metropole:calque_plantabilite_metropole",
+    "tileMatrixSet": "EPSG:4326",
+    "tileMatrixSetLimits": {
+      "EPSG:4326:0": {
+        "minTileRow": 0,
+        "maxTileRow": 1,
+        "minTileCol": 0,
+        "maxTileCol": 1
+      },
+      "EPSG:4326:1": {
+        "minTileRow": 0,
+        "maxTileRow": 2,
+        "minTileCol": 0,
+        "maxTileCol": 2
+      },
+      "EPSG:4326:2": {
+        "minTileRow": 0,
+        "maxTileRow": 4,
+        "minTileCol": 0,
+        "maxTileCol": 4
+      },
+      "EPSG:4326:3": {
+        "minTileRow": 1,
+        "maxTileRow": 8,
+        "minTileCol": 1,
+        "maxTileCol": 8
+      },
+      "EPSG:4326:4": {
+        "minTileRow": 3,
+        "maxTileRow": 16,
+        "minTileCol": 3,
+        "maxTileCol": 16
+      },
+      "EPSG:4326:5": {
+        "minTileRow": 7,
+        "maxTileRow": 32,
+        "minTileCol": 7,
+        "maxTileCol": 32
+      },
+      "EPSG:4326:6": {
+        "minTileRow": 15,
+        "maxTileRow": 65,
+        "minTileCol": 15,
+        "maxTileCol": 65
+      },
+      "EPSG:4326:7": {
+        "minTileRow": 31,
+        "maxTileRow": 131,
+        "minTileCol": 31,
+        "maxTileCol": 131
+      },
+      "EPSG:4326:8": {
+        "minTileRow": 62,
+        "maxTileRow": 262,
+        "minTileCol": 63,
+        "maxTileCol": 263
+      },
+      "EPSG:4326:9": {
+        "minTileRow": 125,
+        "maxTileRow": 525,
+        "minTileCol": 126,
+        "maxTileCol": 526
+      },
+      "EPSG:4326:10": {
+        "minTileRow": 250,
+        "maxTileRow": 1050,
+        "minTileCol": 252,
+        "maxTileCol": 1052
+      },
+      "EPSG:4326:11": {
+        "minTileRow": 501,
+        "maxTileRow": 2101,
+        "minTileCol": 505,
+        "maxTileCol": 2105
+      },
+      "EPSG:4326:12": {
+        "minTileRow": 1002,
+        "maxTileRow": 4202,
+        "minTileCol": 1011,
+        "maxTileCol": 4211
+      },
+      "EPSG:4326:13": {
+        "minTileRow": 2739,
+        "maxTileRow": 4628,
+        "minTileCol": 41,
+        "maxTileCol": 7917
+      },
+      "EPSG:4326:14": {
+        "minTileRow": 5478,
+        "maxTileRow": 9256,
+        "minTileCol": 82,
+        "maxTileCol": 15835
+      },
+      "EPSG:4326:15": {
+        "minTileRow": 10956,
+        "maxTileRow": 18513,
+        "minTileCol": 165,
+        "maxTileCol": 31670
+      },
+      "EPSG:4326:16": {
+        "minTileRow": 21912,
+        "maxTileRow": 37026,
+        "minTileCol": 330,
+        "maxTileCol": 63341
+      },
+      "EPSG:4326:17": {
+        "minTileRow": 43825,
+        "maxTileRow": 74052,
+        "minTileCol": 660,
+        "maxTileCol": 126683
+      },
+      "EPSG:4326:18": {
+        "minTileRow": 87648,
+        "maxTileRow": 148111,
+        "minTileCol": 1312,
+        "maxTileCol": 253375
+      },
+      "EPSG:4326:19": {
+        "minTileRow": 175296,
+        "maxTileRow": 294063,
+        "minTileCol": 170144,
+        "maxTileCol": 343487
+      },
+      "EPSG:4326:20": {
+        "minTileRow": 357008,
+        "maxTileRow": 384687,
+        "minTileCol": 524400,
+        "maxTileCol": 540927
+      },
+      "EPSG:4326:21": {
+        "minTileRow": 714032,
+        "maxTileRow": 768783,
+        "minTileCol": 1048816,
+        "maxTileCol": 1081775
+      }
+    }
+  }
+}

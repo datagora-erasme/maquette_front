@@ -23,6 +23,7 @@ const map = {
     selectedPos: null,
     currentTabValue: null,
     isFullscreen: false,
+    openedMockup: null,
   }),
   getters: {
     getCurrentMockupDownloadLink(state) {
@@ -75,7 +76,10 @@ const map = {
     },
     getIsFullscreen(state) {
       return state.isFullscreen
-    }
+    },
+    getOpenedMockup(state) {
+      return state.openedMockup
+    },
   },
   mutations: {
     SET_PLATES_X(state, platesX) {
@@ -128,7 +132,10 @@ const map = {
     },
     SET_IS_FULLSCREEN(state, newState) {
       state.isFullscreen = newState
-    }
+    },
+    SET_OPENED_MOCKUP(state, newMockup) {
+      state.openedMockup = newMockup
+    },
   },
   actions: {
     /**
@@ -237,6 +244,12 @@ const map = {
     },
     setIsFullscreen({ commit }, newState) {
       commit('SET_IS_FULLSCREEN', newState)
+    },
+    setCSVGenerationState({ commit }, newState) {
+      commit('SET_IS_CSV_GENERATION_ONGOING', newState)
+    },
+    setOpenedMockup({ commit }, newMockup) {
+      commit('SET_OPENED_MOCKUP', newMockup)
     },
   },
 };
