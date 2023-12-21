@@ -1,14 +1,20 @@
-FROM sofianehamlaoui/httpdnpm
+FROM node:lts-alpine as build
+ARG VUE_APP_API_BASE_URL
+ENV VUE_APP_API_BASE_URL=$VUE_APP_API_BASE_URL
+WORKDIR /app
 
-RUN mkdir -p /var/www
+COPY ./ /app/
 
-RUN apt update
-
-COPY . /var/www/front/
-
-WORKDIR /var/www/front/
 
 RUN yarn install --ignore-engines
 RUN yarn build
 
-RUN cp -r dist/* /usr/local/apache2/htdocs/
+
+
+FROM nginx:stable-alpine
+
+COPY --from=build /app/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

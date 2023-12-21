@@ -5,7 +5,6 @@
     <img src="https://images.exo-dev.fr/white_creation_exo_dev.png" width="150">
 </p>
 
-
 # About this project
 
 The augmented mockup project was born during an experiment as part of the MAM project: Mediation and Augmented Modeling. Various workshops were organized in collaboration with LabEx IMU, ERASME Urban Lab and the École Urbaine de Lyon.
