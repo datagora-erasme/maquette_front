@@ -220,8 +220,8 @@
                       <span class="py-2">Générer le guide<br> de montage</span>
                     </v-btn>
                   </v-col>
+                  <!-- TODO: V-if pour delete si généré -->
                   <v-col v-if="false" cols="3" class="px-0">
-                    <!-- TODO: V-if pour delete si généré -->
                     <v-btn
                       color="red-darken-2"
                       height="50"
@@ -244,8 +244,7 @@
                   prepend-icon="mdi-cloud-download"
                   height="50"
                   block
-                  disabled
-                  @click="downloadArea"
+                  @click="downloadEmprise"
                 >
                   <span class="py-2">Télécharger l'emprise<br> géographique</span>
                 </v-btn>
@@ -585,7 +584,7 @@
 <script>
 import StepperComponent from './StepperComponent.vue'
 import { mapActions, mapGetters } from 'vuex'
-import { objToMesh, convertBboxToGeoJSON } from '../utils/threeUtils'
+import { convertBboxToGeoJSON } from '../utils/threeUtils'
 import * as THREE from 'three'
 
 export default {
@@ -747,6 +746,7 @@ export default {
         });
       });
     },
+    // TODO: Finish this
     generateAndSaveCSV() {
       // IF openedMockup > get voxelized data Else keep for later
       if (this.openedMockup) {
@@ -783,6 +783,7 @@ export default {
         this.generateOnlyCSV()
       }
     },
+    // TODO: Finish this
     generateOnlyCSV() {
       this.generateHeightMap({ mesh: this.currentMockupMesh, platesX: this.currentMockupXPlates, platesY: this.currentMockupYPlates })
       .then((heightMap) => {
@@ -1043,8 +1044,21 @@ export default {
       this.setCurrentTabValue(3)
       this.fetchProjectsList()
     },
-    downloadArea() {
-      this.$emit('onDownloadArea')
+    downloadFileObj(data, name) {
+      const blob = new Blob([JSON.stringify(data)], {
+        type: 'application/json',
+      });
+      const downloadUrl = URL.createObjectURL(blob);
+      const downloadLink = document.createElement('a');
+      downloadLink.href = downloadUrl;
+      downloadLink.download = name;
+      downloadLink.click();
+    },
+    downloadEmprise() {
+      // Convert bbox to geojson
+      var empriseGeojson = convertBboxToGeoJSON(this.currentAreaBbox)
+      // Trigger blob download
+      this.downloadFileObj(empriseGeojson, 'emprise.geojson')
     },
     endVoxelisation() {
       this.isLoading = false;
