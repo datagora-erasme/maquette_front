@@ -352,6 +352,7 @@ const generateCSV = (heightMap, platesX) => {
  * @returns {String} Polygon computed.
  */
 const convertBboxToPolygon = (bbox) => {
+  // ! Remove ?
   // Split bbox coordinates
   const bboxArray = bbox.split(',')
   // Get min/max from coord

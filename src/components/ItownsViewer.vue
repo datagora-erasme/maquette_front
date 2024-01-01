@@ -954,8 +954,8 @@ export default {
         this.ongoingTravel = false;
       }
 
-      // TODO: Hide opened Mockup area
-      // this.hideOpenedMockup()
+      // ! Hide opened Mockup area
+      this.hideOpenedMockup()
     },
     async voxelize() {
       if (selectedArea) {
@@ -1083,7 +1083,7 @@ export default {
       // ! Save pos in store for proj
       this.setSelectedPos(polyMockupCoord)
       
-      // TODO: Save mockup obj in global var
+      // ! Save mockup obj in global var + store
       openedMockupObj = currMockup
       this.setOpenedMockup(currMockup)
       
