@@ -19,9 +19,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'  # Specify the Node.js version you are using
+          cache: 'yarn' # 'yarn' or 'npm'
+
 
       - name: Install npm dependencies
-        run: npm install
+        run: yarn install
         working-directory: .  
 
       - name: OWASP Dependency Check
