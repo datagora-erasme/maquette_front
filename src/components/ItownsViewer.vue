@@ -882,7 +882,7 @@ export default {
       this.lookAtCoordinate(result, 1500)
 
       // Build Geometry (h, L, l) + material
-      const geometry = new itowns.THREE.BoxGeometry(100, this.nbPlatesHorizontal * 100, this.nbPlatesVertical * 100);
+      const geometry = new itowns.THREE.BoxGeometry(100, this.nbPlatesHorizontal * 200, this.nbPlatesVertical * 200);
       const material = new itowns.THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.4, transparent: true });
       selectedArea = new itowns.THREE.Mesh(geometry, material);
       
