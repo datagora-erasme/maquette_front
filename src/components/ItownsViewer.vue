@@ -1048,7 +1048,7 @@ export default {
       // convertBboxToGeoJSON(areaJsonProps.bbox)
 
       // ! Build mockup new Mesh
-      const geom = new itowns.THREE.BoxGeometry(100, currMockup.nb_plaques_h * 100, currMockup.nb_plaques_v * 100);
+      const geom = new itowns.THREE.BoxGeometry(100, currMockup.nb_plaques_h * 200, currMockup.nb_plaques_v * 200);
       const mat = new itowns.THREE.MeshBasicMaterial({ color: 0xCB4335, opacity: 0.4, transparent: true });
       var boxMockup = new itowns.THREE.Mesh(geom, mat);
       
