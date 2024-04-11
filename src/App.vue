@@ -12,7 +12,8 @@
         <PasswordModification />
       </v-card>
     </div>
-    <itowns-viewer v-if="isLoggedIn" class="itowns-viewer" />
+    <!-- <itowns-viewer v-if="isLoggedIn" class="itowns-viewer" /> -->
+    <OLViewer v-if="isLoggedIn" class="itowns-viewer" />
     <v-dialog v-model="localIsCSVGenerationOngoing" class="csv-loading-screen-dialog">
       <CSVLoadingScreen v-show="isCSVGenerationOngoing" />
     </v-dialog>
@@ -27,6 +28,7 @@
 
 <script>
 import ItownsViewer from './components/ItownsViewer.vue'
+import OLViewer from './components/OLViewer.vue'
 import AsideBtn from './components/AsideBtn.vue'
 import Aside from './components/Aside.vue'
 import SlideshowExitBtn from './components/SlideshowExitBtn.vue'
@@ -39,7 +41,8 @@ import { mapGetters, mapActions } from 'vuex'
 export default {
   name: 'App',
   components: {
-    ItownsViewer,
+    // ItownsViewer,
+    OLViewer,
     SignIn,
     CSVLoadingScreen,
     PasswordRecuperation,

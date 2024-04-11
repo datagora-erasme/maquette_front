@@ -226,6 +226,38 @@ export default {
     // Try2
     // const imageryLayers = view.getLayers(l => l.isColorLayer);
     // const layer = view.getLayerById('Lyon_Districts');
+
+
+
+    // ###### Geom OL JS #######
+    // this is a simple triangle over the atlantic ocean
+    // const data = {
+    //   type: 'Feature',
+    //   properties: {},
+    //   geometry: {
+    //     type: 'Polygon',
+    //     coordinates: [
+    //       [
+    //         [
+    //           -27.0703125,
+    //           43.58039085560784
+    //         ],
+    //         [
+    //           -28.125,
+    //           23.563987128451217
+    //         ],
+    //         [
+    //           -10.8984375,
+    //           32.84267363195431
+    //         ],
+    //         [
+    //           -27.0703125,
+    //           43.58039085560784
+    //         ]
+    //       ]
+    //     ]
+    //   }
+    // }
   }
 }
 </script>
