@@ -724,10 +724,7 @@ export default {
       // Enable navigator fullscreen
       document.documentElement.requestFullscreen()
 
-      // ! Need to replace - REFACTO
-      this.$emit('onTravelForProjection', this.plates)
-      this.$emit('onCloseNavbar')
-
+      
       // ! Hide all widgets
       document.getElementById('widgets-scale').style.display = 'none'
       document.getElementById('widgets-navigation').style.display = 'none'
@@ -735,6 +732,12 @@ export default {
       
       // Enable fullscreen in Store (v-if btn of exit + sidebar)
       this.setIsFullscreen(true)
+
+      // FIXME: Need to replace - REFACTO
+      setTimeout(() => {
+        this.$evtBus.emit('onTravelForProjection', this.plates)
+        this.$emit('onCloseNavbar')
+      }, 1000);
     },
     // TODO: Remove
     generateAndDownloadCSV() {

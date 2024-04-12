@@ -87,8 +87,9 @@
     </div>
 
     <!-- Viewer Div (override by JS) -->
-    <!-- <div id="viewerDiv" class="viewer" /> -->
-    <OLViewer />
+    <div v-show="!isFullscreen" id="viewerDiv" class="viewer" />
+    <OLViewer v-show="isFullscreen" />
+    <!-- v-show="isFullscreen" -->
 
     <!-- Sidebar -->
     <sidebar-component
@@ -989,9 +990,9 @@ export default {
         const bbMax = clonedGeometry.boundingBox.max.clone().applyMatrix4(selectedArea.matrixWorld)
         
         // DEBUG
-        // console.log('bbMin / bbMax')
-        // console.log(bbMin)
-        // console.log(bbMax)
+        console.log('bbMin / bbMax')
+        console.log(bbMin)
+        console.log(bbMax)
 
         // ! Convert to 2154 coords
         const coordsMin = new itowns.Coordinates('EPSG:4978', bbMin).as('EPSG:2154')
