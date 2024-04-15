@@ -87,8 +87,9 @@
     </div>
 
     <!-- Viewer Div (override by JS) -->
-    <div v-show="!isFullscreen" id="viewerDiv" class="viewer" />
-    <OLViewer v-show="isFullscreen" />
+    <!-- !isFullscreen -->
+    <div v-show="false" id="viewerDiv" class="viewer" />
+    <OLViewer />
     <!-- v-show="isFullscreen" -->
 
     <!-- Sidebar -->
