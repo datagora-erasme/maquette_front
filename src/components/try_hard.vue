@@ -26,8 +26,6 @@ export default {
     // const extent = new itowns.Extent('EPSG:3946', 1837816.94334, 1847692.32501, 5170036.4587, 5178412.82698);
     // view = new itowns.PlanarView(viewerDiv, extent, { placement: { heading: -49.6, range: 6200, tilt: 17 } });
   
-
-
   // ! Calque layer - WIP
   var calque = require('../datas/Calque.json')
   var calqueSource = new itowns.WMTSSource(calque.source)
@@ -39,7 +37,6 @@ export default {
   })
   calqueLayer.visible = true
   view.addLayer(calqueLayer)
-
 
   // ----------------------------------------------------- ITOWNS WMTS CALQUE
 
@@ -347,7 +344,6 @@ export default {
   // meshBB2.updateMatrixWorld() 
   // view.notifyChange(true)
 
-
   // !
     function intersect(pos) {
       raycaster.setFromCamera(pos, view.camera.camera3D);
@@ -450,6 +446,7 @@ export default {
     // const layer = view.getLayerById('Lyon_Districts');
 
 
+    // ========= OpenLayers =========
 
     // ###### Geom OL JS #######
     // this is a simple triangle over the atlantic ocean
@@ -480,6 +477,53 @@ export default {
     //     ]
     //   }
     // }
+
+    // Events binding
+    olMap.on('click', function(evt) {
+      console.log('Coordonnées du clic:', evt.coordinate);
+    });
+    olMap.on('moveend', function(evt) {
+        var newZoomLevel = olMap.getView().getZoom();
+        console.log('Nouveau niveau de zoom :', newZoomLevel);
+    });
+    olMap.getView().on('change:resolution', function(evt) {
+        var newZoomLevel = olMap.getView().getZoom();
+        console.log('View niveau de zoom :', newZoomLevel);
+    });
+
+    // OL Controls custom
+    // import { FullScreen, Control, defaults as defaultControls } from 'ol/control.js'
+    
+    // in OL Map
+    // controls: defaultControls().extend([new FullScreen(), new RotateNorthControl])
+
+    // --- Custom OLL Control ---
+    class RotateNorthControl extends Control {
+      /**
+       * @param {Object} [opt_options] Control options.
+       */
+      constructor(opt_options) {
+        const options = opt_options || {};
+
+        const button = document.createElement('button');
+        button.innerHTML = 'N';
+
+        const element = document.createElement('div');
+        element.className = 'rotate-north ol-unselectable ol-control';
+        element.appendChild(button);
+
+        super({
+          element: element,
+          target: options.target,
+        });
+
+        button.addEventListener('click', this.handleRotateNorth.bind(this), false);
+      }
+
+      handleRotateNorth() {
+        this.getMap().getView().setRotation(0);
+      }
+    }
   }
 }
 </script>

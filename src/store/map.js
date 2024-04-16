@@ -24,6 +24,7 @@ const map = {
     currentTabValue: null,
     isFullscreen: false,
     openedMockup: null,
+    olZoom: 13,
   }),
   getters: {
     getCurrentMockupDownloadLink(state) {
@@ -82,6 +83,9 @@ const map = {
     },
     getCurrentMockupBbox(state) {
       return state.currentMockupBbox
+    },
+    getOlZoom(state) {
+      return state.olZoom
     },
   },
   mutations: {
@@ -142,6 +146,9 @@ const map = {
     SET_CURRENT_MOCKUP_BBOX(state, newBbox) {
       state.currentMockupBbox = newBbox
     },
+    SET_OL_ZOOM(state, newZoom) {
+      state.olZoom = newZoom
+    }
   },
   actions: {
     /**
@@ -260,6 +267,9 @@ const map = {
     setCurrentMockupBbox({ commit }, newBbox) {
       commit('SET_CURRENT_MOCKUP_BBOX', newBbox)
     },
+    setOlZoom({ commit }, newZoom) {
+      commit('SET_OL_ZOOM', newZoom)
+    }
   },
 };
 

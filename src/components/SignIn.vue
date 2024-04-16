@@ -23,7 +23,7 @@
         clearable
         required
         class="input-required"
-        @keyup.enter="submitLoginForm()"
+        @keydown.enter="submitLoginForm()"
       >
         <template #label>
           <span> Email* </span>
@@ -41,27 +41,27 @@
         required
         class="input-required"
         @click:append="showPassword = !showPassword"
-        @keyup.enter="submitLoginForm()"
+        @keydown.enter="submitLoginForm()"
       >
         <template #label>
           <span> Mot de passe* </span>
         </template>
       </v-text-field>
-      <div class="d-flex justify-space-between">
-        <button class="forgotten-password-button" @click="handleChangePassword()" @keyup.enter="console.log('')">
-          Mot de passe oublié ?
-        </button>
-        <v-btn
-          :disabled="!(currLogin.password && currLogin.login)"
-          :loading="formLoading"
-          color="#414288"
-          style="color: white"
-          @click="submitLoginForm()"
-        >
-          Connexion
-        </v-btn>
-      </div>
     </v-form>
+    <div class="d-flex justify-space-between">
+      <button class="forgotten-password-button" @click="handleChangePassword()">
+        Mot de passe oublié ?
+      </button>
+      <v-btn
+        :disabled="!(currLogin.password && currLogin.login)"
+        :loading="formLoading"
+        color="#414288"
+        style="color: white"
+        @click="submitLoginForm()"
+      >
+        Connexion
+      </v-btn>
+    </div>
   </div>
 </template>
 
@@ -113,8 +113,15 @@ export default {
           })
         })
         .catch((e) => {
+          console.log('e.message')
           console.log(e.message)
           this.formLoading = false
+
+          this.$notify({
+            title: 'Erreur lors de la connexion',
+            text: "L'identifiant ou le mot de passe est incorrect",
+            type: 'error'
+          })
         })
     },
   },
