@@ -719,11 +719,8 @@ export default {
       this.$emit('onRotateSelectedArea')
     },
     startSlideShow() {
-      // TODO ?? Set area position in store
-
       // Enable navigator fullscreen
       document.documentElement.requestFullscreen()
-
       
       // ! Hide all widgets
       document.getElementById('widgets-scale').style.display = 'none'

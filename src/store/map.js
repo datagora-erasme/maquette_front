@@ -12,7 +12,7 @@ const map = {
     isCSVGenerationOngoing: false,
     csvString: null,
     currentMockupUrl: null,
-    currentMockupObjFile: null, //Blob containing the obj file's content. Downloadable with a .obj extension.
+    currentMockupBbox: null,
     baseLayers: [],
     currAreaRotation: 0,
     newAreaRotation: 0,
@@ -80,6 +80,9 @@ const map = {
     getOpenedMockup(state) {
       return state.openedMockup
     },
+    getCurrentMockupBbox(state) {
+      return state.currentMockupBbox
+    },
   },
   mutations: {
     SET_PLATES_X(state, platesX) {
@@ -135,6 +138,9 @@ const map = {
     },
     SET_OPENED_MOCKUP(state, newMockup) {
       state.openedMockup = newMockup
+    },
+    SET_CURRENT_MOCKUP_BBOX(state, newBbox) {
+      state.currentMockupBbox = newBbox
     },
   },
   actions: {
@@ -250,6 +256,9 @@ const map = {
     },
     setOpenedMockup({ commit }, newMockup) {
       commit('SET_OPENED_MOCKUP', newMockup)
+    },
+    setCurrentMockupBbox({ commit }, newBbox) {
+      commit('SET_CURRENT_MOCKUP_BBOX', newBbox)
     },
   },
 };

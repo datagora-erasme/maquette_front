@@ -22,14 +22,12 @@
   import { getTopLeft, getWidth } from 'ol/extent.js'
   // import 'ol/ol.css'
 
-  // DEBUG Import iTowns to reproj
-  import * as itowns from '@/node_modules/itowns/dist/itowns'
-
   import proj4 from 'proj4'
   import { register } from 'ol/proj/proj4'
 
   // Singleton OL Map
   var olMap = null
+  var olLayers = []
 
   // Import Ortho data conf file
   var ortho = require('../datas/Ortho.json')
@@ -100,37 +98,54 @@
         getSelectedPos: 'map/getSelectedPos',
         getOpenedMockup: 'map/getOpenedMockup',
         getIsFullscreen: 'map/getIsFullscreen',
+        getCurrentMockupBbox: 'map/getCurrentMockupBbox'
       }),
     },
     mounted() {
       // ===== Bind Events =====
       this.$evtBus.on('onTravelForProjection', this.goToMockup)
-      console.log(this.$evtBus)
+      
+      // ===== Init OL =====
+      this.initOlLayers()
+      this.addCustomProj()
 
-      // proj4.defs['EPSG:2154'] = '+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs';
-      // register(proj4);
-      // const proj2154 = getProjection('EPSG:2154');
-      // proj2154.setExtent([0, 0, 700000, 1300000]);
-
-      // this is where we create the OpenLayers map
+      // ===== Create OL Map =====
       olMap = new Map({
         controls: defaultControls().extend([new FullScreen(), new RotateNorthControl]),
-        layers: [
+        layers: olLayers,
+        target: this.$refs['map-root'],
+        view: new View({
+          // -------------
+          // center: [4.835095, 45.757838],
+          // projection: 'EPSG:2154',
+          // center: [845989.4937740469, 6520401.078594064],
+          // --------------
+          center: [538240.3133371031, 5741627.150498441], //3857 (default)
+          zoom: 13,
+          // constrainResolution: true
+        }),
+      })
+
+      // TODO: Script init OL
+
+      // DEBUG
+      console.log('olMap')
+      console.log(olMap)
+      console.log('olMap.getView().getZoom()')
+      console.log(olMap.getView().getZoom())
+      // console.log(this)
+      // console.log('this.olMap.getLayers()')
+      // console.log(this.olMap.getLayers())
+      // console.log('this.olMap.getView()')
+      // console.log(this.olMap.getView())
+    },
+    methods: {
+      initOlLayers() {
+        olLayers = [
           // adding a background tiled layer
           new TileLayer({
             source: new OSM() // tiles are served by OpenStreetMap
           }),
-          // TODO: WMS Bruit > Manque style
-          // new TileLayer({
-          //   // extent: [-13884991, 2870341, -7455066, 6338219],
-          //   source: new TileWMS({
-          //     url: 'https://data.grandlyon.com/geoserver/grandlyon/ows',
-          //     params: { 'LAYERS': 'grandlyon:GL_Rte_Lden', 'SLD': 'https://documents.exo-dev.fr/metropole/style_raster_bruit.sld' },
-          //     // serverType: 'geoserver',
-          //     // Countries have transparency, so do not fade tiles:
-          //     transition: 0,
-          //   }),
-          // }),
           // INFO: WMTS IGN OrthoImagery Layer
           new TileLayer({
             opacity: 1,
@@ -150,73 +165,54 @@
               wrapX: true,
             }),
           }),
-          // INFO: WMTS CALQUE Layer
+          // TODO: WMS Bruit > Manque style
           new TileLayer({
-            opacity: 0.5,
-            source: new WMTS({
-              attributions: "- <a href='https://datagora.erasme.org/projets/calque-de-plantabilite/' target='_blank'>Métropole de Lyon</a>",
-              url: 'https://geoserver-planta.exo-dev.fr/geoserver/gwc/service/wmts',
-              layer: 'Metropole:calque_plantabilite_metropole',
-              matrixSet: 'EPSG:4326',
-              format: 'image/png',
-              projection: projectionCalq,
-              tileGrid: new WMTSTileGrid({
-                origin: getTopLeft(projectionExtentCalq),
-                resolutions: resolutionsCalq,
-                matrixIds: matrixIdsCalq,
-              }),
-              style: 'style_calque_planta',
-              wrapX: true,
+            source: new TileWMS({
+              url: 'https://data.grandlyon.com/geoserver/grandlyon/ows',
+              params: { 'LAYERS': 'grandlyon:GL_Rte_Lden', 'SLD': 'https://documents.exo-dev.fr/metropole/style_raster_bruit.sld' },
+              serverType: 'geoserver',
+              transition: 0,
             }),
           }),
-        ],
-        // the map view will initially show the whole world
-        target: this.$refs['map-root'],
-        view: new View({
-          // -------------
-          // center: [4.835095, 45.757838],
-          // projection: 'EPSG:2154',
-          // center: [845989.4937740469, 6520401.078594064],
-          // --------------
-          // center: [538240.3133371031, 5741627.150498441], //3857 (default)
-          center: [543081.6043775391, 5743182.916149397], //3857 (converted gratteciel)
-          zoom: 18,
-          // constrainResolution: true
-        }),
-      })
-
-      // DEBUG
-      console.log(olMap)
-      // console.log(olMap.view.crs)
-      this.goToMockup()
-    },
-    methods: {
-      goToMockup() {
-        // DEBUG
-        console.log('olMap')
-        console.log(olMap)
-        console.log('olMap.getView().getZoom()')
-        console.log(olMap.getView().getZoom())
-        // console.log(this)
-        // console.log('this.olMap.getLayers()')
-        // console.log(this.olMap.getLayers())
-        // console.log('this.olMap.getView()')
-        // console.log(this.olMap.getView())
-
-        // TODO: GET BBOX FROM STORE ?
-        const bbox = this.getOpenedMockup
-        console.log('bbox getter')
-        console.log(bbox)
-
-        // {"bbox":"845600.9314362408, 6520086.293301369, 846378.0511953031, 6520715.868384956","pos":{"isCoordinates":true,"crs":"EPSG:4978","x":4440836.300916875,"y":379042.0116279596,"z":4547385.7553764675,"_normal":{"x":0,"y":0,"z":0},"_normalNeedsUpdate":true},"rotation":-1.6867438373981044e-14}
-
-        // 2154 - {"x":845989.4937740469,"y":6520401.078594064,"z":168.2260222453624}
-
+          // INFO: WMTS CALQUE Layer
+          // new TileLayer({
+          //   opacity: 0.5,
+          //   source: new WMTS({
+          //     attributions: "- <a href='https://datagora.erasme.org/projets/calque-de-plantabilite/' target='_blank'>Métropole de Lyon</a>",
+          //     url: 'https://geoserver-planta.exo-dev.fr/geoserver/gwc/service/wmts',
+          //     layer: 'Metropole:calque_plantabilite_metropole',
+          //     matrixSet: 'EPSG:4326',
+          //     format: 'image/png',
+          //     projection: projectionCalq,
+          //     tileGrid: new WMTSTileGrid({
+          //       origin: getTopLeft(projectionExtentCalq),
+          //       resolutions: resolutionsCalq,
+          //       matrixIds: matrixIdsCalq,
+          //     }),
+          //     style: 'style_calque_planta',
+          //     wrapX: true,
+          //   }),
+          // }),
+        ]
+      },
+      addCustomProj() {
         // Define new custom coord
         proj4.defs('EPSG:2154','+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs');
         proj4.defs('EPSG:4978','+proj=geocent +datum=WGS84 +units=m +no_defs +type=crs');
         // Register new custom coord
         register(proj4)
+      },  
+      goToMockup() {
+        // GET BBOX FROM STORE
+        const currBbox = this.getCurrentMockupBbox
+        console.log('bbox getter')
+        console.log(currBbox)
+
+        // // Define new custom coord
+        // proj4.defs('EPSG:2154','+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs');
+        // proj4.defs('EPSG:4978','+proj=geocent +datum=WGS84 +units=m +no_defs +type=crs');
+        // // Register new custom coord
+        // register(proj4)
 
         // Transform bbox from EPSG:2154 to EPSG:3857 with OL
         const bboxOrigin = [845600.9314362408, 6520086.293301369, 846378.0511953031, 6520715.868384956]
@@ -226,7 +222,6 @@
 
         // GoTo extent converted
         olMap.getView().fit(extent)
-
       }
     }
   }

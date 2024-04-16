@@ -312,6 +312,7 @@ export default {
       fetchProjectsList: 'project/fetchProjectsList',
       setCurrentTabValue: 'map/setCurrentTabValue',
       setOpenedMockup: 'map/setOpenedMockup',
+      setCurrentMockupBbox: 'map/setCurrentMockupBbox',
     }),
     toggleLayerVisibility(layerId) {
       if(view) {
@@ -1057,7 +1058,8 @@ export default {
 
       // ! Get mockup props and cast to JSON
       const areaJsonProps = JSON.parse(currMockup.bbox)
-      // console.log(areaJsonProps)
+      console.log('areaJsonProps')
+      console.log(areaJsonProps)
 
       // TODO: Try hard convert to geoJson polygon
       // convertBboxToGeoJSON(areaJsonProps.bbox)
@@ -1101,6 +1103,9 @@ export default {
       // ! Save mockup obj in global var + store
       openedMockupObj = currMockup
       this.setOpenedMockup(currMockup)
+
+      // Save Opened Mockup Bbox in store
+      this.setCurrentMockupBbox(areaJsonProps.bbox)
       
       // ! Trigger boolean to next step (sidebar)
       this.setCurrentTabValue(1)
