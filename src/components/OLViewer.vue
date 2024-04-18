@@ -100,16 +100,7 @@
 
       // ===== Create OL Map =====
       olMap = new Map({
-        // interactions: ol.interaction.defaults({
-        //   doubleClickZoom :true,
-        //   dragAndDrop: false,
-        //   keyboardPan: false,
-        //   keyboardZoom: false,
-        //   mouseWheelZoom: true,
-        //   pointer: false,
-        //   select: false
-        // }),
-        control: null,
+        control: [],
         layers: olLayers,
         target: this.$refs['map-root'],
         view: new View({
@@ -140,9 +131,9 @@
       console.log('interactions')
       console.log(interactions)
       interactions.forEach(function(interaction) {
-          console.log(interaction.constructor.name)
+          // Search for interaction to desactivate
           if (interaction.constructor.name === 'DragZoom' || interaction.constructor.name === 'KeyboardZoom' || interaction.constructor.name === 'KeyboardPan' || interaction.constructor.name === 'PinchRotate' || interaction.constructor.name === 'DragRotate') {
-              // Désactivation de l'interaction DragZoom
+              // Desactivate
               interaction.setActive(false);
           }
       });
@@ -153,8 +144,8 @@
           var newZoomLevel = olMap.getView().getZoom()
           console.log('Nouveau niveau de zoom :', newZoomLevel)
           // Set in store + local
-          this.setOlZoom(newZoomLevel.toFixed(2))
-          this.newOlZoom = newZoomLevel.toFixed(2)
+          this.setOlZoom(parseFloat(newZoomLevel.toFixed(2)))
+          this.newOlZoom = parseFloat(newZoomLevel.toFixed(2))
       }.bind(this))
     },
     methods: {
@@ -189,10 +180,12 @@
         olLayers = [
           // INFO: OSM fdp
           new TileLayer({
+            visible: false,
             source: new OSM() // tiles are served by OpenStreetMap
           }),
           // INFO: WMTS IGN OrthoImagery Layer
           new TileLayer({
+            visible: true,
             opacity: 1,
             source: new WMTS({
               attributions: "<a href='" + ortho.source.attribution.url + "' target='_blank'>" + ortho.source.attribution.name + '</a>',
@@ -209,9 +202,11 @@
               style: 'normal',
               wrapX: true,
             }),
+            extent: [542514.5195642435, 5742717.405373302, 543648.7387576812, 5743648.423984917]
           }),
           // TODO: WMS Bruit > Manque style
           // new TileLayer({
+          //   visible: false,
           //   source: new TileWMS({
           //     url: 'https://data.grandlyon.com/geoserver/grandlyon/ows',
           //     params: { 'LAYERS': 'grandlyon:GL_Rte_Lden', 'SLD': 'https://documents.exo-dev.fr/metropole/style_raster_bruit.sld' },
@@ -221,6 +216,7 @@
           // }),
           // INFO: WMTS CALQUE Layer
           new TileLayer({
+            visible: false,
             opacity: 0.5,
             source: new WMTS({
               attributions: "- <a href='https://datagora.erasme.org/projets/calque-de-plantabilite/' target='_blank'>Métropole de Lyon</a>",
@@ -248,20 +244,32 @@
         register(proj4)
       },  
       goToMockup() {
-        // GET BBOX FROM STORE
+        // GET BBOX FROM STORE (str)
         const currBbox = this.getCurrentMockupBbox
-        console.log('bbox getter')
-        console.log(currBbox)
+        // DEBUG
+        // console.log('bbox getter')
+        // console.log(currBbox)
+
+        // Convert into Array (and convert to Float)
+        const currBboxStrArray = currBbox.split(', ')
+        const currBboxArray = []
+        currBboxStrArray.forEach(element => {
+          currBboxArray.push(parseFloat(element))
+        })
+        // DEBUG
+        // console.log(currBboxArray)
 
 
         // TODO: Transform bbox from EPSG:2154 to EPSG:3857 with OL
         // const bboxOrigin = [845600.9314362408, 6520086.293301369, 846378.0511953031, 6520715.868384956]
-        const extent = olProj.transformExtent(currBbox, 'EPSG:2154', 'EPSG:3857')
+        const extent = olProj.transformExtent(currBboxArray, 'EPSG:2154', 'EPSG:3857')
         console.log('new bbox extent')
         console.log(extent)
 
         // GoTo extent converted
         olMap.getView().fit(extent)
+
+
       },
       verifyOlZoom() {
         // Min or null value
@@ -283,7 +291,7 @@
         this.setOlZoom(this.newOlZoom)
       },
       minusZoom() {
-        this.newOlZoom -= 0.5
+        this.newOlZoom -= 0.1
         
         // Max value
         if (this.newOlZoom < 3) {
@@ -296,7 +304,7 @@
         this.setOlZoom(this.newOlZoom)
       },
       plusZoom() {
-        this.newOlZoom += 0.5
+        this.newOlZoom += 0.1
         
         // Max value
         if (this.newOlZoom > 20) {
@@ -316,6 +324,10 @@
 #map-root {
   width: 100%;
   height: 100%;
+  background: black;
+}
+.ol-zoom {
+  display: none;
 }
 
 #custom-controls {

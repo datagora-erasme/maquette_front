@@ -88,8 +88,8 @@
 
     <!-- Viewer Div (override by JS) -->
     <!-- !isFullscreen -->
-    <div v-show="false" id="viewerDiv" class="viewer" />
-    <OLViewer />
+    <div v-show="!isFullscreen" id="viewerDiv" class="viewer" />
+    <OLViewer v-show="isFullscreen" />
     <!-- v-show="isFullscreen" -->
 
     <!-- Sidebar -->
@@ -803,8 +803,13 @@ export default {
     addSearchBarWidget() {
       // Define options for geocoding service that should be used by the searchbar
       const geocodingOptions = {
+          // INFO: OLD URL
+          // url: new URL(
+          //     'https://wxs.ign.fr/ayxvok72rcocdyn8xyvy32og/ols/apis/completion?text=&type=StreetAddress,' +
+          //     'PositionOfInterest',
+          // ),
           url: new URL(
-              'https://wxs.ign.fr/ayxvok72rcocdyn8xyvy32og/ols/apis/completion?text=&type=StreetAddress,' +
+              'https://data.geopf.fr/geocodage/completion?text=&type=StreetAddress,' +
               'PositionOfInterest',
           ),
           // As precised in the doc (https://www.itowns-project.org/itowns/docs/#api/Widgets/Searchbar), the parser
