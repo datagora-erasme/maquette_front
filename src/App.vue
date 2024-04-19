@@ -13,14 +13,15 @@
       </v-card>
     </div>
     <itowns-viewer v-if="isLoggedIn" class="itowns-viewer" />
+    
+    <Aside v-if="isLoggedIn" />
+    <AsideBtn v-if="isLoggedIn" />
+    <SlideshowExitBtn v-if="isFullscreen" />
+    
     <v-dialog v-model="localIsCSVGenerationOngoing" class="csv-loading-screen-dialog">
       <CSVLoadingScreen v-show="isCSVGenerationOngoing" />
     </v-dialog>
     <!-- <csv-loading-screen @onHidePreview="hidePreview" /> -->
-    <notifications position="bottom right" />
-    <Aside v-if="isLoggedIn" />
-    <AsideBtn v-if="isLoggedIn" />
-    <SlideshowExitBtn v-if="isFullscreen" />
     <Notifications position="bottom right" />
   </div>
 </template>
@@ -81,7 +82,9 @@ export default {
   mounted() {
     if (window.location.href.includes('reset?token=') && window.location.href.split('reset?token=')[1]) {
       this.setOngoingPasswordModification(true);
-    } else this.verifySession();
+    } else { 
+      this.verifySession() 
+    }
   },
   methods: {
     ...mapActions({

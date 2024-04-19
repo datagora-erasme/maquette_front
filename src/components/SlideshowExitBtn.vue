@@ -24,14 +24,27 @@ export default {
       if (document.fullscreenElement) {
         document.exitFullscreen()
       }
-
-      // Restore display of all widget
-      document.getElementById('widgets-scale').style.display = 'flex' // flex
-      document.getElementById('widgets-navigation').style.display = 'flex' // flex
-      document.getElementById('widgets-searchbar').style.display = 'block' // block
       
       // Disable fullscreen in Store
       this.setIsFullscreen(false)
+
+      this.$evtBus.emit('onRefreshMap')
+
+      setTimeout(() => {
+        // Restore display of all widget
+        const widgetScale = document.getElementById('widgets-scale')
+        if (widgetScale) {
+          widgetScale.style.display = 'flex' // flex
+        }
+        const widgetNav = document.getElementById('widgets-navigation')
+        if (widgetNav) {
+          widgetNav.style.display = 'flex' // flex
+        }
+        const widgetSearch = document.getElementById('widgets-searchbar')
+        if (widgetSearch) {
+          widgetSearch.style.display = 'block' // block
+        }
+      }, 1000);
 
       // TODO: Show again Opened Mockup
       this.$evtBus.emit('onShowOpenedMockup')

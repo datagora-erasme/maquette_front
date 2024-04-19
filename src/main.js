@@ -16,6 +16,13 @@ import store from './store';
 import Notifications from '@kyvg/vue3-notification';
 import eventBus from './utils/event-bus';
 
+// ### vue3-openlayers ###
+// import OpenLayersMap from "vue3-openlayers";
+// import "vue3-openlayers/styles.css";
+
+// ### OL ###
+import 'ol/ol.css'
+
 // Import CSS
 import '@/node_modules/itowns/examples/css/widgets.css'
 
@@ -37,9 +44,11 @@ const app = createApp(App)
 app.use(Itowns)
 app.use(THREE)
 app.use(vuetify)
-app.use(Notifications);
+app.use(Notifications)
 app.use(store)
 app.use(eventBus)
+// ### vue3-openlayers ###
+// app.use(OpenLayersMap)
 
 // Create prototypes
 app.config.globalProperties.$axios = axios;

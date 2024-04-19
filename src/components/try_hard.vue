@@ -22,6 +22,10 @@ export default {
   //https://geoserver-planta.exo-dev.fr/geoserver/Metropole/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Metropole%3Abati&maxFeatures=50&outputFormat=application%2Fjson
   // EPSG:4326
 
+    // TODO: NEW planar view ?
+    // const extent = new itowns.Extent('EPSG:3946', 1837816.94334, 1847692.32501, 5170036.4587, 5178412.82698);
+    // view = new itowns.PlanarView(viewerDiv, extent, { placement: { heading: -49.6, range: 6200, tilt: 17 } });
+  
   // ! Calque layer - WIP
   var calque = require('../datas/Calque.json')
   var calqueSource = new itowns.WMTSSource(calque.source)
@@ -33,6 +37,221 @@ export default {
   })
   calqueLayer.visible = true
   view.addLayer(calqueLayer)
+
+  // ----------------------------------------------------- ITOWNS WMTS CALQUE
+
+  // TODO: ADD CALQUE WMS (with tiled ?)
+      // var wmsCalqueSource = new itowns.WMSSource({
+      //   extent: currentExtent,
+      //   name: 'calque_plantabilite_metropole',
+      //   url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/wms',
+      //   version: '1.1.0',
+      //   crs: 'EPSG:4326',
+      //   format: 'image/jpeg',
+      //   tiled: true,
+      // })
+
+      // // Add a WMS Calque layer
+      // var wmsCalqueLayer = new itowns.ColorLayer('calque', {
+      //   name: 'Calque',
+      //   source: wmsCalqueSource,
+      //   opacity: 1,
+      // })
+
+      // view.addLayer(wmsCalqueLayer);
+
+      // TODO: CALQUE TMS
+      
+      // // Create the source
+      // const tmsSource = new itowns.TMSSource({
+      //   format: 'image/png',
+      //   url: 'https://geoserver-planta.exo-dev.fr/geoserver/gwc/service/tms/1.0.0/Metropole:calque_plantabilite_metropole/${z}/${x}/${y}.png',
+      //   crs: 'EPSG:4326',
+      // })
+
+      // // Create the layer
+      // const colorLayer = new itowns.ColorLayer('OPENSM', {
+      //     source: tmsSource,
+      // })
+
+      // // Add the layer
+      // view.addLayer(colorLayer);
+
+      // TODO: CALQUE WMTS
+      var calque = require('../datas/Calque.json')
+      
+      var calqueSource = new itowns.WMTSSource(calque.source)
+      
+      var calqueLayer = new itowns.ColorLayer('CalqueLayer', {
+        name: 'Calque de plantabilité',
+        protocol: 'wmts',
+        source: calqueSource,
+        opacity: 1,
+      })
+      calqueLayer.visible = true
+
+      view.addLayer(calqueLayer)
+
+      var orthoLayer = {
+        'type': 'color',
+        'protocol':   'wmts',
+        'id':         'calquewmts',
+        'url':        'https://geoserver-planta.exo-dev.fr/geoserver/gwc/service/wmts',
+        'updateStrategy': {
+            'type': '0',
+            'options': {}
+        },
+        'networkOptions' : {
+            'crossOrigin' : 'omit'
+        },
+        'options': {
+            'attribution' : {
+                'name':'IGN',
+                'url':'http://www.ign.fr/'
+            },
+            'name': 'Metropole:calque_plantabilite_metropole',
+            'mimetype': 'image/jpeg',
+            'tileMatrixSet': 'EPSG:4326',
+            'tileMatrixSetLimits': {
+              'EPSG:4326:0': {
+                'minTileRow': 0,
+                'maxTileRow': 1,
+                'minTileCol': 0,
+                'maxTileCol': 1
+              },
+              'EPSG:4326:1': {
+                'minTileRow': 0,
+                'maxTileRow': 2,
+                'minTileCol': 0,
+                'maxTileCol': 2
+              },
+              'EPSG:4326:2': {
+                'minTileRow': 0,
+                'maxTileRow': 4,
+                'minTileCol': 0,
+                'maxTileCol': 4
+              },
+              'EPSG:4326:3': {
+                'minTileRow': 1,
+                'maxTileRow': 8,
+                'minTileCol': 1,
+                'maxTileCol': 8
+              },
+              'EPSG:4326:4': {
+                'minTileRow': 3,
+                'maxTileRow': 16,
+                'minTileCol': 3,
+                'maxTileCol': 16
+              },
+              'EPSG:4326:5': {
+                'minTileRow': 7,
+                'maxTileRow': 32,
+                'minTileCol': 7,
+                'maxTileCol': 32
+              },
+              'EPSG:4326:6': {
+                'minTileRow': 15,
+                'maxTileRow': 65,
+                'minTileCol': 15,
+                'maxTileCol': 65
+              },
+              'EPSG:4326:7': {
+                'minTileRow': 31,
+                'maxTileRow': 131,
+                'minTileCol': 31,
+                'maxTileCol': 131
+              },
+              'EPSG:4326:8': {
+                'minTileRow': 62,
+                'maxTileRow': 262,
+                'minTileCol': 63,
+                'maxTileCol': 263
+              },
+              'EPSG:4326:9': {
+                'minTileRow': 125,
+                'maxTileRow': 525,
+                'minTileCol': 126,
+                'maxTileCol': 526
+              },
+              'EPSG:4326:10': {
+                'minTileRow': 250,
+                'maxTileRow': 1050,
+                'minTileCol': 252,
+                'maxTileCol': 1052
+              },
+              'EPSG:4326:11': {
+                'minTileRow': 501,
+                'maxTileRow': 2101,
+                'minTileCol': 505,
+                'maxTileCol': 2105
+              },
+              'EPSG:4326:12': {
+                'minTileRow': 1002,
+                'maxTileRow': 4202,
+                'minTileCol': 1011,
+                'maxTileCol': 4211
+              },
+              'EPSG:4326:13': {
+                'minTileRow': 2739,
+                'maxTileRow': 4628,
+                'minTileCol': 41,
+                'maxTileCol': 7917
+              },
+              'EPSG:4326:14': {
+                'minTileRow': 5478,
+                'maxTileRow': 9256,
+                'minTileCol': 82,
+                'maxTileCol': 15835
+              },
+              'EPSG:4326:15': {
+                'minTileRow': 10956,
+                'maxTileRow': 18513,
+                'minTileCol': 165,
+                'maxTileCol': 31670
+              },
+              'EPSG:4326:16': {
+                'minTileRow': 21912,
+                'maxTileRow': 37026,
+                'minTileCol': 330,
+                'maxTileCol': 63341
+              },
+              'EPSG:4326:17': {
+                'minTileRow': 43825,
+                'maxTileRow': 74052,
+                'minTileCol': 660,
+                'maxTileCol': 126683
+              },
+              'EPSG:4326:18': {
+                'minTileRow': 87648,
+                'maxTileRow': 148111,
+                'minTileCol': 1312,
+                'maxTileCol': 253375
+              },
+              'EPSG:4326:19': {
+                'minTileRow': 175296,
+                'maxTileRow': 294063,
+                'minTileCol': 170144,
+                'maxTileCol': 343487
+              },
+              'EPSG:4326:20': {
+                'minTileRow': 357008,
+                'maxTileRow': 384687,
+                'minTileCol': 524400,
+                'maxTileCol': 540927
+              },
+              'EPSG:4326:21': {
+                'minTileRow': 714032,
+                'maxTileRow': 768783,
+                'minTileCol': 1048816,
+                'maxTileCol': 1081775
+              }
+            }
+        }
+    }
+
+    view.addLayer(orthoLayer)
+    
+  // -----------------------------------------------------
 
   // ! WMS Calque planta of Metropole de Lyon --> Not working...
   // var wmsCalqueLyonSource = new itowns.WMSSource({
@@ -124,7 +343,6 @@ export default {
   // meshBB1.updateMatrixWorld()
   // meshBB2.updateMatrixWorld() 
   // view.notifyChange(true)
-
 
   // !
     function intersect(pos) {
@@ -226,6 +444,96 @@ export default {
     // Try2
     // const imageryLayers = view.getLayers(l => l.isColorLayer);
     // const layer = view.getLayerById('Lyon_Districts');
+
+
+    // ========= OpenLayers =========
+
+    // ###### Geom OL JS #######
+    // this is a simple triangle over the atlantic ocean
+    // const data = {
+    //   type: 'Feature',
+    //   properties: {},
+    //   geometry: {
+    //     type: 'Polygon',
+    //     coordinates: [
+    //       [
+    //         [
+    //           -27.0703125,
+    //           43.58039085560784
+    //         ],
+    //         [
+    //           -28.125,
+    //           23.563987128451217
+    //         ],
+    //         [
+    //           -10.8984375,
+    //           32.84267363195431
+    //         ],
+    //         [
+    //           -27.0703125,
+    //           43.58039085560784
+    //         ]
+    //       ]
+    //     ]
+    //   }
+    // }
+
+    // Events binding
+    olMap.on('click', function(evt) {
+      console.log('Coordonnées du clic:', evt.coordinate);
+    });
+    olMap.on('moveend', function(evt) {
+        var newZoomLevel = olMap.getView().getZoom();
+        console.log('Nouveau niveau de zoom :', newZoomLevel);
+    });
+    olMap.getView().on('change:resolution', function(evt) {
+        var newZoomLevel = olMap.getView().getZoom();
+        console.log('View niveau de zoom :', newZoomLevel);
+    });
+
+    // OL default 2154 ????????????
+    // -------------
+    // center: [4.835095, 45.757838],
+    // projection: 'EPSG:2154',
+    // center: [845989.4937740469, 6520401.078594064],
+    // --------------
+
+    // OL - Find one Layer with id
+    console.log(olMap.getAllLayers().find(l => l.get('id') === 'OpenStreetMap'))
+
+    // OL Controls custom
+    // import { FullScreen, Control, defaults as defaultControls } from 'ol/control.js'
+    
+    // in OL Map
+    // controls: defaultControls().extend([new FullScreen(), new RotateNorthControl])
+
+    // --- Custom OLL Control ---
+    class RotateNorthControl extends Control {
+      /**
+       * @param {Object} [opt_options] Control options.
+       */
+      constructor(opt_options) {
+        const options = opt_options || {};
+
+        const button = document.createElement('button');
+        button.innerHTML = 'N';
+
+        const element = document.createElement('div');
+        element.className = 'rotate-north ol-unselectable ol-control';
+        element.appendChild(button);
+
+        super({
+          element: element,
+          target: options.target,
+        });
+
+        button.addEventListener('click', this.handleRotateNorth.bind(this), false);
+      }
+
+      handleRotateNorth() {
+        this.getMap().getView().setRotation(0);
+      }
+    }
   }
 }
 </script>

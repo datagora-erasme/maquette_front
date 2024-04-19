@@ -87,7 +87,12 @@
     </div>
 
     <!-- Viewer Div (override by JS) -->
-    <div id="viewerDiv" class="viewer" />
+    <!-- !isFullscreen -->
+    <div v-show="!isFullscreen" id="viewerDiv" class="viewer" />
+    <OLViewer v-show="isFullscreen" />
+    <!-- v-show="isFullscreen" -->
+
+    <!-- Sidebar -->
     <sidebar-component
       v-if="currentTabValue"
       ref="sidebarComponent"
@@ -119,6 +124,7 @@
 import { mapActions, mapGetters } from 'vuex'
 import * as itowns from '@/node_modules/itowns/dist/itowns'
 import * as itowns_widgets from '@/node_modules/itowns/dist/itowns_widgets'
+import OLViewer from './OLViewer.vue'
 import SidebarComponent from './SidebarComponent.vue'
 import PreviewComponent from './PreviewComponent.vue'
 import UserInfo from './UserInfo.vue'
@@ -142,6 +148,7 @@ const clickMouse = new itowns.THREE.Vector2();  // create once
 export default {
   name: 'ItownsViewer',
   components: { 
+    OLViewer,
     SidebarComponent, 
     PreviewComponent, 
     UserInfo 
@@ -216,6 +223,10 @@ export default {
     this.$evtBus.on('onResetArea', this.resetOpenedMockup)
 
     // ===== Init iTowns vars =====
+    
+    // Add other projections to iTowns
+    this.addCustomProjections()
+
     // Placement in Lyon - France
     lyonPlacement = {
       coord: new itowns.Coordinates('EPSG:4326', 4.835095, 45.757838),
@@ -231,54 +242,56 @@ export default {
     // console.log('viewerDiv')
     // console.log(viewerDiv)
 
-    // ===== Init View =====
-    view = new itowns.GlobeView(viewerDiv, lyonPlacement)
-  
-    // ===== Initiate view Extent =====
-    this.getViewCurrentExtent()
-    // ===== Add other projections to iTowns =====
-    this.addCustomProjections()
-    // ===== Init Data and add layer to iTowns =====
-    // this.loadFdpData(view)
-    // ===== Init Scale Widget =====
-    this.addScaleWidget(view)
-    // ===== Init Navigation Widgets =====
-    this.addNavigationWidget(view)
-    // ===== Init Searchbar Widgets =====
-    this.addSearchBarWidget(view)
-
-    // Finally...
-    view.notifyChange()
-
-    this.removeSelectedArea()
-    this.resetAreaStore()
-
-    // Global init Event
-    view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function m() {
-      // ! Init OK
-      // console.info('-Globe initialized-')
-      // ! ===== Reload view Extent =====
+    if (viewerDiv) {
+      // ===== Init View =====
+      view = new itowns.GlobeView(viewerDiv, lyonPlacement)
+      
+      // ===== Initiate view Extent =====
       this.getViewCurrentExtent()
-      // ! ===== Init Data and add layer to iTowns =====
-      this.loadFdpData(view)
-      // ! ===== Add 3D Building =====
-      this.addIGNBuildingLayer()
-      // ! ===== Show Debug =====
-      // this.showDebugInfos()
-      // ! ===== Show All Layers =====
-      this.showAllLayers()
+      
+      // ===== Init Data and add layer to iTowns =====
+      // this.loadFdpData(view)
+      // ===== Init Scale Widget =====
+      this.addScaleWidget(view)
+      // ===== Init Navigation Widgets =====
+      this.addNavigationWidget(view)
+      // ===== Init Searchbar Widgets =====
+      this.addSearchBarWidget(view)
+  
+      // Finally...
+      view.notifyChange()
+  
+      this.removeSelectedArea()
+      this.resetAreaStore()
+  
+      // Global init Event
+      view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function m() {
+        // ! Init OK
+        // console.info('-Globe initialized-')
+        // ! ===== Reload view Extent =====
+        this.getViewCurrentExtent()
+        // ! ===== Init Data and add layer to iTowns =====
+        this.loadFdpData(view)
+        // ! ===== Add 3D Building =====
+        this.addIGNBuildingLayer()
+        // ! ===== Show Debug =====
+        // this.showDebugInfos()
+        // ! ===== Show All Layers =====
+        this.showAllLayers()
+  
+        // ## Add Mouse Event listener ##
+        viewerDiv.addEventListener('mousedown', this.handleMouseDown)
+        viewerDiv.addEventListener('mouseup', this.handleMouseUp)
+        viewerDiv.addEventListener('mousemove', this.handleMouseDrag)
+  
+        // ! For debugging pos
+        // viewerDiv.addEventListener('mousemove', this.handleMouseMove)
+        // ## Add Wheel Event listener ##
+        // viewerDiv.addEventListener('wheel', this.handleMouseMove)
+  
+      }.bind(this))
+    }
 
-      // ## Add Mouse Event listener ##
-      viewerDiv.addEventListener('mousedown', this.handleMouseDown)
-      viewerDiv.addEventListener('mouseup', this.handleMouseUp)
-      viewerDiv.addEventListener('mousemove', this.handleMouseDrag)
-
-      // ! For debugging pos
-      // viewerDiv.addEventListener('mousemove', this.handleMouseMove)
-      // ## Add Wheel Event listener ##
-      // viewerDiv.addEventListener('wheel', this.handleMouseMove)
-
-    }.bind(this))
   },
   methods: {
     ...mapActions({
@@ -299,19 +312,24 @@ export default {
       fetchProjectsList: 'project/fetchProjectsList',
       setCurrentTabValue: 'map/setCurrentTabValue',
       setOpenedMockup: 'map/setOpenedMockup',
+      setCurrentMockupBbox: 'map/setCurrentMockupBbox',
     }),
     toggleLayerVisibility(layerId) {
       if(view) {
-        const currLayer = view.getLayerById(layerId);
-        currLayer.visible = !currLayer.visible
-        view.notifyChange()
+        const currLayer = view.getLayerById(layerId)
+        if(currLayer) {
+          currLayer.visible = !currLayer.visible
+          view.notifyChange()
+        }
       }
     },
     changeLayerOpacity(newLayerOp) {
       if(view) {
-        const currLayer = view.getLayerById(newLayerOp.id);
-        currLayer.opacity = newLayerOp.opacity / 100
-        view.notifyChange()
+        const currLayer = view.getLayerById(newLayerOp.id)
+        if(currLayer) {
+          currLayer.opacity = newLayerOp.opacity / 100
+          view.notifyChange()
+        }
       }
     },
     refreshMap() {
@@ -386,6 +404,7 @@ export default {
     addCustomProjections() {
       // Define crs projection that we will use (taken from https://epsg.io/2154, Proj4js section)
       itowns.proj4.defs('EPSG:2154', '+proj=lcc +lat_0=46.5 +lon_0=3 +lat_1=49 +lat_2=44 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs')
+      itowns.proj4.defs('EPSG:3946','+proj=lcc +lat_0=46 +lon_0=3 +lat_1=45.25 +lat_2=46.75 +x_0=1700000 +y_0=5200000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs');
     },
     handleMouseDrag(event) {
       // Enable drag boolean
@@ -493,6 +512,7 @@ export default {
     },
     loadFdpData() {
       // -- Init Data and add layer to iTowns --
+
       // OSM layer
       var osm = require('../datas/OPENSM.json')
       var osmSource = new itowns.WMTSSource(osm.source)
@@ -543,122 +563,23 @@ export default {
       view.addLayer(worldDTMLayer)
 
       // WMS Communes of Metropole de Lyon
-      var wmsCommuneLyonSource = new itowns.WMSSource({
-        url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/wms',
-        protocol: 'wms',
-        version: '1.1.0',
-        name: 'communes',
-        format: 'image/svg',
-        projection: 'EPSG:3857',
-        extent: currentExtent,
-      })
-      const wmsCommuneLyonLayer = new itowns.ColorLayer('Lyon_Districts', {
-        name: 'Communes Lyon',
-        source: wmsCommuneLyonSource,
-        transparent: true,
-        opacity: 1,
-      });
-      wmsCommuneLyonLayer.visible = false
-      view.addLayer(wmsCommuneLyonLayer);
-    },
-    addCustomBuildingLayer() {
-      // ! Unused ?
-      var color = new itowns.THREE.Color()
-      var meshes = []
-
-      function colorBuildings(properties) {
-        // ? Grey : 0x555555 / White : 0xFDFDFF
-        // if (properties.usage_1 === 'Résidentiel') {
-        //     return color.set(0xFDFDFF)
-        // } else if (properties.usage_1 === 'Annexe') {
-        //     return color.set(0xC6C5B9)
-        // } else if (properties.usage_1 === 'Commercial et services') {
-        //     return color.set(0x62929E)
-        // } else if (properties.usage_1 === 'Religieux') {
-        //     return color.set(0x393D3F)
-        // } else if (properties.usage_1 === 'Sportif') {
-        //     return color.set(0x546A7B)
-        // }
-        return color.set(0xFDFDFF)
-      }
-      function acceptFeature(properties) {
-        return !!properties.hauteur
-      }
-      function altitudeBuildings(properties) {
-        return parseFloat(properties.altitude_minimale_sol)
-      }
-      function extrudeBuildings(properties) {
-        return parseFloat(properties.hauteur)
-      }
-
-      scaler = function update(/* dt */) {
-        var i;
-        var mesh;
-        if (meshes.length) {
-          view.notifyChange(view.camera.camera3D, true);
-        }
-        for (i = 0; i < meshes.length; i++) {
-          mesh = meshes[i];
-          if (mesh) {
-            mesh.scale.z = Math.min(1.0, mesh.scale.z + 0.1);
-            mesh.updateMatrixWorld(true);
-          }
-        }
-        meshes = meshes.filter(function filter(m) { return m.scale.z < 1; });
-      };
-      view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.BEFORE_RENDER, scaler);
-
-      // DB IGN Building from Exo-Dev Server (https://geoserver-planta.exo-dev.fr/geoserver/) - Only dep 69 in France
-      var wfsBuildingSource = new itowns.WFSSource({
-        protocol: 'wfs',
-        url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/ows?',
-        version: '1.0.0',
-        typeName: 'Metropole:bati',
-        crs: 'EPSG:4326',
-        format: 'application/json',
-        // maxFeatures: 50
-      })
-
-      var wfsBuildingSource = new itowns.WFSSource({
-        url: 'https://wxs.ign.fr/topographie/geoportail/wfs?',
-        version: '2.0.0',
-        typeName: 'BDTOPO_V3:batiment',
-        crs: 'EPSG:4326',
-        ipr: 'IGN',
-        format: 'application/json',
-        extent: {
-          west: 4.568,
-          east: 5.18,
-          south: 45.437,
-          north: 46.03,
-        },
-      });
-
-      // Create layer on wfs building source
-      var wfsBuildingLayer = new itowns.FeatureGeometryLayer('IGN_Buildings',{
-          name: 'Bâtiments IGN',
-          batchId: function(property, featureId) { return featureId },
-          accurate: true,
-          onMeshCreated: function scaleZ(mesh) {
-              mesh.children.forEach(c => {
-                  c.scale.z = 0.01
-              })
-          },
-          filter: acceptFeature,
-          source: wfsBuildingSource,
-          zoom: { min: 15 }, //14
-          style: new itowns.Style({
-            fill: {
-              color: colorBuildings,
-              base_altitude: altitudeBuildings,
-              extrusion_height: extrudeBuildings,
-            },
-            stroke: { color: color.set(0x546A7B) },
-          })
-      })
-
-      // Finally add layer
-      view.addLayer(wfsBuildingLayer)
+      // var wmsCommuneLyonSource = new itowns.WMSSource({
+      //   url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/wms',
+      //   protocol: 'wms',
+      //   version: '1.1.0',
+      //   name: 'communes',
+      //   format: 'image/svg',
+      //   projection: 'EPSG:3857',
+      //   extent: currentExtent,
+      // })
+      // const wmsCommuneLyonLayer = new itowns.ColorLayer('Lyon_Districts', {
+      //   name: 'Communes Lyon',
+      //   source: wmsCommuneLyonSource,
+      //   transparent: true,
+      //   opacity: 1,
+      // });
+      // wmsCommuneLyonLayer.visible = false
+      // view.addLayer(wmsCommuneLyonLayer)
     },
     addIGNBuildingLayer() {
       var color = new itowns.THREE.Color()
@@ -787,8 +708,13 @@ export default {
     addSearchBarWidget() {
       // Define options for geocoding service that should be used by the searchbar
       const geocodingOptions = {
+          // INFO: OLD URL
+          // url: new URL(
+          //     'https://wxs.ign.fr/ayxvok72rcocdyn8xyvy32og/ols/apis/completion?text=&type=StreetAddress,' +
+          //     'PositionOfInterest',
+          // ),
           url: new URL(
-              'https://wxs.ign.fr/ayxvok72rcocdyn8xyvy32og/ols/apis/completion?text=&type=StreetAddress,' +
+              'https://data.geopf.fr/geocodage/completion?text=&type=StreetAddress,' +
               'PositionOfInterest',
           ),
           // As precised in the doc (https://www.itowns-project.org/itowns/docs/#api/Widgets/Searchbar), the parser
@@ -976,9 +902,9 @@ export default {
         const bbMax = clonedGeometry.boundingBox.max.clone().applyMatrix4(selectedArea.matrixWorld)
         
         // DEBUG
-        // console.log('bbMin / bbMax')
-        // console.log(bbMin)
-        // console.log(bbMax)
+        console.log('bbMin / bbMax')
+        console.log(bbMin)
+        console.log(bbMax)
 
         // ! Convert to 2154 coords
         const coordsMin = new itowns.Coordinates('EPSG:4978', bbMin).as('EPSG:2154')
@@ -993,17 +919,18 @@ export default {
 
         // ! Set in Store
         this.setSelectedBbox(this.selectedBbox)
+        this.setCurrentMockupBbox(this.selectedBbox)
 
         // ! Api call to voxelize
         this.voxelizeBbox(this.selectedBbox)
         .then((objContent) =>  {
-          console.log('objContent')
-          console.log(objContent)
+          // console.log('objContent')
+          // console.log(objContent)
 
           objToMesh(objContent)
           .then((mesh) => {
-            console.log('mesh')
-            console.log(mesh)
+            // console.log('mesh')
+            // console.log(mesh)
 
             // Set data in Store
             this.setVoxelizedMesh(mesh)
@@ -1042,7 +969,8 @@ export default {
 
       // ! Get mockup props and cast to JSON
       const areaJsonProps = JSON.parse(currMockup.bbox)
-      // console.log(areaJsonProps)
+      console.log('areaJsonProps')
+      console.log(areaJsonProps)
 
       // TODO: Try hard convert to geoJson polygon
       // convertBboxToGeoJSON(areaJsonProps.bbox)
@@ -1086,6 +1014,9 @@ export default {
       // ! Save mockup obj in global var + store
       openedMockupObj = currMockup
       this.setOpenedMockup(currMockup)
+
+      // Save Opened Mockup Bbox in store
+      this.setCurrentMockupBbox(areaJsonProps.bbox)
       
       // ! Trigger boolean to next step (sidebar)
       this.setCurrentTabValue(1)
