@@ -47,7 +47,6 @@
 
 <script>
   import { mapActions, mapGetters } from 'vuex'
-  import * as ol from 'ol'
   import * as olProj from 'ol/proj'
   import { get as getProjection } from 'ol/proj.js'
   import { getTopLeft, getWidth } from 'ol/extent.js'
@@ -59,7 +58,7 @@
   import VectorLayer from 'ol/layer/Vector.js'
   import VectorSource from 'ol/source/Vector.js'
   import GeoJSON from 'ol/format/GeoJSON.js'
-  import { bbox as bboxStrategy, all as allStrategy } from 'ol/loadingstrategy.js'
+  import { bbox as bboxStrategy } from 'ol/loadingstrategy.js'
   import WMTS from 'ol/source/WMTS.js'
   import WMTSTileGrid from 'ol/tilegrid/WMTS.js'
   import proj4 from 'proj4'
@@ -137,7 +136,9 @@
       olMap.on('moveend', function(evt) {
           // Get Zoom from view
           var newZoomLevel = olMap.getView().getZoom()
-          console.log('Nouveau niveau de zoom :', newZoomLevel)
+          // DEBUG
+          // console.log('Nouveau niveau de zoom :', newZoomLevel)
+
           // Set in store + local
           this.setOlZoom(parseFloat(newZoomLevel.toFixed(2)))
           this.newOlZoom = parseFloat(newZoomLevel.toFixed(2))
@@ -253,12 +254,9 @@
             source: new VectorSource({
               format: new GeoJSON(),
               url: function(extent) {
-                console.log('inside fct')
-                console.log(extent)
                 return this.computeWFSLink(extent)
               }.bind(this),
               strategy: bboxStrategy,
-              // strategy: allStrategy,
             }),
             style: {
               'stroke-width': 0.75,
@@ -276,12 +274,6 @@
         if (this.currExtent) {
           goodExtent = this.currExtent
         }
-
-        console.log('goodExtent')
-        console.log(goodExtent)
-
-        // TODO: SOL 2
-        // goodExtent = olMap.getView().calculateExtent(olMap.getSize());
 
         return (
           'https://wxs.ign.fr/topographie/geoportail/wfs?SERVICE=WFS&' +
