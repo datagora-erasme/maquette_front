@@ -496,6 +496,7 @@ export default {
     // center: [4.835095, 45.757838],
     // projection: 'EPSG:2154',
     // center: [845989.4937740469, 6520401.078594064],
+    // center: [538240.3133371031, 5741627.150498441], //3857 (lyon default)
     // --------------
 
     // OL - Find one Layer with id

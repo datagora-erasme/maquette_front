@@ -2,6 +2,46 @@
   <div id="map-root" ref="map-root">
     <div id="custom-controls">
       <v-text-field
+        v-model="newOlCenterX"
+        label="Position X"
+        type="number"
+        variant="solo"
+        density="compact"
+        @click:append-inner="changeOlZoom"
+        @keydown.enter="changeOlZoom"
+        @blur="changeOlZoom"
+      >
+        <!-- append-inner-icon="mdi-check" -->
+        <template #append-inner>
+          <v-icon
+            class="mt-3"
+            :class="newOlZoom == currOlZoom ? '' : 'icon-darkblue'"
+            icon="mdi-check"
+            @click="changeOlZoom"
+          />
+        </template>
+      </v-text-field>
+      <v-text-field
+        v-model="newOlCenterY"
+        label="Position Y"
+        type="number"
+        variant="solo"
+        density="compact"
+        @click:append-inner="changeOlZoom"
+        @keydown.enter="changeOlZoom"
+        @blur="changeOlZoom"
+      >
+        <!-- append-inner-icon="mdi-check" -->
+        <template #append-inner>
+          <v-icon
+            class="mt-3"
+            :class="newOlZoom == currOlZoom ? '' : 'icon-darkblue'"
+            icon="mdi-check"
+            @click="changeOlZoom"
+          />
+        </template>
+      </v-text-field>
+      <v-text-field
         v-model="newOlZoom"
         label="Zoom (3 à 20)"
         type="number"
@@ -9,6 +49,7 @@
         max="20"
         variant="solo"
         density="compact"
+        color="#263238"
         @click:append-inner="changeOlZoom"
         @keydown.enter="changeOlZoom"
         @blur="changeOlZoom"
@@ -28,18 +69,20 @@
       <v-btn
         class="custom-zoom-btn mb-1"
         density="compact"
+        color="#263238"
         icon
         @click="plusZoom"
       >
-        <v-icon class="zoom-icon" icon="mdi-plus" />
+        <v-icon class="zoom-icon" style="color: #fff" icon="mdi-plus" />
       </v-btn>
       <v-btn
         class="custom-zoom-btn"
         density="compact"
+        color="#263238"
         icon
         @click="minusZoom"
       >
-        <v-icon class="zoom-icon" icon="mdi-minus" />
+        <v-icon class="zoom-icon" style="color: #fff" icon="mdi-minus" />
       </v-btn>
     </div>
   </div>
@@ -76,6 +119,8 @@
     data() {
       return {
         newOlZoom: null,
+        newOlCenterX: null,
+        newOlCenterY: null,
         currExtent: null,
       }
     },
@@ -104,14 +149,15 @@
       // Set initial OL Zoom
       this.newOlZoom = this.currOlZoom
 
+      // TODO: Set initial OL Center ?
+
       // ===== Create OL Map =====
       olMap = new Map({
         control: [],
         layers: olLayers,
         target: this.$refs['map-root'],
         view: new View({
-          // center: [538240.3133371031, 5741627.150498441], //3857 (lyon default)
-          center: [4.835095, 45.757838],
+          center: [845989.4937740469, 6520401.078594064],
           projection: 'EPSG:2154',
           zoom: this.currOlZoom,
           minZoom: 3,
@@ -144,6 +190,15 @@
           // Set in store + local
           this.setOlZoom(parseFloat(newZoomLevel.toFixed(2)))
           this.newOlZoom = parseFloat(newZoomLevel.toFixed(2))
+
+          // TODO: Get View center
+          var newCenter = olMap.getView().getCenter()
+          console.log(newCenter)
+
+          // Set in store + local
+          // this.setOlCenter(parseFloat(newCenter.toFixed(2)))
+          this.newOlCenterX = newCenter[0]
+          this.newOlCenterY = newCenter[1]
 
           // Re-set Extent and refresh all existing OL Layers
           olMap.getAllLayers().forEach(layer => {
@@ -323,9 +378,10 @@
         // DEBUG
         // console.log(currBboxArray)
 
-
-        // Transform bbox from EPSG:2154 to EPSG:3857 with OL
+        // Set current BBOX (EPSG:2154)
         this.currExtent = currBboxArray
+
+        // TODO: Transform bbox from EPSG:2154 to EPSG:3857 with OL (to remove ?)
         // this.currExtent = olProj.transformExtent(currBboxArray, 'EPSG:2154', 'EPSG:3857')
         
         // DEBUG
@@ -402,12 +458,14 @@
 #custom-controls {
   position: absolute;
   display: flex;
+  flex-direction: column;
   align-content: center;
   align-items: center;
   justify-content: center;
   bottom: 1.5em;
   right: 3.5em;
   z-index: 3;
+  max-width: 222px;
 
   input {
     border-bottom: 1px solid grey !important;
