@@ -110,7 +110,9 @@
         layers: olLayers,
         target: this.$refs['map-root'],
         view: new View({
-          center: [538240.3133371031, 5741627.150498441], //3857 (lyon default)
+          // center: [538240.3133371031, 5741627.150498441], //3857 (lyon default)
+          center: [4.835095, 45.757838],
+          projection: 'EPSG:2154',
           zoom: this.currOlZoom,
           minZoom: 3,
           maxZoom: 20
@@ -278,10 +280,12 @@
         return (
           'https://wxs.ign.fr/topographie/geoportail/wfs?SERVICE=WFS&' +
           'version=2.0.0&request=GetFeature&typename=BDTOPO_V3:batiment&' +
-          'outputFormat=application/json&srsname=EPSG:3857&' +
+          'outputFormat=application/json&srsname=EPSG:2154&' +
+          // 'outputFormat=application/json&srsname=EPSG:3857&' +
           'bbox=' +
           goodExtent.join(',') +
-          ',EPSG:3857'
+          ',EPSG:2154'
+          // ',EPSG:3857'
         )
       },
       addCustomProj() {
@@ -321,7 +325,9 @@
 
 
         // Transform bbox from EPSG:2154 to EPSG:3857 with OL
-        this.currExtent = olProj.transformExtent(currBboxArray, 'EPSG:2154', 'EPSG:3857')
+        this.currExtent = currBboxArray
+        // this.currExtent = olProj.transformExtent(currBboxArray, 'EPSG:2154', 'EPSG:3857')
+        
         // DEBUG
         // console.log('new bbox extent')
         // console.log(extent)
