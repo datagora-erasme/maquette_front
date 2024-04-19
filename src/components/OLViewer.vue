@@ -56,6 +56,10 @@
   import OSM from 'ol/source/OSM'
   import TileLayer from 'ol/layer/Tile'
   import TileWMS from 'ol/source/TileWMS.js'
+  import VectorLayer from 'ol/layer/Vector.js'
+  import VectorSource from 'ol/source/Vector.js'
+  import GeoJSON from 'ol/format/GeoJSON.js'
+  import { bbox as bboxStrategy, all as allStrategy } from 'ol/loadingstrategy.js'
   import WMTS from 'ol/source/WMTS.js'
   import WMTSTileGrid from 'ol/tilegrid/WMTS.js'
   import proj4 from 'proj4'
@@ -73,6 +77,7 @@
     data() {
       return {
         newOlZoom: null,
+        currExtent: null,
       }
     },
     computed: {
@@ -90,6 +95,8 @@
     mounted() {
       // ===== Bind Events =====
       this.$evtBus.on('onTravelForProjection', this.goToMockup)
+      this.$evtBus.on('onToggleLayerVisibility', this.toggleLayerVisibility)
+      this.$evtBus.on('onChangeLayerOpacity', this.changeLayerOpacity)
       
       // ===== Init OL =====
       this.initOlLayers()
@@ -104,11 +111,6 @@
         layers: olLayers,
         target: this.$refs['map-root'],
         view: new View({
-          // -------------
-          // center: [4.835095, 45.757838],
-          // projection: 'EPSG:2154',
-          // center: [845989.4937740469, 6520401.078594064],
-          // --------------
           center: [538240.3133371031, 5741627.150498441], //3857 (lyon default)
           zoom: this.currOlZoom,
           minZoom: 3,
@@ -118,25 +120,18 @@
       })
 
       // DEBUG
-      console.log('olMap')
-      console.log(olMap)
-      console.log('olMap.getView().getZoom()')
-      console.log(olMap.getView().getZoom())
-      console.log('olMap.getAllLayers()')
-      console.log(olMap.getAllLayers())
-      console.log('olMap.getLayers()')
-      console.log(olMap.getLayers())
+      // console.log('olMap')
+      // console.log(olMap)
 
-      var interactions = olMap.getInteractions();
-      console.log('interactions')
-      console.log(interactions)
+      // ===== Disable some interactions in OL Map =====
+      var interactions = olMap.getInteractions()
       interactions.forEach(function(interaction) {
           // Search for interaction to desactivate
           if (interaction.constructor.name === 'DragZoom' || interaction.constructor.name === 'KeyboardZoom' || interaction.constructor.name === 'KeyboardPan' || interaction.constructor.name === 'PinchRotate' || interaction.constructor.name === 'DragRotate') {
               // Desactivate
               interaction.setActive(false);
           }
-      });
+      })
 
       // ===== Watch OL Events =====
       olMap.on('moveend', function(evt) {
@@ -146,6 +141,12 @@
           // Set in store + local
           this.setOlZoom(parseFloat(newZoomLevel.toFixed(2)))
           this.newOlZoom = parseFloat(newZoomLevel.toFixed(2))
+
+          // Re-set Extent and refresh all existing OL Layers
+          olMap.getAllLayers().forEach(layer => {
+            layer.setExtent(this.currExtent)
+            layer.getSource().refresh()
+          })
       }.bind(this))
     },
     methods: {
@@ -181,7 +182,10 @@
           // INFO: OSM fdp
           new TileLayer({
             visible: false,
-            source: new OSM() // tiles are served by OpenStreetMap
+            source: new OSM(), // tiles are served by OpenStreetMap
+            properties: {
+              id: 'OpenStreetMap'
+            }
           }),
           // INFO: WMTS IGN OrthoImagery Layer
           new TileLayer({
@@ -202,22 +206,27 @@
               style: 'normal',
               wrapX: true,
             }),
-            extent: [542514.5195642435, 5742717.405373302, 543648.7387576812, 5743648.423984917]
+            properties: {
+              id: 'IGN_Orthophotos'
+            }
           }),
           // TODO: WMS Bruit > Manque style
-          // new TileLayer({
-          //   visible: false,
-          //   source: new TileWMS({
-          //     url: 'https://data.grandlyon.com/geoserver/grandlyon/ows',
-          //     params: { 'LAYERS': 'grandlyon:GL_Rte_Lden', 'SLD': 'https://documents.exo-dev.fr/metropole/style_raster_bruit.sld' },
-          //     serverType: 'geoserver',
-          //     transition: 0,
-          //   }),
-          // }),
+          new TileLayer({
+            visible: false,
+            source: new TileWMS({
+              url: 'https://data.grandlyon.com/geoserver/grandlyon/ows',
+              params: { 'LAYERS': 'grandlyon:GL_Rte_Lden', 'SLD': 'https://documents.exo-dev.fr/metropole/style_raster_bruit.sld' },
+              serverType: 'geoserver',
+              transition: 0,
+            }),
+            properties: {
+              id: 'Bruit'
+            }
+          }),
           // INFO: WMTS CALQUE Layer
           new TileLayer({
             visible: false,
-            opacity: 0.5,
+            opacity: 1,
             source: new WMTS({
               attributions: "- <a href='https://datagora.erasme.org/projets/calque-de-plantabilite/' target='_blank'>Métropole de Lyon</a>",
               url: 'https://geoserver-planta.exo-dev.fr/geoserver/gwc/service/wmts',
@@ -233,8 +242,55 @@
               style: 'style_calque_planta',
               wrapX: true,
             }),
+            properties: {
+              id: 'Calque_Planta'
+            }
           }),
+          // INFO: WFS BDTOPO (IGN)
+          new VectorLayer({
+            visible: true,
+            opacity: 1,
+            source: new VectorSource({
+              format: new GeoJSON(),
+              url: function(extent) {
+                console.log('inside fct')
+                console.log(extent)
+                return this.computeWFSLink(extent)
+              }.bind(this),
+              strategy: bboxStrategy,
+              // strategy: allStrategy,
+            }),
+            style: {
+              'stroke-width': 0.75,
+              'stroke-color': 'black',
+              'fill-color': 'rgba(255,255,255,1)',
+            },
+            properties: {
+              id: 'IGN_Buildings'
+            }
+          })
         ]
+      },
+      computeWFSLink(extent) {
+        var goodExtent = extent
+        if (this.currExtent) {
+          goodExtent = this.currExtent
+        }
+
+        console.log('goodExtent')
+        console.log(goodExtent)
+
+        // TODO: SOL 2
+        // goodExtent = olMap.getView().calculateExtent(olMap.getSize());
+
+        return (
+          'https://wxs.ign.fr/topographie/geoportail/wfs?SERVICE=WFS&' +
+          'version=2.0.0&request=GetFeature&typename=BDTOPO_V3:batiment&' +
+          'outputFormat=application/json&srsname=EPSG:3857&' +
+          'bbox=' +
+          goodExtent.join(',') +
+          ',EPSG:3857'
+        )
       },
       addCustomProj() {
         // Define new custom coord
@@ -242,9 +298,21 @@
         proj4.defs('EPSG:4978','+proj=geocent +datum=WGS84 +units=m +no_defs +type=crs');
         // Register new custom coord
         register(proj4)
-      },  
+      },
+      toggleLayerVisibility(layerId) {
+        const currLayer = olMap.getAllLayers().find(l => l.get('id') === layerId)
+        if (currLayer) {
+          currLayer.setVisible(!currLayer.getVisible())
+        }
+      },
+      changeLayerOpacity(newLayerOp) {
+        const currLayer = olMap.getAllLayers().find(l => l.get('id') === newLayerOp.id)
+        if (currLayer) {
+          currLayer.setOpacity(newLayerOp.opacity / 100)
+        }
+      },
       goToMockup() {
-        // GET BBOX FROM STORE (str)
+        // Get current Mockup Bbox from Store (str)
         const currBbox = this.getCurrentMockupBbox
         // DEBUG
         // console.log('bbox getter')
@@ -260,16 +328,19 @@
         // console.log(currBboxArray)
 
 
-        // TODO: Transform bbox from EPSG:2154 to EPSG:3857 with OL
-        // const bboxOrigin = [845600.9314362408, 6520086.293301369, 846378.0511953031, 6520715.868384956]
-        const extent = olProj.transformExtent(currBboxArray, 'EPSG:2154', 'EPSG:3857')
-        console.log('new bbox extent')
-        console.log(extent)
+        // Transform bbox from EPSG:2154 to EPSG:3857 with OL
+        this.currExtent = olProj.transformExtent(currBboxArray, 'EPSG:2154', 'EPSG:3857')
+        // DEBUG
+        // console.log('new bbox extent')
+        // console.log(extent)
 
-        // GoTo extent converted
-        olMap.getView().fit(extent)
+        // GoTo Extent converted
+        olMap.getView().fit(this.currExtent)
 
-
+        // Set extent to all existing OL Layers
+        olMap.getAllLayers().forEach(layer => {
+          layer.setExtent(this.currExtent)
+        })
       },
       verifyOlZoom() {
         // Min or null value

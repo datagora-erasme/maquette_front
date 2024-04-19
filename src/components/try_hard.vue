@@ -491,6 +491,16 @@ export default {
         console.log('View niveau de zoom :', newZoomLevel);
     });
 
+    // OL default 2154 ????????????
+    // -------------
+    // center: [4.835095, 45.757838],
+    // projection: 'EPSG:2154',
+    // center: [845989.4937740469, 6520401.078594064],
+    // --------------
+
+    // OL - Find one Layer with id
+    console.log(olMap.getAllLayers().find(l => l.get('id') === 'OpenStreetMap'))
+
     // OL Controls custom
     // import { FullScreen, Control, defaults as defaultControls } from 'ol/control.js'
     

@@ -316,16 +316,20 @@ export default {
     }),
     toggleLayerVisibility(layerId) {
       if(view) {
-        const currLayer = view.getLayerById(layerId);
-        currLayer.visible = !currLayer.visible
-        view.notifyChange()
+        const currLayer = view.getLayerById(layerId)
+        if(currLayer) {
+          currLayer.visible = !currLayer.visible
+          view.notifyChange()
+        }
       }
     },
     changeLayerOpacity(newLayerOp) {
       if(view) {
-        const currLayer = view.getLayerById(newLayerOp.id);
-        currLayer.opacity = newLayerOp.opacity / 100
-        view.notifyChange()
+        const currLayer = view.getLayerById(newLayerOp.id)
+        if(currLayer) {
+          currLayer.opacity = newLayerOp.opacity / 100
+          view.notifyChange()
+        }
       }
     },
     refreshMap() {
@@ -559,122 +563,23 @@ export default {
       view.addLayer(worldDTMLayer)
 
       // WMS Communes of Metropole de Lyon
-      var wmsCommuneLyonSource = new itowns.WMSSource({
-        url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/wms',
-        protocol: 'wms',
-        version: '1.1.0',
-        name: 'communes',
-        format: 'image/svg',
-        projection: 'EPSG:3857',
-        extent: currentExtent,
-      })
-      const wmsCommuneLyonLayer = new itowns.ColorLayer('Lyon_Districts', {
-        name: 'Communes Lyon',
-        source: wmsCommuneLyonSource,
-        transparent: true,
-        opacity: 1,
-      });
-      wmsCommuneLyonLayer.visible = false
-      view.addLayer(wmsCommuneLyonLayer);
-    },
-    addCustomBuildingLayer() {
-      // FIXME Unused ?
-      var color = new itowns.THREE.Color()
-      var meshes = []
-
-      function colorBuildings(properties) {
-        // ? Grey : 0x555555 / White : 0xFDFDFF
-        // if (properties.usage_1 === 'Résidentiel') {
-        //     return color.set(0xFDFDFF)
-        // } else if (properties.usage_1 === 'Annexe') {
-        //     return color.set(0xC6C5B9)
-        // } else if (properties.usage_1 === 'Commercial et services') {
-        //     return color.set(0x62929E)
-        // } else if (properties.usage_1 === 'Religieux') {
-        //     return color.set(0x393D3F)
-        // } else if (properties.usage_1 === 'Sportif') {
-        //     return color.set(0x546A7B)
-        // }
-        return color.set(0xFDFDFF)
-      }
-      function acceptFeature(properties) {
-        return !!properties.hauteur
-      }
-      function altitudeBuildings(properties) {
-        return parseFloat(properties.altitude_minimale_sol)
-      }
-      function extrudeBuildings(properties) {
-        return parseFloat(properties.hauteur)
-      }
-
-      scaler = function update(/* dt */) {
-        var i;
-        var mesh;
-        if (meshes.length) {
-          view.notifyChange(view.camera.camera3D, true);
-        }
-        for (i = 0; i < meshes.length; i++) {
-          mesh = meshes[i];
-          if (mesh) {
-            mesh.scale.z = Math.min(1.0, mesh.scale.z + 0.1);
-            mesh.updateMatrixWorld(true);
-          }
-        }
-        meshes = meshes.filter(function filter(m) { return m.scale.z < 1; });
-      };
-      view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.BEFORE_RENDER, scaler);
-
-      // DB IGN Building from Exo-Dev Server (https://geoserver-planta.exo-dev.fr/geoserver/) - Only dep 69 in France
-      var wfsBuildingSource = new itowns.WFSSource({
-        protocol: 'wfs',
-        url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/ows?',
-        version: '1.0.0',
-        typeName: 'Metropole:bati',
-        crs: 'EPSG:4326',
-        format: 'application/json',
-        // maxFeatures: 50
-      })
-
-      var wfsBuildingSource = new itowns.WFSSource({
-        url: 'https://wxs.ign.fr/topographie/geoportail/wfs?',
-        version: '2.0.0',
-        typeName: 'BDTOPO_V3:batiment',
-        crs: 'EPSG:4326',
-        ipr: 'IGN',
-        format: 'application/json',
-        extent: {
-          west: 4.568,
-          east: 5.18,
-          south: 45.437,
-          north: 46.03,
-        },
-      });
-
-      // Create layer on wfs building source
-      var wfsBuildingLayer = new itowns.FeatureGeometryLayer('IGN_Buildings',{
-          name: 'Bâtiments IGN',
-          batchId: function(property, featureId) { return featureId },
-          accurate: true,
-          onMeshCreated: function scaleZ(mesh) {
-              mesh.children.forEach(c => {
-                  c.scale.z = 0.01
-              })
-          },
-          filter: acceptFeature,
-          source: wfsBuildingSource,
-          zoom: { min: 15 }, //14
-          style: new itowns.Style({
-            fill: {
-              color: colorBuildings,
-              base_altitude: altitudeBuildings,
-              extrusion_height: extrudeBuildings,
-            },
-            stroke: { color: color.set(0x546A7B) },
-          })
-      })
-
-      // Finally add layer
-      view.addLayer(wfsBuildingLayer)
+      // var wmsCommuneLyonSource = new itowns.WMSSource({
+      //   url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/wms',
+      //   protocol: 'wms',
+      //   version: '1.1.0',
+      //   name: 'communes',
+      //   format: 'image/svg',
+      //   projection: 'EPSG:3857',
+      //   extent: currentExtent,
+      // })
+      // const wmsCommuneLyonLayer = new itowns.ColorLayer('Lyon_Districts', {
+      //   name: 'Communes Lyon',
+      //   source: wmsCommuneLyonSource,
+      //   transparent: true,
+      //   opacity: 1,
+      // });
+      // wmsCommuneLyonLayer.visible = false
+      // view.addLayer(wmsCommuneLyonLayer)
     },
     addIGNBuildingLayer() {
       var color = new itowns.THREE.Color()
@@ -1014,17 +919,18 @@ export default {
 
         // ! Set in Store
         this.setSelectedBbox(this.selectedBbox)
+        this.setCurrentMockupBbox(this.selectedBbox)
 
         // ! Api call to voxelize
         this.voxelizeBbox(this.selectedBbox)
         .then((objContent) =>  {
-          console.log('objContent')
-          console.log(objContent)
+          // console.log('objContent')
+          // console.log(objContent)
 
           objToMesh(objContent)
           .then((mesh) => {
-            console.log('mesh')
-            console.log(mesh)
+            // console.log('mesh')
+            // console.log(mesh)
 
             // Set data in Store
             this.setVoxelizedMesh(mesh)
