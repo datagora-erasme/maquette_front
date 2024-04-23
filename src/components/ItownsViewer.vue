@@ -49,7 +49,7 @@
               </v-tooltip>
               <v-tooltip text="Mode projection">
                 <template #activator="{ props }">
-                  <!-- TODO: Disable if maq was not load -->
+                  <!-- TODO: Disable if maq was not load -> Confirm message -->
                   <!-- :disabled="!getSelectedArea" -->
                   <v-list-item
                     v-bind="props"
@@ -972,7 +972,7 @@ export default {
       console.log('areaJsonProps')
       console.log(areaJsonProps)
 
-      // TODO: Try hard convert to geoJson polygon
+      // TODO: Try hard convert to geoJson polygon --> To remove ?
       // convertBboxToGeoJSON(areaJsonProps.bbox)
 
       // ! Build mockup new Mesh

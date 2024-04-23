@@ -25,6 +25,8 @@ const map = {
     isFullscreen: false,
     openedMockup: null,
     olZoom: 13,
+    olCenterX: 0,
+    olCenterY: 0
   }),
   getters: {
     getCurrentMockupDownloadLink(state) {
@@ -87,6 +89,12 @@ const map = {
     getOlZoom(state) {
       return state.olZoom
     },
+    getOlCenterX(state) {
+      return state.olCenterX
+    },
+    getOlCenterY(state) {
+      return state.olCenterY
+    },
   },
   mutations: {
     SET_PLATES_X(state, platesX) {
@@ -148,7 +156,13 @@ const map = {
     },
     SET_OL_ZOOM(state, newZoom) {
       state.olZoom = newZoom
-    }
+    },
+    SET_OL_CENTER_X(state, newCenterX) {
+      state.olCenterX = newCenterX
+    },
+    SET_OL_CENTER_Y(state, newCenterY) {
+      state.olCenterY = newCenterY
+    },
   },
   actions: {
     /**
@@ -269,6 +283,15 @@ const map = {
     },
     setOlZoom({ commit }, newZoom) {
       commit('SET_OL_ZOOM', newZoom)
+    },
+    setOlCenterX({ commit }, newCenterX) {
+      commit('SET_OL_CENTER_X', newCenterX)
+    },
+    setOlCenterY({ commit }, newCenterY) {
+      commit('SET_OL_CENTER_Y', newCenterY)
+    },
+    savePos({ commit }, newPos) {
+      //TODO: Call API
     }
   },
 };
