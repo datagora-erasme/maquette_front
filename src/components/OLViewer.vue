@@ -1,45 +1,87 @@
 <template>
   <div id="map-root" ref="map-root">
-    <div id="custom-controls">
-      <v-text-field
-        v-model="newOlZoom"
-        label="Zoom (3 à 20)"
-        type="number"
-        min="0"
-        max="20"
-        variant="solo"
-        density="compact"
-        @click:append-inner="changeOlZoom"
-        @keydown.enter="changeOlZoom"
-        @blur="changeOlZoom"
-      >
-        <!-- append-inner-icon="mdi-check" -->
-        <template #append-inner>
-          <v-icon
-            class="mt-3"
-            :class="newOlZoom == currOlZoom ? '' : 'icon-darkblue'"
-            icon="mdi-check"
-            @click="changeOlZoom"
-          />
-        </template>
-      </v-text-field>
-    </div>
+    <!-- Arrow Controls -->
+    <v-row id="custom-arrow">
+      <v-col>
+        <v-btn
+          class="custom-arrow-btn mb-1"
+          density="compact"
+          color="#263238"
+          icon
+          @click="moveLeft"
+        >
+          <v-icon class="arrow-icon" style="color: #fff" icon="mdi-arrow-left" />
+        </v-btn>
+      </v-col>
+      <v-col id="arrow-middle">
+        <v-btn
+          class="custom-arrow-btn mb-1"
+          density="compact"
+          color="#263238"
+          icon
+          @click="moveUp"
+        >
+          <v-icon class="arrow-icon" style="color: #fff" icon="mdi-arrow-up" />
+        </v-btn>
+        <!-- Save BTN #1CB800 // #676767 -->
+        <v-btn
+          class="custom-arrow-btn mb-1"
+          density="compact"
+          :color="isPosDifferent ? '#1CB800':'#676767'" 
+          icon
+          :disabled="!isPosDifferent"
+          @click="updateOlPos"
+        >
+          <v-icon class="arrow-icon" style="color: #fff" icon="mdi-content-save" />
+          <v-tooltip
+            activator="parent"
+            location="bottom"
+          >
+            Sauvegarder la position
+          </v-tooltip>
+        </v-btn>
+        <v-btn
+          class="custom-arrow-btn mb-1"
+          density="compact"
+          color="#263238"
+          icon
+          @click="moveDown"
+        >
+          <v-icon class="arrow-icon" style="color: #fff" icon="mdi-arrow-down" />
+        </v-btn>
+      </v-col>
+      <v-col>
+        <v-btn
+          class="custom-arrow-btn mb-1"
+          density="compact"
+          color="#263238"
+          icon
+          @click="moveRight"
+        >
+          <v-icon class="arrow-icon" style="color: #fff" icon="mdi-arrow-right" />
+        </v-btn>
+      </v-col>
+    </v-row>
+
+    <!-- Zoom Controls -->
     <div id="custom-zoom">
       <v-btn
         class="custom-zoom-btn mb-1"
         density="compact"
+        color="#263238"
         icon
         @click="plusZoom"
       >
-        <v-icon class="zoom-icon" icon="mdi-plus" />
+        <v-icon class="zoom-icon" style="color: #fff" icon="mdi-plus" />
       </v-btn>
       <v-btn
         class="custom-zoom-btn"
         density="compact"
+        color="#263238"
         icon
         @click="minusZoom"
       >
-        <v-icon class="zoom-icon" icon="mdi-minus" />
+        <v-icon class="zoom-icon" style="color: #fff" icon="mdi-minus" />
       </v-btn>
     </div>
   </div>
@@ -52,6 +94,9 @@
   import { getTopLeft, getWidth } from 'ol/extent.js'
   import Map from 'ol/Map'
   import View from 'ol/View'
+  import Style from 'ol/style/Style'
+  import Fill from 'ol/style/Fill'
+  import Stroke from 'ol/style/Stroke'
   import OSM from 'ol/source/OSM'
   import TileLayer from 'ol/layer/Tile'
   import TileWMS from 'ol/source/TileWMS.js'
@@ -76,6 +121,8 @@
     data() {
       return {
         newOlZoom: null,
+        newOlCenterX: null,
+        newOlCenterY: null,
         currExtent: null,
       }
     },
@@ -85,10 +132,39 @@
         getOpenedMockup: 'map/getOpenedMockup',
         getIsFullscreen: 'map/getIsFullscreen',
         getCurrentMockupBbox: 'map/getCurrentMockupBbox',
+        getOpenedMockup: 'map/getOpenedMockup',
         getOlZoom: 'map/getOlZoom'
       }),
       currOlZoom() {
         return this.getOlZoom
+      },
+      currOpenedMockup() {
+        return this.getOpenedMockup
+      },
+      currOpenedMockupPos() {
+        var returnPos = null
+        if (this.currOpenedMockup && this.currOpenedMockup.pos) {
+          returnPos = JSON.parse(this.currOpenedMockup.pos)
+        }
+        return returnPos
+      },
+      isPosDifferent() {
+        var diff = false
+
+        // Compare OMPos & local var
+        if (this.currOpenedMockupPos) {
+          if (this.currOpenedMockupPos.centerX !== this.newOlCenterX) {
+            diff = true
+          }
+          if (this.currOpenedMockupPos.centerY !== this.newOlCenterY) {
+            diff = true
+          }
+          if (this.currOpenedMockupPos.zoom !== this.newOlZoom) {
+            diff = true
+          }
+        }
+
+        return diff
       }
     },
     mounted() {
@@ -96,6 +172,8 @@
       this.$evtBus.on('onTravelForProjection', this.goToMockup)
       this.$evtBus.on('onToggleLayerVisibility', this.toggleLayerVisibility)
       this.$evtBus.on('onChangeLayerOpacity', this.changeLayerOpacity)
+      this.$evtBus.on('onChangeZoom', this.changeZoom)
+      this.$evtBus.on('onChangeCenter', this.changeCenter)
       
       // ===== Init OL =====
       this.initOlLayers()
@@ -103,14 +181,15 @@
 
       // Set initial OL Zoom
       this.newOlZoom = this.currOlZoom
-
+      
       // ===== Create OL Map =====
       olMap = new Map({
         control: [],
         layers: olLayers,
         target: this.$refs['map-root'],
         view: new View({
-          center: [538240.3133371031, 5741627.150498441], //3857 (lyon default)
+          center: [845989.4937740469, 6520401.078594064],
+          projection: 'EPSG:2154',
           zoom: this.currOlZoom,
           minZoom: 3,
           maxZoom: 20
@@ -132,6 +211,14 @@
           }
       })
 
+      // Get View center
+      var newCenter = olMap.getView().getCenter()
+      // Set Center in store + local
+      this.newOlCenterX = newCenter[0]
+      this.setOlCenterX(this.newOlCenterX)
+      this.newOlCenterY = newCenter[1]
+      this.setOlCenterY(this.newOlCenterY)
+
       // ===== Watch OL Events =====
       olMap.on('moveend', function(evt) {
           // Get Zoom from view
@@ -139,20 +226,36 @@
           // DEBUG
           // console.log('Nouveau niveau de zoom :', newZoomLevel)
 
-          // Set in store + local
+          // Set Zoom in store + local
           this.setOlZoom(parseFloat(newZoomLevel.toFixed(2)))
           this.newOlZoom = parseFloat(newZoomLevel.toFixed(2))
 
-          // Re-set Extent and refresh all existing OL Layers
+          // Get View center
+          var newCenter = olMap.getView().getCenter()
+          
+          // DEBUG
+          // console.log('newCenter: ', newCenter)
+
+          // Set Center in store + local
+          this.newOlCenterX = newCenter[0]
+          this.setOlCenterX(this.newOlCenterX)
+          this.newOlCenterY = newCenter[1]
+          this.setOlCenterY(this.newOlCenterY)
+
+          // Re-set Extent and refresh all VectorLayers in OL
           olMap.getAllLayers().forEach(layer => {
-            layer.setExtent(this.currExtent)
-            layer.getSource().refresh()
+            if (layer.constructor.name === 'VectorLayer') {
+              layer.setExtent(this.currExtent)
+              layer.getSource().refresh()
+            }
           })
       }.bind(this))
     },
     methods: {
       ...mapActions({
-        setOlZoom: 'map/setOlZoom'
+        setOlZoom: 'map/setOlZoom',
+        setOlCenterX: 'map/setOlCenterX',
+        setOlCenterY: 'map/setOlCenterY',
       }),
       initOlLayers() {
         // --- Init var for WMTS OrthoImagery ---
@@ -278,10 +381,12 @@
         return (
           'https://wxs.ign.fr/topographie/geoportail/wfs?SERVICE=WFS&' +
           'version=2.0.0&request=GetFeature&typename=BDTOPO_V3:batiment&' +
-          'outputFormat=application/json&srsname=EPSG:3857&' +
+          'outputFormat=application/json&srsname=EPSG:2154&' +
+          // 'outputFormat=application/json&srsname=EPSG:3857&' +
           'bbox=' +
           goodExtent.join(',') +
-          ',EPSG:3857'
+          ',EPSG:2154'
+          // ',EPSG:3857'
         )
       },
       addCustomProj() {
@@ -299,16 +404,36 @@
       },
       changeLayerOpacity(newLayerOp) {
         const currLayer = olMap.getAllLayers().find(l => l.get('id') === newLayerOp.id)
+        
+        // DEBUG
+        console.log(currLayer)
+        console.log(currLayer.constructor.name)
+        
+        const ratioOpacity = newLayerOp.opacity / 100
         if (currLayer) {
-          currLayer.setOpacity(newLayerOp.opacity / 100)
+          if (currLayer.constructor.name === 'VectorLayer') {
+            // Change style (color alpha in rgba)
+            var newStyle = new Style({
+              fill: new Fill({
+                color: 'rgba(255,255,255,'+ ratioOpacity + ')'
+              }),
+              stroke: new Stroke({
+                color: 'rgba(0,0,0,'+ ratioOpacity + ')',
+                width: 0.75
+              })
+            })
+            
+            // Re-set style in Layer
+            currLayer.setStyle(newStyle)
+          } else {
+            // Change layer opacity
+            currLayer.setOpacity(ratioOpacity)
+          }
         }
       },
       goToMockup() {
         // Get current Mockup Bbox from Store (str)
         const currBbox = this.getCurrentMockupBbox
-        // DEBUG
-        // console.log('bbox getter')
-        // console.log(currBbox)
 
         // Convert into Array (and convert to Float)
         const currBboxStrArray = currBbox.split(', ')
@@ -316,42 +441,28 @@
         currBboxStrArray.forEach(element => {
           currBboxArray.push(parseFloat(element))
         })
-        // DEBUG
-        // console.log(currBboxArray)
 
-
-        // Transform bbox from EPSG:2154 to EPSG:3857 with OL
-        this.currExtent = olProj.transformExtent(currBboxArray, 'EPSG:2154', 'EPSG:3857')
-        // DEBUG
-        // console.log('new bbox extent')
-        // console.log(extent)
-
-        // GoTo Extent converted
-        olMap.getView().fit(this.currExtent)
+        // Set current BBOX (EPSG:2154)
+        this.currExtent = currBboxArray
 
         // Set extent to all existing OL Layers
         olMap.getAllLayers().forEach(layer => {
           layer.setExtent(this.currExtent)
         })
-      },
-      verifyOlZoom() {
-        // Min or null value
-        if (!this.newOlZoom || this.newOlZoom < 3) {
-          this.newOlZoom = 3
-        }
 
-        // Max value
-        if (this.newOlZoom > 20) {
-          this.newOlZoom = 20
+        // IF Pos in OpenedMockup exist
+        if (this.currOpenedMockupPos) {
+          // Set in Map (local & store do in moveEnd event)
+          olMap.getView().setCenter([this.currOpenedMockupPos.centerX, this.currOpenedMockupPos.centerY])
+          olMap.getView().setZoom(this.currOpenedMockupPos.zoom)
+
+        } else {
+          // Else > GoTo Extent converted
+          olMap.getView().fit(this.currExtent)
         }
       },
-      changeOlZoom() {
-        this.verifyOlZoom()
-
-        // Set Zoom in view
-        olMap.getView().setZoom(this.newOlZoom)
-        // Set Zoom in store
-        this.setOlZoom(this.newOlZoom)
+      updateOlPos() {
+        this.$evtBus.emit('onUpdatePos')
       },
       minusZoom() {
         this.newOlZoom -= 0.1
@@ -378,6 +489,76 @@
         olMap.getView().setZoom(this.newOlZoom)
         // Set Zoom in store
         this.setOlZoom(this.newOlZoom)
+      },
+      moveLeft() {
+        this.newOlCenterX -= 10
+
+        // Min value
+        if (this.newOlCenterX < -22000000) {
+          this.newOlCenterX = -22000000
+        }
+
+        // Set Center in view
+        olMap.getView().setCenter([this.newOlCenterX, this.newOlCenterY])
+        // Set Center in store
+        this.setOlCenterX(this.newOlCenterX)
+      },
+      moveRight() {
+        this.newOlCenterX += 10
+
+        // Max value
+        if (this.newOlCenterX > 18500000) {
+          this.newOlCenterX = 18500000
+        }
+
+        // Set Center in view
+        olMap.getView().setCenter([this.newOlCenterX, this.newOlCenterY])
+        // Set Center in store
+        this.setOlCenterX(this.newOlCenterX)
+      },
+      moveUp() {
+        this.newOlCenterY += 10
+
+        // Max value
+        if (this.newOlCenterY > 19600000) {
+          this.newOlCenterY = 19600000
+        }
+
+        // Set Center in view
+        olMap.getView().setCenter([this.newOlCenterX, this.newOlCenterY])
+        // Set Center in store
+        this.setOlCenterY(this.newOlCenterY)
+      },
+      moveDown() {
+        this.newOlCenterY -= 10
+
+        // Max value
+        if (this.newOlCenterY < -19600000) {
+          this.newOlCenterY = -19600000
+        }
+
+        // Set Center in view
+        olMap.getView().setCenter([this.newOlCenterX, this.newOlCenterY])
+        // Set Center in store
+        this.setOlCenterY(this.newOlCenterY)
+      },
+      changeZoom(newZoom) {
+        // Set Zoom in local
+        this.newOlZoom = newZoom
+        // Set Zoom in store
+        this.setOlZoom(newZoom)
+        // Set Zoom in view
+        olMap.getView().setZoom(newZoom)
+      },
+      changeCenter(newCenter) {
+        // Set Center in local
+        this.newOlCenterX = newCenter[0]
+        this.newOlCenterY = newCenter[1]
+        // Set Center in store
+        this.setOlCenterX(this.newOlCenterX)
+        this.setOlCenterY(this.newOlCenterY)
+        // Set Center in view
+        olMap.getView().setCenter(newCenter)
       }
     }
   }
@@ -393,24 +574,39 @@
   display: none;
 }
 
-#custom-controls {
+#custom-arrow {
   position: absolute;
   display: flex;
   align-content: center;
   align-items: center;
   justify-content: center;
-  bottom: 1.5em;
-  right: 3.5em;
+  bottom: 1.6em;
+  right: 0.7em;
   z-index: 3;
+  width: 95px;
+  padding: 0;
+  margin: 0;
 
-  input {
-    border-bottom: 1px solid grey !important;
+  div {
+    padding: 0;
+    margin: 0;
   }
-}
-.icon-darkblue {
-  color: #388e3c !important;
-  opacity: 1 !important;
-  font-weight: bold;
+
+  #arrow-middle {
+    display: flex;
+    flex-direction: column;
+    align-content: center;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .custom-arrow-btn {
+    border-radius: 6px !important;
+
+    .arrow-icon {
+      font-size: 18px;
+    }
+  }
 }
 #custom-zoom {
   position: absolute;
@@ -419,8 +615,8 @@
   align-content: center;
   align-items: center;
   justify-content: center;
-  bottom: 2.8em;
-  right: 1em;
+  bottom: 8em;
+  right: 2.8em;
   z-index: 3;
 }
 .custom-zoom-btn {

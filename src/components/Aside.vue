@@ -228,32 +228,6 @@ export default {
     return {
       allBaseLayers: [],
       allCustomLayers: [],
-      exampleData: [
-        {
-          id: 'RéseauRoutier',
-          name: 'Réseau routier',
-          icon: 'mdi-road',
-          subtitle: '2020',
-          append: 'mdi-eye-off',
-          visible: false,
-        },
-        {
-          id: 'LignesMétro',
-          name: 'Lignes de métro',
-          icon: 'mdi-train',
-          subtitle: '2020',
-          append: 'mdi-eye-off',
-          visible: false,
-        },
-        {
-          id: 'Arbres',
-          name: 'Arbres',
-          icon: 'mdi-tree',
-          subtitle: '2020',
-          append: 'mdi-eye-off',
-          visible: false,
-        },
-      ]
     }
   },
   computed: {

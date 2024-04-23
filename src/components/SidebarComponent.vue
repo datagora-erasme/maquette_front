@@ -244,6 +244,7 @@
                   prepend-icon="mdi-cloud-download"
                   height="50"
                   block
+                  :disabled="openedMockup"
                   @click="downloadEmprise"
                 >
                   <span class="py-2">Télécharger l'emprise<br> géographique</span>

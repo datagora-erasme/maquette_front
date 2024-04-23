@@ -425,7 +425,72 @@ export default {
       }
     }
     window.addEventListener('mousemove', handleMouseMove);
+
+    // ==========================
+
+    exampleData: [
+      {
+        id: 'RéseauRoutier',
+        name: 'Réseau routier',
+        icon: 'mdi-road',
+        subtitle: '2020',
+        append: 'mdi-eye-off',
+        visible: false,
+      },
+      {
+        id: 'LignesMétro',
+        name: 'Lignes de métro',
+        icon: 'mdi-train',
+        subtitle: '2020',
+        append: 'mdi-eye-off',
+        visible: false,
+      },
+      {
+        id: 'Arbres',
+        name: 'Arbres',
+        icon: 'mdi-tree',
+        subtitle: '2020',
+        append: 'mdi-eye-off',
+        visible: false,
+      },
+    ]
+
+    // ==========================
+    // this.setOlCenter(parseFloat(newCenter.toFixed(2)))
+
+    // TODO: Transform bbox from EPSG:2154 to EPSG:3857 with OL (to remove ?)
+    // this.currExtent = olProj.transformExtent(currBboxArray, 'EPSG:2154', 'EPSG:3857')
     
+    // DEBUG
+    // console.log('new bbox extent')
+    // console.log(extent)
+    
+    // ========================== OLD Zoom Controls (in map)
+    // <v-text-field
+    //       v-model="newOlZoom"
+    //       label="Zoom (3 à 20)"
+    //       type="number"
+    //       min="0"
+    //       max="20"
+    //       variant="solo"
+    //       density="compact"
+    //       color="#263238"
+    //       @click:append-inner="changeOlZoom"
+    //       @keydown.enter="changeOlZoom"
+    //       @blur="changeOlZoom"
+    //     >
+    //       <!-- append-inner-icon="mdi-check" -->
+    //       <template #append-inner>
+    //         <v-icon
+    //           class="mt-3"
+    //           :class="newOlZoom == currOlZoom ? '' : 'icon-darkblue'"
+    //           icon="mdi-check"
+    //           @click="changeOlZoom"
+    //         />
+    //       </template>
+    //     </v-text-field>
+    // ==========================
+
     // TODO: Add two elevation layers ? (change URL)
     /** These will deform iTowns globe geometry to represent terrain elevation.
     // function addElevationLayerFromConfig(config) {
@@ -496,6 +561,7 @@ export default {
     // center: [4.835095, 45.757838],
     // projection: 'EPSG:2154',
     // center: [845989.4937740469, 6520401.078594064],
+    // center: [538240.3133371031, 5741627.150498441], //3857 (lyon default)
     // --------------
 
     // OL - Find one Layer with id

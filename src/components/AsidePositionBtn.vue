@@ -1,12 +1,13 @@
 <template>
+  <!-- TODO: v-if="isFullscreen" -->
   <v-btn
-    id="layers-btn"
-    :class="asideStatus ? 'aside-open': ''"
+    id="position-btn"
+    :class="asidePosStatus ? 'aside-open': ''"
     :color="isFullscreen ? '#263238': ''"
     :theme="isFullscreen ? 'dark':''"
-    @click="toggleAside()"
+    @click="toggleAsidePos()"
   >
-    <v-icon class="layers-icon" icon="mdi-layers" />
+    <v-icon class="position-icon" icon="mdi-map-marker-radius" />
   </v-btn>
 </template>
 
@@ -14,14 +15,14 @@
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
-  name: 'AsideBtn',
+  name: 'AsidePosBtn',
   computed: {
     ...mapGetters({
-      getAsideStatus: 'aside/getAsideStatus',
+      getAsidePosStatus: 'aside/getAsidePosStatus',
       getIsFullscreen: 'map/getIsFullscreen',
     }),
-    asideStatus() {
-      return this.getAsideStatus
+    asidePosStatus() {
+      return this.getAsidePosStatus
     },
     isFullscreen() {
       return this.getIsFullscreen
@@ -29,23 +30,23 @@ export default {
   },
   methods: {
     ...mapActions({
-      setAsideStatus: 'aside/setAsideStatus'
+      setAsidePosStatus: 'aside/setAsidePosStatus'
     }),
-    toggleAside() {
-      this.setAsideStatus(!this.asideStatus)
+    toggleAsidePos() {
+      this.setAsidePosStatus(!this.asidePosStatus)
     }
   }
 }
 </script>
 
 <style lang="scss">
-#layers-btn {
+#position-btn {
   position: absolute;
   display: flex;
   align-content: center;
   align-items: center;
   justify-content: center;
-  top: 56px;
+  top: 116px;
   right: 0;
   width: 50px;
   height: 50px;
@@ -61,7 +62,7 @@ export default {
     margin-right: 400px;
   }
 
-  .layers-icon {
+  .position-icon {
     font-size: 26px;
   }
 }

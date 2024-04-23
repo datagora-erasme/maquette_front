@@ -16,6 +16,8 @@
     
     <Aside v-if="isLoggedIn" />
     <AsideBtn v-if="isLoggedIn" />
+    <AsidePosition v-if="isLoggedIn" />
+    <AsidePositionBtn v-if="isLoggedIn && isFullscreen" />
     <SlideshowExitBtn v-if="isFullscreen" />
     
     <v-dialog v-model="localIsCSVGenerationOngoing" class="csv-loading-screen-dialog">
@@ -28,8 +30,10 @@
 
 <script>
 import ItownsViewer from './components/ItownsViewer.vue'
-import AsideBtn from './components/AsideBtn.vue'
 import Aside from './components/Aside.vue'
+import AsideBtn from './components/AsideBtn.vue'
+import AsidePosition from './components/AsidePosition.vue'
+import AsidePositionBtn from './components/AsidePositionBtn.vue'
 import SlideshowExitBtn from './components/SlideshowExitBtn.vue'
 import SignIn from './components/SignIn.vue'
 import CSVLoadingScreen from './components/CSVLoadingScreen.vue'
@@ -45,8 +49,10 @@ export default {
     CSVLoadingScreen,
     PasswordRecuperation,
     PasswordModification,
-    AsideBtn,
     Aside,
+    AsideBtn,
+    AsidePosition,
+    AsidePositionBtn,
     SlideshowExitBtn,
     SignIn
   },
