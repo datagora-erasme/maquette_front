@@ -17,7 +17,7 @@
     <Aside v-if="isLoggedIn" />
     <AsideBtn v-if="isLoggedIn" />
     <AsidePosition v-if="isLoggedIn" />
-    <AsidePositionBtn v-if="isLoggedIn" />
+    <AsidePositionBtn v-if="isLoggedIn && isFullscreen" />
     <SlideshowExitBtn v-if="isFullscreen" />
     
     <v-dialog v-model="localIsCSVGenerationOngoing" class="csv-loading-screen-dialog">

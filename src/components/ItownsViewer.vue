@@ -969,8 +969,8 @@ export default {
 
       // ! Get mockup props and cast to JSON
       const areaJsonProps = JSON.parse(currMockup.bbox)
-      console.log('areaJsonProps')
-      console.log(areaJsonProps)
+      // console.log('areaJsonProps')
+      // console.log(areaJsonProps)
 
       // TODO: Try hard convert to geoJson polygon --> To remove ?
       // convertBboxToGeoJSON(areaJsonProps.bbox)

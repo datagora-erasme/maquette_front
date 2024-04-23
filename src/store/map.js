@@ -151,6 +151,9 @@ const map = {
     SET_OPENED_MOCKUP(state, newMockup) {
       state.openedMockup = newMockup
     },
+    UPDATE_OPENED_MOCKUP_POS(state, newPos) {
+      state.openedMockup.pos = newPos
+    },
     SET_CURRENT_MOCKUP_BBOX(state, newBbox) {
       state.currentMockupBbox = newBbox
     },
@@ -277,6 +280,9 @@ const map = {
     },
     setOpenedMockup({ commit }, newMockup) {
       commit('SET_OPENED_MOCKUP', newMockup)
+    },
+    updateOpenedMockupPos({ commit }, newPos) {
+      commit('UPDATE_OPENED_MOCKUP_POS', newPos)
     },
     setCurrentMockupBbox({ commit }, newBbox) {
       commit('SET_CURRENT_MOCKUP_BBOX', newBbox)

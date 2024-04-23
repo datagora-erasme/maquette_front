@@ -27,9 +27,10 @@
         <v-btn
           class="custom-arrow-btn mb-1"
           density="compact"
-          color="#676767" 
+          :color="isPosDifferent ? '#1CB800':'#676767'" 
           icon
-          @click="plusZoom"
+          :disabled="!isPosDifferent"
+          @click="updateOlPos"
         >
           <v-icon class="arrow-icon" style="color: #fff" icon="mdi-content-save" />
           <v-tooltip
@@ -131,10 +132,39 @@
         getOpenedMockup: 'map/getOpenedMockup',
         getIsFullscreen: 'map/getIsFullscreen',
         getCurrentMockupBbox: 'map/getCurrentMockupBbox',
+        getOpenedMockup: 'map/getOpenedMockup',
         getOlZoom: 'map/getOlZoom'
       }),
       currOlZoom() {
         return this.getOlZoom
+      },
+      currOpenedMockup() {
+        return this.getOpenedMockup
+      },
+      currOpenedMockupPos() {
+        var returnPos = null
+        if (this.currOpenedMockup && this.currOpenedMockup.pos) {
+          returnPos = JSON.parse(this.currOpenedMockup.pos)
+        }
+        return returnPos
+      },
+      isPosDifferent() {
+        var diff = false
+
+        // Compare OMPos & local var
+        if (this.currOpenedMockupPos) {
+          if (this.currOpenedMockupPos.centerX !== this.newOlCenterX) {
+            diff = true
+          }
+          if (this.currOpenedMockupPos.centerY !== this.newOlCenterY) {
+            diff = true
+          }
+          if (this.currOpenedMockupPos.zoom !== this.newOlZoom) {
+            diff = true
+          }
+        }
+
+        return diff
       }
     },
     mounted() {
@@ -404,9 +434,6 @@
       goToMockup() {
         // Get current Mockup Bbox from Store (str)
         const currBbox = this.getCurrentMockupBbox
-        // DEBUG
-        // console.log('bbox getter')
-        // console.log(currBbox)
 
         // Convert into Array (and convert to Float)
         const currBboxStrArray = currBbox.split(', ')
@@ -414,19 +441,28 @@
         currBboxStrArray.forEach(element => {
           currBboxArray.push(parseFloat(element))
         })
-        // DEBUG
-        // console.log(currBboxArray)
 
         // Set current BBOX (EPSG:2154)
         this.currExtent = currBboxArray
-
-        // GoTo Extent converted
-        olMap.getView().fit(this.currExtent)
 
         // Set extent to all existing OL Layers
         olMap.getAllLayers().forEach(layer => {
           layer.setExtent(this.currExtent)
         })
+
+        // IF Pos in OpenedMockup exist
+        if (this.currOpenedMockupPos) {
+          // Set in Map (local & store do in moveEnd event)
+          olMap.getView().setCenter([this.currOpenedMockupPos.centerX, this.currOpenedMockupPos.centerY])
+          olMap.getView().setZoom(this.currOpenedMockupPos.zoom)
+
+        } else {
+          // Else > GoTo Extent converted
+          olMap.getView().fit(this.currExtent)
+        }
+      },
+      updateOlPos() {
+        this.$evtBus.emit('onUpdatePos')
       },
       minusZoom() {
         this.newOlZoom -= 0.1

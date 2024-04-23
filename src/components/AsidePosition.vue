@@ -53,40 +53,30 @@
           <v-col>
             <v-btn
               density="comfortable"
-              color="#37474F"
+              color="#414288"
               min-height="40"
               style="color: white"
               block
-              @click="initPos()"
+              :disabled="!isPosDifferent"
+              @click="resetPos()"
             >
-              Annuler
+              Réinitialiser
             </v-btn>
           </v-col>
           <v-col>
-            <!-- TODO: Disable Conditional -->
             <v-btn
               density="comfortable"
               color="#1B5E20"
               min-height="40"
               style="color: white"
               block
-              @click="updateNewPos()"
+              :disabled="!isPosDifferent"
+              @click="updatePos()"
             >
               Sauvegarder
             </v-btn>
           </v-col>
         </v-row>
-        <v-btn
-          density="comfortable"
-          color="#414288"
-          min-height="40"
-          style="color: white"
-          class="mt-4"
-          block
-          @click="resetPos()"
-        >
-          Réinitialiser par défaut
-        </v-btn>
       </v-card-text>
     </v-card>
   </v-slide-x-transition>
@@ -110,6 +100,7 @@ export default {
       getOlCenterX: 'map/getOlCenterX',
       getOlCenterY: 'map/getOlCenterY',
       getOlZoom: 'map/getOlZoom',
+      getOpenedMockup: 'map/getOpenedMockup',
     }),
     asidePosStatus() {
       return this.getAsidePosStatus
@@ -123,6 +114,34 @@ export default {
     currOlCenterY() {
       return this.getOlCenterY
     },
+    currOpenedMockup() {
+      return this.getOpenedMockup
+    },
+    currOpenedMockupPos() {
+      var returnPos = null
+      if (this.currOpenedMockup && this.currOpenedMockup.pos) {
+        returnPos = JSON.parse(this.currOpenedMockup.pos)
+      }
+      return returnPos
+    },
+    isPosDifferent() {
+      var diff = false
+
+      // Compare OMPos & local var
+      if (this.currOpenedMockupPos) {
+        if (this.currOpenedMockupPos.centerX !== this.newOlCenterX) {
+          diff = true
+        }
+        if (this.currOpenedMockupPos.centerY !== this.newOlCenterY) {
+          diff = true
+        }
+        if (this.currOpenedMockupPos.zoom !== this.newOlZoom) {
+          diff = true
+        }
+      }
+
+      return diff
+    }
   },
   watch: {
     currOlCenterX() {
@@ -136,6 +155,10 @@ export default {
     },
   },
   mounted() {
+    // ===== Bind Events =====
+    this.$evtBus.on('onUpdatePos', this.updatePos)
+
+    // Init for setExtent
     this.initPos()
   },
   methods: {
@@ -144,6 +167,8 @@ export default {
       setOlCenterX: 'map/setOlCenterX',
       setOlCenterY: 'map/setOlCenterY',
       setOlZoom: 'map/setOlZoom',
+      updateProject: 'project/updateProject',
+      updateOpenedMockupPos: 'map/updateOpenedMockupPos'
     }),
     closeAsidePos() {
       this.setAsidePosStatus(false)
@@ -156,12 +181,52 @@ export default {
       this.newOlZoom = this.currOlZoom
     },
     updatePos() {
-      // TODO: Set in Map
-      // TODO: Set in Store
-      // TODO: Save in DB
+      // ===== Save in DB =====
+      // (Set Map & Store do in moveEnd event)
+
+      // Build new Pos Obj
+      var newPosJson = {
+        centerX: this.newOlCenterX,
+        centerY: this.newOlCenterY,
+        zoom: this.newOlZoom,
+      }
+      var newPosStr = JSON.stringify(newPosJson)
+
+      // Build Mockup Obj
+      const updatedMockup = {
+        id: this.currOpenedMockup.id,
+        pos: newPosStr,
+      }
+      // PATCH Mockup
+      this.updateProject(updatedMockup)
+      .then((response) => {
+        // Re-set pos in Store Mockup
+        this.updateOpenedMockupPos(newPosStr)
+
+        // Notify
+        this.$notify({
+          title: 'Position mise à jour',
+          text: 'La position de projection été mise à jour',
+          type: 'success'
+        });
+      }).catch((e) => {
+        // Notify
+        this.$notify({
+          title: 'Erreur lors de la sauvegarde',
+          text: "Une erreur s'est produite lors de l'enregistrement des données",
+          type: 'error'
+        });
+      })
     },
     resetPos() {
-      // TODO: Set Pos after setExtent
+      // Re-Set Pos in local with BD value
+      this.newOlCenterX = this.currOpenedMockupPos.centerX
+      this.newOlCenterY = this.currOpenedMockupPos.centerY
+      this.newOlZoom = this.currOpenedMockupPos.zoom
+
+      // Set in Map (store with moveEnd event)
+      this.changeOlCenter()
+      this.changeOlZoom()
     },
     verifyOlZoom() {
       // Min or null value
@@ -175,7 +240,6 @@ export default {
       }
     },
     changeOlZoom() {
-      console.log('changeinAside')
       // Verify values
       this.verifyOlZoom()
 
