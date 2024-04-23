@@ -1,5 +1,4 @@
 <template>
-  <!-- TODO: v-if="isFullscreen" -->
   <v-btn
     id="position-btn"
     :class="asidePosStatus ? 'aside-open': ''"

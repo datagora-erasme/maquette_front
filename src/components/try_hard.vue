@@ -351,14 +351,14 @@ export default {
       // console.log(raycaster)
       // console.log(view.scene.children)
       // console.log(view.scene.children.filter(c => c.name = 'WFS Building'))
-      console.log('HERE')
-      console.log(view.scene.children)
+      // console.log('HERE')
+      // console.log(view.scene.children)
       // console.log(view.scene.children[3].children)
       // console.log(meshes)
       // console.log(view.scene.getObjectByName( 'WFS Building' ).children)
       // return raycaster.intersectObjects(view.scene.getObjectByName( 'WFS Building' ).children, true)
       var childrenToFind = view.scene.children.filter(c => c.name === 'WFS Building')
-      console.log(childrenToFind)
+      // console.log(childrenToFind)
       // return raycaster.intersectObjects(childrenToFind, true)
       return raycaster.intersectObjects(view.scene.children, true)
       // return raycaster.intersectObjects(meshes, true)
@@ -369,7 +369,7 @@ export default {
     function handleMouseMove(event) {
       // Ensures that event trigger only when alt is pressed.
       if(event.altKey) {
-        console.log('mouse move')
+        // console.log('mouse move')
         // console.log(event)
 
         // Define mouse coord

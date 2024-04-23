@@ -130,29 +130,29 @@ const generateHeightMap = (mesh, platesX, platesY) => {
     const legoPerPlate = 32;
     const maxLegoHeight = 15; // Max lego height for the higher buildings in the geometry
     const bbMockUp = geometryBuffer.boundingBox;
-    console.log('bbMockup')
-    console.log(bbMockUp)
+    // console.log('bbMockup')
+    // console.log(bbMockUp)
     
     // ! Negative number ?
     const widthMockUp = bbMockUp.max.x - bbMockUp.min.x;
     const heightMockUp = bbMockUp.max.y - bbMockUp.min.y;
     const totalNumberOfLegosX = platesX * legoPerPlate;
-    console.log('Mockup Details')
-    console.log(widthMockUp)
-    console.log(heightMockUp)
-    console.log(totalNumberOfLegosX)
+    // console.log('Mockup Details')
+    // console.log(widthMockUp)
+    // console.log(heightMockUp)
+    // console.log(totalNumberOfLegosX)
     
     // TODO  : Update step distance according to number of voxels given by backend
     const stepDistanceX = widthMockUp / legoPerPlate / platesX; // Step to launch a ray
     const stepDistanceY = heightMockUp / legoPerPlate / platesY; // Step to launch a ray
-    console.log('stepDistance')
-    console.log(stepDistanceX)
-    console.log(stepDistanceY)
+    // console.log('stepDistance')
+    // console.log(stepDistanceX)
+    // console.log(stepDistanceY)
     
     // ! Compute for ratio
     const maxZMockup = bbMockUp.max.z;
-    console.log('maxZMockup')
-    console.log(maxZMockup)
+    // console.log('maxZMockup')
+    // console.log(maxZMockup)
     
     const raycastArray = new Array(
       (platesY * legoPerPlate) * (platesX * legoPerPlate)
@@ -375,7 +375,7 @@ const convertBboxToPolygon = (bbox) => {
   polygon.lineTo( pt5 );
   
   // DEBUG
-  console.log(polygon)
+  // console.log(polygon)
   
   // Return
   return polygon
@@ -445,7 +445,7 @@ const convertBboxToGeoJSON = (bbox) => {
   }
   
   // DEBUG
-  console.log(geojson)
+  // console.log(geojson)
   
   // Return
   return geojson

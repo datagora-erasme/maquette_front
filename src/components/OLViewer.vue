@@ -406,8 +406,8 @@
         const currLayer = olMap.getAllLayers().find(l => l.get('id') === newLayerOp.id)
         
         // DEBUG
-        console.log(currLayer)
-        console.log(currLayer.constructor.name)
+        // console.log(currLayer)
+        // console.log(currLayer.constructor.name)
         
         const ratioOpacity = newLayerOp.opacity / 100
         if (currLayer) {

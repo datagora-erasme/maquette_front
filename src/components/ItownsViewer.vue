@@ -1029,8 +1029,6 @@ export default {
       }
     },
     showOpenedMockup() {
-      console.log('openedMockupMesh')
-      console.log(openedMockupMesh)
       if (openedMockupMesh) {
         view.scene.add(openedMockupMesh)
         view.notifyChange(true)

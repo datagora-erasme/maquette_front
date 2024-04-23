@@ -760,12 +760,12 @@ export default {
         .then((response) => {
           // Decode response
           var decodedMesh = JSON.parse(atob(response.data.data))
-          console.log('decodedMesh')
-          console.log(decodedMesh)
-          console.log(typeof(decodedMesh))
+          // console.log('decodedMesh')
+          // console.log(decodedMesh)
+          // console.log(typeof(decodedMesh))
           
-          console.log(decodedMesh.geometries[0])
-          console.log(decodedMesh.materials[0])
+          // console.log(decodedMesh.geometries[0])
+          // console.log(decodedMesh.materials[0])
 
           const mesh = new THREE.Mesh(decodedMesh.geometries[0], decodedMesh.materials[0])
 
