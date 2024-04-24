@@ -69,12 +69,12 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { toRaw } from 'vue';
 import { VertexNormalsHelper } from 'three/addons/helpers/VertexNormalsHelper.js';
 
-var previewDiv;
-var scene;
-var camera;
-var renderer;
-var controls;
-var requestId;
+let previewDiv;
+let scene;
+let camera;
+let renderer;
+let controls;
+let requestId;
 
 export default {
   name: 'PreviewComponent',
@@ -131,9 +131,9 @@ export default {
     scene.add( mesh );
     
     // Add Wireframe of Mockup Mesh
-    var geo = new THREE.EdgesGeometry( mesh.geometry ); // or WireframeGeometry
-    var mat = new THREE.LineBasicMaterial( { color: 0x000000 } );
-    var wireframe = new THREE.LineSegments( geo, mat );
+    let geo = new THREE.EdgesGeometry( mesh.geometry ); // or WireframeGeometry
+    let mat = new THREE.LineBasicMaterial( { color: 0x000000 } );
+    let wireframe = new THREE.LineSegments( geo, mat );
     mesh.add( wireframe );
 
     // Configure controls

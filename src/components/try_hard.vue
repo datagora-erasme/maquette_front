@@ -9,8 +9,8 @@ export default {
   const raycaster = new itowns.THREE.Raycaster(); // create once
   const coordMouse = new itowns.THREE.Vector2();  // create once
 
-  var wireframeMaterial = new itowns.THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true }) //{ color: 0x00ff00, wireframe: true })
-  var exampleMaterial = new itowns.THREE.MeshBasicMaterial({ color: 0x00ff00 }) //{ color: 0x00ff00, wireframe: true })
+  let wireframeMaterial = new itowns.THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true }) //{ color: 0x00ff00, wireframe: true })
+  let exampleMaterial = new itowns.THREE.MeshBasicMaterial({ color: 0x00ff00 }) //{ color: 0x00ff00, wireframe: true })
 
   // Links
   //==WMS==
@@ -22,14 +22,14 @@ export default {
   //https://geoserver-planta.exo-dev.fr/geoserver/Metropole/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Metropole%3Abati&maxFeatures=50&outputFormat=application%2Fjson
   // EPSG:4326
 
-    // TODO: NEW planar view ?
+    //  NEW planar view ?
     // const extent = new itowns.Extent('EPSG:3946', 1837816.94334, 1847692.32501, 5170036.4587, 5178412.82698);
     // view = new itowns.PlanarView(viewerDiv, extent, { placement: { heading: -49.6, range: 6200, tilt: 17 } });
   
   // ! Calque layer - WIP
-  var calque = require('../datas/Calque.json')
-  var calqueSource = new itowns.WMTSSource(calque.source)
-  var calqueLayer = new itowns.ColorLayer('CalqueLayer', {
+  let calque = require('../datas/Calque.json')
+  let calqueSource = new itowns.WMTSSource(calque.source)
+  let calqueLayer = new itowns.ColorLayer('CalqueLayer', {
     name: 'Calque de plantabilité',
     protocol: 'wmts',
     source: calqueSource,
@@ -40,8 +40,8 @@ export default {
 
   // ----------------------------------------------------- ITOWNS WMTS CALQUE
 
-  // TODO: ADD CALQUE WMS (with tiled ?)
-      // var wmsCalqueSource = new itowns.WMSSource({
+  //  ADD CALQUE WMS (with tiled ?)
+      // let wmsCalqueSource = new itowns.WMSSource({
       //   extent: currentExtent,
       //   name: 'calque_plantabilite_metropole',
       //   url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/wms',
@@ -52,7 +52,7 @@ export default {
       // })
 
       // // Add a WMS Calque layer
-      // var wmsCalqueLayer = new itowns.ColorLayer('calque', {
+      // let wmsCalqueLayer = new itowns.ColorLayer('calque', {
       //   name: 'Calque',
       //   source: wmsCalqueSource,
       //   opacity: 1,
@@ -60,7 +60,7 @@ export default {
 
       // view.addLayer(wmsCalqueLayer);
 
-      // TODO: CALQUE TMS
+      //  CALQUE TMS
       
       // // Create the source
       // const tmsSource = new itowns.TMSSource({
@@ -77,12 +77,12 @@ export default {
       // // Add the layer
       // view.addLayer(colorLayer);
 
-      // TODO: CALQUE WMTS
-      var calque = require('../datas/Calque.json')
+      //  CALQUE WMTS
+      let calque = require('../datas/Calque.json')
       
-      var calqueSource = new itowns.WMTSSource(calque.source)
+      let calqueSource = new itowns.WMTSSource(calque.source)
       
-      var calqueLayer = new itowns.ColorLayer('CalqueLayer', {
+      let calqueLayer = new itowns.ColorLayer('CalqueLayer', {
         name: 'Calque de plantabilité',
         protocol: 'wmts',
         source: calqueSource,
@@ -92,7 +92,7 @@ export default {
 
       view.addLayer(calqueLayer)
 
-      var orthoLayer = {
+      let orthoLayer = {
         'type': 'color',
         'protocol':   'wmts',
         'id':         'calquewmts',
@@ -254,7 +254,7 @@ export default {
   // -----------------------------------------------------
 
   // ! WMS Calque planta of Metropole de Lyon --> Not working...
-  // var wmsCalqueLyonSource = new itowns.WMSSource({
+  // let wmsCalqueLyonSource = new itowns.WMSSource({
   //   url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/wms',
   //   protocol: 'wmts',
   //   version: '1.1.0',
@@ -276,7 +276,7 @@ export default {
     // Define crs projection that we will use (taken from https://epsg.io/3946, Proj4js section)
     // itowns.proj4.defs('EPSG:3946', '+proj=lcc +lat_1=45.25 +lat_2=46.75 +lat_0=46 +lon_0=3 +x_0=1700000 +y_0=5200000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs')
 
-    // TODO: Setup loading screen and debug menu 
+    //  Setup loading screen and debug menu 
     // setupLoadingScreen(viewerDiv, view)
     // const debugMenu = new GuiTools('menuDiv', view)
 
@@ -298,7 +298,7 @@ export default {
   // sceneCube.rotation.x = MathUtils.degToRad(-60)
   // sceneCube.rotation.set(new itowns.THREE.Euler(this.currentSliderX, 0,0))
 
-  // var quaternion = new itowns.THREE.Quaternion();
+  // let quaternion = new itowns.THREE.Quaternion();
   // console.log(quaternion)
   // quaternion = sceneCube.quaternion
   // console.log(quaternion)
@@ -314,7 +314,7 @@ export default {
 
   // sceneCube.rotateOnWorldAxis(new itowns.THREE.Vector3( 1, 0, 1 ), Math.PI / this.currentSliderX)
 
-  // var cubeAxis = new itowns.THREE.AxesHelper(20);
+  // let cubeAxis = new itowns.THREE.AxesHelper(20);
   // cubeAxis.updateMatrixWorld()
   // sceneCube.add(cubeAxis);
 
@@ -328,7 +328,7 @@ export default {
   // selectedArea = new itowns.THREE.Mesh(geometry, new itowns.THREE.MeshLambertMaterial( { map: texture, side: itowns.THREE.DoubleSide } ))
 
 
-  // TODO: Create 2 box for min and max + material + add to scene
+  //  Create 2 box for min and max + material + add to scene
   // ! NEW - DEBUG BBOX IN SCENE
   // const geomBB = new itowns.THREE.BoxGeometry(10, 10, 10);
   // const matBB = new itowns.THREE.MeshBasicMaterial({ color: 0xCB4335, opacity: 0.4, transparent: true });
@@ -357,7 +357,7 @@ export default {
       // console.log(meshes)
       // console.log(view.scene.getObjectByName( 'WFS Building' ).children)
       // return raycaster.intersectObjects(view.scene.getObjectByName( 'WFS Building' ).children, true)
-      var childrenToFind = view.scene.children.filter(c => c.name === 'WFS Building')
+      let childrenToFind = view.scene.children.filter(c => c.name === 'WFS Building')
       // console.log(childrenToFind)
       // return raycaster.intersectObjects(childrenToFind, true)
       return raycaster.intersectObjects(view.scene.children, true)
@@ -388,13 +388,13 @@ export default {
           console.log(found[0])
 
 
-          // TODO: Change Wireframe ?
+          //  Change Wireframe ?
           // if (found[0].object && found[0].object.wireframe) {
           //   found[0].object.wireframe = true
           // }
 
-          // TODO: Change Material ?
-          var modifiedMat
+          //  Change Material ?
+          let modifiedMat
           if (found[0].object && found[0].object.material) {
             // modifiedMat = new itowns.THREE.MeshBasicMaterial(found[0].object.material)
             modifiedMat = found[0].object.material.clone()
@@ -407,8 +407,8 @@ export default {
             found[0].object.material = modifiedMat
           }
 
-          // TODO: Go To Obj Coords ? (lookAt ?)
-          // var goCoord = new itowns.Coordinates('EPSG:4978', found[14].point.x, found[14].point.y) //4978 - 4326
+          //  Go To Obj Coords ? (lookAt ?)
+          // let goCoord = new itowns.Coordinates('EPSG:4978', found[14].point.x, found[14].point.y) //4978 - 4326
           // lookAtCoordinate(goCoord)
 
           // But only taking into account the cube (see metadata above, userData.draggable)
@@ -458,7 +458,7 @@ export default {
     // ==========================
     // this.setOlCenter(parseFloat(newCenter.toFixed(2)))
 
-    // TODO: Transform bbox from EPSG:2154 to EPSG:3857 with OL (to remove ?)
+    //  Transform bbox from EPSG:2154 to EPSG:3857 with OL (to remove ?)
     // this.currExtent = olProj.transformExtent(currBboxArray, 'EPSG:2154', 'EPSG:3857')
     
     // DEBUG
@@ -491,11 +491,11 @@ export default {
     //     </v-text-field>
     // ==========================
 
-    // TODO: Add two elevation layers ? (change URL)
+    //  Add two elevation layers ? (change URL)
     /** These will deform iTowns globe geometry to represent terrain elevation.
     // function addElevationLayerFromConfig(config) {
     //     config.source = new itowns.WMTSSource(config.source);
-    //     var layer = new itowns.ElevationLayer(config.id, config);
+    //     let layer = new itowns.ElevationLayer(config.id, config);
     //     view.addLayer(layer) //.then(menuGlobe.addLayerGUI.bind(menuGlobe));
     // }
     // itowns.Fetcher.json('./layers/JSONLayers/IGN_MNT_HIGHRES.json').then(addElevationLayerFromConfig);
@@ -548,11 +548,11 @@ export default {
       console.log('Coordonnées du clic:', evt.coordinate);
     });
     olMap.on('moveend', function(evt) {
-        var newZoomLevel = olMap.getView().getZoom();
+        let newZoomLevel = olMap.getView().getZoom();
         console.log('Nouveau niveau de zoom :', newZoomLevel);
     });
     olMap.getView().on('change:resolution', function(evt) {
-        var newZoomLevel = olMap.getView().getZoom();
+        let newZoomLevel = olMap.getView().getZoom();
         console.log('View niveau de zoom :', newZoomLevel);
     });
 

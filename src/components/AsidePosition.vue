@@ -118,14 +118,14 @@ export default {
       return this.getOpenedMockup
     },
     currOpenedMockupPos() {
-      var returnPos = null
+      let returnPos = null
       if (this.currOpenedMockup && this.currOpenedMockup.pos) {
         returnPos = JSON.parse(this.currOpenedMockup.pos)
       }
       return returnPos
     },
     isPosDifferent() {
-      var diff = false
+      let diff = false
 
       // Compare OMPos & local var
       if (this.currOpenedMockupPos) {
@@ -138,6 +138,8 @@ export default {
         if (this.currOpenedMockupPos.zoom !== this.newOlZoom) {
           diff = true
         }
+      } else {
+        diff = true
       }
 
       return diff
@@ -185,12 +187,12 @@ export default {
       // (Set Map & Store do in moveEnd event)
 
       // Build new Pos Obj
-      var newPosJson = {
+      let newPosJson = {
         centerX: this.newOlCenterX,
         centerY: this.newOlCenterY,
         zoom: this.newOlZoom,
       }
-      var newPosStr = JSON.stringify(newPosJson)
+      let newPosStr = JSON.stringify(newPosJson)
 
       // Build Mockup Obj
       const updatedMockup = {
@@ -270,7 +272,7 @@ export default {
       this.verifyOlCenter()
 
       // Compile Center in obj
-      var newCenter = [parseFloat(this.newOlCenterX), parseFloat(this.newOlCenterY)]
+      let newCenter = [parseFloat(this.newOlCenterX), parseFloat(this.newOlCenterY)]
 
       // Set Zoom in view (with EvtBus)
       this.$evtBus.emit('onChangeCenter', newCenter)

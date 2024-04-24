@@ -132,16 +132,16 @@ import { objToMesh, convertBboxToGeoJSON } from '../utils/threeUtils'
 import { MathUtils } from 'three'
 
 // Global vars...
-var view
-var viewerDiv
-var currentExtent
-var lyonPlacement
-var lyonPlacementSmall
-var coordMouse
-var selectedArea = null
-var openedMockupMesh = null
-var openedMockupObj = null
-var scaler
+let view
+let viewerDiv
+let currentExtent
+let lyonPlacement
+let lyonPlacementSmall
+let coordMouse
+let selectedArea = null
+let openedMockupMesh = null
+let openedMockupObj = null
+let scaler
 const raycaster = new itowns.THREE.Raycaster(); // create once
 const clickMouse = new itowns.THREE.Vector2();  // create once
 
@@ -391,7 +391,7 @@ export default {
     },
     showAllLayers() {
       // ! Add all Layers in Store
-      var allViewLayers = view.getLayers()
+      let allViewLayers = view.getLayers()
       this.setBaseLayers(allViewLayers)
 
       // DEBUG Show layers
@@ -497,7 +497,7 @@ export default {
     },
     getViewCurrentExtent() {
       if (view.tileLayer && view.tileLayer.info.displayed.extent) {
-        var extentObj = view.tileLayer.info.displayed.extent;
+        let extentObj = view.tileLayer.info.displayed.extent;
         currentExtent = extentObj
       } else {
         currentExtent = {
@@ -514,9 +514,9 @@ export default {
       // -- Init Data and add layer to iTowns --
 
       // OSM layer
-      var osm = require('../datas/OPENSM.json')
-      var osmSource = new itowns.WMTSSource(osm.source)
-      var osmLayer = new itowns.ColorLayer('OpenStreetMap', {
+      let osm = require('../datas/OPENSM.json')
+      let osmSource = new itowns.WMTSSource(osm.source)
+      let osmLayer = new itowns.ColorLayer('OpenStreetMap', {
         name: 'OpenStreetMap',
         source: osmSource,
       })
@@ -524,9 +524,9 @@ export default {
       view.addLayer(osmLayer)
 
       // Ortho layer
-      var ortho = require('../datas/Ortho.json')
-      var orthoSource = new itowns.WMTSSource(ortho.source)
-      var orthoLayer = new itowns.ColorLayer('IGN_Orthophotos', {
+      let ortho = require('../datas/Ortho.json')
+      let orthoSource = new itowns.WMTSSource(ortho.source)
+      let orthoLayer = new itowns.ColorLayer('IGN_Orthophotos', {
         name: 'Plan Orthophotos IGN',
         source: orthoSource,
         opacity: 1,
@@ -535,27 +535,27 @@ export default {
       view.addLayer(orthoLayer)
 
       // MNT layer
-      var mnt = require('../datas/IGN_MNT.json')
-      var mntSource = new itowns.WMTSSource(mnt.source)
-      var mntLayer = new itowns.ElevationLayer('IGN_MNT', {
+      let mnt = require('../datas/IGN_MNT.json')
+      let mntSource = new itowns.WMTSSource(mnt.source)
+      let mntLayer = new itowns.ElevationLayer('IGN_MNT', {
         name: 'Couche MNT IGN',
         source: mntSource,
       })
       mntLayer.visible = true
       view.addLayer(mntLayer)
 
-      var mntHD = require('../datas/IGN_MNT_HIGHRES.json')
-      var mntHDSource = new itowns.WMTSSource(mntHD.source)
-      var mntHDLayer = new itowns.ElevationLayer('IGN_MNT_HIGHRES', {
+      let mntHD = require('../datas/IGN_MNT_HIGHRES.json')
+      let mntHDSource = new itowns.WMTSSource(mntHD.source)
+      let mntHDLayer = new itowns.ElevationLayer('IGN_MNT_HIGHRES', {
         name: 'Couche MNT HD IGN',
         source: mntHDSource,
       })
       mntHDLayer.visible = true
       view.addLayer(mntHDLayer)
 
-      var worldDTM = require('../datas/WORLD_DTM.json')
-      var worldDTMSource = new itowns.WMTSSource(worldDTM.source)
-      var worldDTMLayer = new itowns.ElevationLayer('MNT_WORLD_SRTM3', {
+      let worldDTM = require('../datas/WORLD_DTM.json')
+      let worldDTMSource = new itowns.WMTSSource(worldDTM.source)
+      let worldDTMLayer = new itowns.ElevationLayer('MNT_WORLD_SRTM3', {
         name: 'Couche DTM IGN',
         source: worldDTMSource,
       })
@@ -563,7 +563,7 @@ export default {
       view.addLayer(worldDTMLayer)
 
       // WMS Communes of Metropole de Lyon
-      // var wmsCommuneLyonSource = new itowns.WMSSource({
+      // let wmsCommuneLyonSource = new itowns.WMSSource({
       //   url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/wms',
       //   protocol: 'wms',
       //   version: '1.1.0',
@@ -582,8 +582,8 @@ export default {
       // view.addLayer(wmsCommuneLyonLayer)
     },
     addIGNBuildingLayer() {
-      var color = new itowns.THREE.Color()
-      var meshes = []
+      let color = new itowns.THREE.Color()
+      let meshes = []
 
       function colorBuildings(properties) {
         // ? Grey : 0x555555 / White : 0xFDFDFF
@@ -600,8 +600,8 @@ export default {
       }
 
       scaler = function update(/* dt */) {
-        var i;
-        var mesh;
+        let i;
+        let mesh;
         if (meshes.length) {
           view.notifyChange(view.camera.camera3D, true);
         }
@@ -616,7 +616,7 @@ export default {
       };
       view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.BEFORE_RENDER, scaler);
 
-      var wfsBuildingSource = new itowns.WFSSource({
+      let wfsBuildingSource = new itowns.WFSSource({
         url: 'https://wxs.ign.fr/topographie/geoportail/wfs?',
         version: '2.0.0',
         typeName: 'BDTOPO_V3:batiment',
@@ -632,7 +632,7 @@ export default {
       });
 
       // Create layer on wfs building source
-      var wfsBuildingLayer = new itowns.FeatureGeometryLayer('IGN_Buildings',{
+      let wfsBuildingLayer = new itowns.FeatureGeometryLayer('IGN_Buildings',{
           name: 'Bâtiments IGN',
           batchId: function(property, featureId) { return featureId },
           accurate: true,
@@ -667,11 +667,11 @@ export default {
     },
     addScaleWidget() {
       // Add Scale Widget
-      var scale = new itowns_widgets.Scale(view, { position: 'bottom-right', translate: { x: -80 } });
+      let scale = new itowns_widgets.Scale(view, { position: 'bottom-right', translate: { x: -80 } });
     },
     addNavigationWidget() {
       // Add Navigation Widgets
-      var navigationWidgets = new itowns_widgets.Navigation(view, { position: 'bottom-right' })
+      let navigationWidgets = new itowns_widgets.Navigation(view, { position: 'bottom-right' })
 
       // Add a new button to the widgets menu
       navigationWidgets.addButton(
@@ -733,7 +733,7 @@ export default {
       }
       // Create the searchbar
       // eslint-disable-next-line no-unused-vars
-      var searchbarWidget = new itowns_widgets.Searchbar(view, geocodingOptions, {
+      let searchbarWidget = new itowns_widgets.Searchbar(view, geocodingOptions, {
           maxSuggestionNumber: 5,
           position: 'top',
           width: '320',
@@ -854,7 +854,7 @@ export default {
         // Go To area
         this.ongoingTravel = true;
 
-        var newZoom = 160
+        let newZoom = 160
 
         if (openedMockupObj) {
           if (openedMockupObj.nb_plaques_h > 1 || openedMockupObj.nb_plaques_v > 1) {
@@ -978,7 +978,7 @@ export default {
       // ! Build mockup new Mesh
       const geom = new itowns.THREE.BoxGeometry(100, currMockup.nb_plaques_h * 200, currMockup.nb_plaques_v * 200);
       const mat = new itowns.THREE.MeshBasicMaterial({ color: 0xCB4335, opacity: 0.4, transparent: true });
-      var boxMockup = new itowns.THREE.Mesh(geom, mat);
+      let boxMockup = new itowns.THREE.Mesh(geom, mat);
       
       // ! Set Mesh pos
       boxMockup.position.set(areaJsonProps.pos.x, areaJsonProps.pos.y, areaJsonProps.pos.z)

@@ -759,7 +759,7 @@ export default {
         this.fetchDocument(this.openedMockup.model.id)
         .then((response) => {
           // Decode response
-          var decodedMesh = JSON.parse(atob(response.data.data))
+          let decodedMesh = JSON.parse(atob(response.data.data))
           // console.log('decodedMesh')
           // console.log(decodedMesh)
           // console.log(typeof(decodedMesh))
@@ -795,7 +795,7 @@ export default {
           // TODO: If opened mockup id > save Else keep file to save later
           if (this.openedMockup) {
             // Create document obj
-            var newDoc = {
+            let newDoc = {
               data: csvString,
               file_name: csvName,
               title: csvName,
@@ -809,7 +809,7 @@ export default {
               
               // Prepare Data
               this.currentMockupSavedId = this.openedMockup.id
-              var patchedMockup = {
+              let patchedMockup = {
                 id: this.currentMockupSavedId,
                 model_id: responseDoc.data.id
               }
@@ -844,13 +844,13 @@ export default {
       this.$refs.formMockup.validate().then((response) => {
         if (response.valid) {
           // Build bbox & pos object
-          var bboxPosJson = {
+          let bboxPosJson = {
             bbox: this.currentAreaBbox,
             pos: this.currentAreaPos,
             rotation: this.currAreaRotation,
           }
           // Build mockup Obj
-          var newMockupObj = {
+          let newMockupObj = {
             bbox: JSON.stringify(bboxPosJson),
             name: this.newMockupName,
             nb_plaques_h: this.nbPlatesHorizontal,
@@ -874,9 +874,9 @@ export default {
             // TODO: IF CSV > save / IF Emprise > Save
             
             // Prepare Model Obj
-            var meshName = 'generated_mesh.obj'
-            var encodedMesh = btoa(JSON.stringify(this.voxelizedMesh))
-            var newDoc = {
+            let meshName = 'generated_mesh.obj'
+            let encodedMesh = btoa(JSON.stringify(this.voxelizedMesh))
+            let newDoc = {
               data: encodedMesh,
               file_name: meshName,
               title: meshName,
@@ -887,7 +887,7 @@ export default {
             this.saveDocument(newDoc)
             .then((responseDoc) => {
               // Prepare Data
-              var patchedMockup = {
+              let patchedMockup = {
                 id: this.currentMockupSavedId,
                 model_id: responseDoc.data.id
               }
@@ -951,7 +951,7 @@ export default {
     },
     openMockup(index) {
       // Get current Mockup
-      var currMockup = this.allMockupList[index]
+      let currMockup = this.allMockupList[index]
       // Trigger Event and send Bbox to ItownsViewer
       this.$evtBus.emit('onOpenMockup', currMockup)
     },
@@ -1057,7 +1057,7 @@ export default {
     },
     downloadEmprise() {
       // Convert bbox to geojson
-      var empriseGeojson = convertBboxToGeoJSON(this.currentAreaBbox)
+      let empriseGeojson = convertBboxToGeoJSON(this.currentAreaBbox)
       // Trigger blob download
       this.downloadFileObj(empriseGeojson, 'emprise.geojson')
     },

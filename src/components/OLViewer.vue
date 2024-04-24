@@ -110,11 +110,11 @@
   import { register } from 'ol/proj/proj4'
 
   // Singleton OL Map
-  var olMap = null
-  var olLayers = []
+  let olMap = null
+  let olLayers = []
 
   // Import Ortho data conf file
-  var ortho = require('../datas/Ortho.json')
+  let ortho = require('../datas/Ortho.json')
 
   export default {
     name: 'MapContainer',
@@ -142,14 +142,14 @@
         return this.getOpenedMockup
       },
       currOpenedMockupPos() {
-        var returnPos = null
+        let returnPos = null
         if (this.currOpenedMockup && this.currOpenedMockup.pos) {
           returnPos = JSON.parse(this.currOpenedMockup.pos)
         }
         return returnPos
       },
       isPosDifferent() {
-        var diff = false
+        let diff = false
 
         // Compare OMPos & local var
         if (this.currOpenedMockupPos) {
@@ -162,6 +162,8 @@
           if (this.currOpenedMockupPos.zoom !== this.newOlZoom) {
             diff = true
           }
+        } else {
+          diff = true
         }
 
         return diff
@@ -202,7 +204,7 @@
       // console.log(olMap)
 
       // ===== Disable some interactions in OL Map =====
-      var interactions = olMap.getInteractions()
+      let interactions = olMap.getInteractions()
       interactions.forEach(function(interaction) {
           // Search for interaction to desactivate
           if (interaction.constructor.name === 'DragZoom' || interaction.constructor.name === 'KeyboardZoom' || interaction.constructor.name === 'KeyboardPan' || interaction.constructor.name === 'PinchRotate' || interaction.constructor.name === 'DragRotate') {
@@ -212,7 +214,7 @@
       })
 
       // Get View center
-      var newCenter = olMap.getView().getCenter()
+      let newCenter = olMap.getView().getCenter()
       // Set Center in store + local
       this.newOlCenterX = newCenter[0]
       this.setOlCenterX(this.newOlCenterX)
@@ -222,7 +224,7 @@
       // ===== Watch OL Events =====
       olMap.on('moveend', function(evt) {
           // Get Zoom from view
-          var newZoomLevel = olMap.getView().getZoom()
+          let newZoomLevel = olMap.getView().getZoom()
           // DEBUG
           // console.log('Nouveau niveau de zoom :', newZoomLevel)
 
@@ -231,7 +233,7 @@
           this.newOlZoom = parseFloat(newZoomLevel.toFixed(2))
 
           // Get View center
-          var newCenter = olMap.getView().getCenter()
+          let newCenter = olMap.getView().getCenter()
           
           // DEBUG
           // console.log('newCenter: ', newCenter)
@@ -373,7 +375,7 @@
         ]
       },
       computeWFSLink(extent) {
-        var goodExtent = extent
+        let goodExtent = extent
         if (this.currExtent) {
           goodExtent = this.currExtent
         }
@@ -413,7 +415,7 @@
         if (currLayer) {
           if (currLayer.constructor.name === 'VectorLayer') {
             // Change style (color alpha in rgba)
-            var newStyle = new Style({
+            let newStyle = new Style({
               fill: new Fill({
                 color: 'rgba(255,255,255,'+ ratioOpacity + ')'
               }),
