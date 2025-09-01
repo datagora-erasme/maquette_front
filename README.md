@@ -119,3 +119,6 @@ Here are the main dependencies used in the project. The complete list can be fou
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
+
+
+<!-- Security scan triggered at 2025-09-02 00:10:02 -->
