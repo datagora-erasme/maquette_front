@@ -1,12 +1,12 @@
-FROM node:lts-alpine as build
+FROM node:19.9.0-alpine as build
 ARG VUE_APP_API_BASE_URL
 ENV VUE_APP_API_BASE_URL=$VUE_APP_API_BASE_URL
 WORKDIR /app
 
+COPY package.json yarn.lock ./
+RUN yarn install --ignore-engines --frozen-lockfile
+
 COPY ./ /app/
-
-
-RUN yarn install --ignore-engines
 RUN yarn build
 
 
