@@ -381,7 +381,8 @@
         }
 
         return (
-          'https://wxs.ign.fr/topographie/geoportail/wfs?SERVICE=WFS&' +
+          // 'https://wxs.ign.fr/topographie/geoportail/wfs?SERVICE=WFS&' +
+          'https://data.geopf.fr/wfs?SERVICE=WFS&' +
           'version=2.0.0&request=GetFeature&typename=BDTOPO_V3:batiment&' +
           'outputFormat=application/json&srsname=EPSG:2154&' +
           // 'outputFormat=application/json&srsname=EPSG:3857&' +

@@ -616,8 +616,11 @@ export default {
       };
       view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.BEFORE_RENDER, scaler);
 
+      // OLD VALUE : https://wxs.ign.fr/topographie/geoportail/wfs?
+      // NEW VALUE : https://data.geopf.fr/wfs?
+      // (SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0&TYPENAMES=BDTOPO_V3%3Abatiment&OUTPUTFORMAT=application%2Fjson&SRSNAME=EPSG%3A4326)
       let wfsBuildingSource = new itowns.WFSSource({
-        url: 'https://wxs.ign.fr/topographie/geoportail/wfs?',
+        url: 'https://data.geopf.fr/wfs?',
         version: '2.0.0',
         typeName: 'BDTOPO_V3:batiment',
         crs: 'EPSG:4326',
