@@ -564,10 +564,10 @@ export default {
 
       // WMS Communes of Metropole de Lyon
       // let wmsCommuneLyonSource = new itowns.WMSSource({
-      //   url: 'https://geoserver-planta.exo-dev.fr/geoserver/Metropole/wms',
+      //   url: 'https://data.grandlyon.com/geoserver/metropole-de-lyon/ows',
       //   protocol: 'wms',
       //   version: '1.1.0',
-      //   name: 'communes',
+      //   name: 'grandlyon:adr_voie_lieu.adrcomgl_2024',
       //   format: 'image/svg',
       //   projection: 'EPSG:3857',
       //   extent: currentExtent,
@@ -580,6 +580,33 @@ export default {
       // });
       // wmsCommuneLyonLayer.visible = false
       // view.addLayer(wmsCommuneLyonLayer)
+
+      // Try to add WFS Commune of Metropole de Lyon
+      // let wfsCommuneLyonSource = new itowns.WFSSource({
+      //   url: 'https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?',
+      //   version: '2.0.0',
+      //   typeName: 'metropole-de-lyon:adr_voie_lieu.adrcomgl_2024',
+      //   crs: 'EPSG:4326',
+      //   format: 'application/json',
+      //   // extent: currentExtent,
+      //   extent: {
+      //     west: 4.568,
+      //     east: 5.18,
+      //     south: 45.437,
+      //     north: 46.03,
+      //   },
+      // })
+      // const wfsCommuneLyonLayer = new itowns.FeatureGeometryLayer('Lyon_Districts', {
+      //   name: 'Communes Lyon',
+      //   source: wfsCommuneLyonSource,
+      //   zoom: { min: 0 },
+      //   style: new itowns.Style({
+      //     fill: { color: 'red', opacity: 0.3 },
+      //     stroke: { color: 'red', width: 2 },
+      //   }),
+      // })
+      // wfsCommuneLyonLayer.visible = true
+      // view.addLayer(wfsCommuneLyonLayer)
     },
     addIGNBuildingLayer() {
       let color = new itowns.THREE.Color()
@@ -660,6 +687,7 @@ export default {
       // Finally add layer
       view.addLayer(wfsBuildingLayer)
     },
+
     lookAtCoordinate(coordinates, range, tilt) {
       view.controls.lookAtCoordinate({ 
         coord: coordinates, 

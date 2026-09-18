@@ -316,12 +316,12 @@
               id: 'IGN_Orthophotos'
             }
           }),
-          // TODO: WMS Bruit > Manque style
+          // INFO: WMS Bruit
           new TileLayer({
             visible: false,
             source: new TileWMS({
               url: 'https://data.grandlyon.com/geoserver/grandlyon/ows',
-              params: { 'LAYERS': 'grandlyon:GL_Rte_Lden', 'SLD': 'https://documents.exo-dev.fr/metropole/style_raster_bruit.sld' },
+              params: { 'LAYERS': 'grandlyon:GL_Rte_Lden', 'STYLES': 'grandlyon:bruit_avec_couleur' },
               serverType: 'geoserver',
               transition: 0,
             }),
@@ -332,21 +332,11 @@
           // INFO: WMTS CALQUE Layer
           new TileLayer({
             visible: false,
-            opacity: 1,
-            source: new WMTS({
-              attributions: "- <a href='https://datagora.erasme.org/projets/calque-de-plantabilite/' target='_blank'>Métropole de Lyon</a>",
-              url: 'https://geoserver-planta.exo-dev.fr/geoserver/gwc/service/wmts',
-              layer: 'Metropole:calque_plantabilite_metropole',
-              matrixSet: 'EPSG:4326',
-              format: 'image/png',
-              projection: projectionCalq,
-              tileGrid: new WMTSTileGrid({
-                origin: getTopLeft(projectionExtentCalq),
-                resolutions: resolutionsCalq,
-                matrixIds: matrixIdsCalq,
-              }),
-              style: 'style_calque_planta',
-              wrapX: true,
+            source: new TileWMS({
+              url: 'https://data.grandlyon.com/geoserver/grandlyon/ows',
+              params: { 'LAYERS': 'grandlyon:calque_plantabilite' },
+              serverType: 'geoserver',
+              transition: 0,
             }),
             properties: {
               id: 'Calque_Planta'
