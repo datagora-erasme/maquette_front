@@ -36,8 +36,11 @@
     "babel-eslint": "^10.1.0",
     "eslint": "^7.32.0",
     "eslint-plugin-vue": "^8.0.3",
-    "node-sass": "^9.0.0",
+    "sass": "^1.77.0",
     "sass-loader": "^13.3.2"
+  },
+  "resolutions": {
+    "@achrinza/node-ipc": "^9.2.10"
   },
   "eslintConfig": {
     "root": true,
