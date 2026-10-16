@@ -200,6 +200,23 @@
                   </v-slider>
                 </v-col>
               </v-row>
+              <!-- Buildings extrusion (iTowns viewer only) -->
+              <v-row v-if="bLayer.id === 'IGN_Buildings' && !isFullscreen" class="justify-space-between">
+                <v-col lg="12" class="pt-0">
+                  <v-checkbox
+                    v-model="bLayer.extruded"
+                    class="layers-checkbox"
+                    :color="bLayer.visible ? 'blue':'grey'"
+                    density="compact"
+                    hide-details
+                    @update:modelValue="toggleBuildingsExtrusion(index)"
+                  >
+                    <template #label>
+                      <span class="fs-16" :class="bLayer.visible ? '':'text-grey'">Extruder les bâtiments (3D)</span>
+                    </template>
+                  </v-checkbox>
+                </v-col>
+              </v-row>
             </div>
           </div>
         </v-list>
@@ -269,7 +286,7 @@ export default {
       if (this.iTownsBaseLayers.length) {
         let tempBaseLayers = []
         // Technical layers and layers listed in additional data (see computeCustomLayers)
-        const excludedLayerIds = ['globe', 'atmosphere', 'IGN_MNT', 'IGN_MNT_HIGHRES', 'MNT_WORLD_SRTM3', 'IGN_Buildings', 'Calque_Planta', 'Calque_Planta_2025', 'Bruit']
+        const excludedLayerIds = ['globe', 'atmosphere', 'IGN_MNT', 'IGN_MNT_HIGHRES', 'MNT_WORLD_SRTM3', 'IGN_Buildings', 'IGN_Buildings_Flat', 'Calque_Planta', 'Calque_Planta_2025', 'Bruit']
         this.iTownsBaseLayers.forEach(bLayer => {
           if (!excludedLayerIds.includes(bLayer.id)) {
             let newSubtitle = 'Fond de plan'
@@ -303,6 +320,7 @@ export default {
         openSub: false,
         visible: true,
         opacity: 1 * 100,
+        extruded: true,
       }
       tempBaseLayers.push(newLayerBuildings)
 
@@ -380,6 +398,10 @@ export default {
         opacity: this.allCustomLayers[index].opacity
       }
       this.$evtBus.emit('onChangeLayerOpacity', newLayerOpacity)
+    },
+    toggleBuildingsExtrusion(index) {
+      // Emit Event to ItownsViewer (style only, visibility is unchanged)
+      this.$evtBus.emit('onToggleBuildingsExtrusion', this.allCustomLayers[index].extruded)
     }
   }
 }
@@ -444,6 +466,10 @@ export default {
 }
 .layers-slider {
   padding-top: 10px;
+}
+// Vuetify labels are greyed by default (medium emphasis opacity)
+.layers-checkbox .v-label {
+  opacity: 1;
 }
 .layers-info-btn {
   margin-top: 20px;

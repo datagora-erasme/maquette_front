@@ -142,6 +142,9 @@ let selectedArea = null
 let openedMockupMesh = null
 let openedMockupObj = null
 let scaler
+// Buildings are displayed by 2 layers (extruded / flat): only one is visible at a time
+let buildingsVisible = true
+let buildingsExtruded = true
 const raycaster = new itowns.THREE.Raycaster(); // create once
 const clickMouse = new itowns.THREE.Vector2();  // create once
 
@@ -216,6 +219,7 @@ export default {
     // ===== Bind Events =====
     this.$evtBus.on('onToggleLayerVisibility', this.toggleLayerVisibility)
     this.$evtBus.on('onChangeLayerOpacity', this.changeLayerOpacity)
+    this.$evtBus.on('onToggleBuildingsExtrusion', this.toggleBuildingsExtrusion)
     this.$evtBus.on('onOpenMockup', this.openMockup)
     this.$evtBus.on('onShowOpenedMockup', this.showOpenedMockup)
     this.$evtBus.on('onRefreshMap', this.refreshMap)
@@ -318,6 +322,11 @@ export default {
     }),
     toggleLayerVisibility(layerId) {
       if(view) {
+        if (layerId === 'IGN_Buildings') {
+          buildingsVisible = !buildingsVisible
+          this.updateBuildingsLayersVisibility()
+          return
+        }
         const currLayer = view.getLayerById(layerId)
         if(currLayer) {
           currLayer.visible = !currLayer.visible
@@ -327,9 +336,28 @@ export default {
     },
     changeLayerOpacity(newLayerOp) {
       if(view) {
-        const currLayer = view.getLayerById(newLayerOp.id)
-        if(currLayer) {
-          currLayer.opacity = newLayerOp.opacity / 100
+        // Opacity of buildings is shared by extruded and flat layers
+        const layerIds = newLayerOp.id === 'IGN_Buildings' ? ['IGN_Buildings', 'IGN_Buildings_Flat'] : [newLayerOp.id]
+        layerIds.forEach(layerId => {
+          const currLayer = view.getLayerById(layerId)
+          if(currLayer) {
+            currLayer.opacity = newLayerOp.opacity / 100
+          }
+        })
+        view.notifyChange()
+      }
+    },
+    toggleBuildingsExtrusion(isExtruded) {
+      buildingsExtruded = isExtruded
+      this.updateBuildingsLayersVisibility()
+    },
+    updateBuildingsLayersVisibility() {
+      if(view) {
+        const extrudedLayer = view.getLayerById('IGN_Buildings')
+        const flatLayer = view.getLayerById('IGN_Buildings_Flat')
+        if(extrudedLayer && flatLayer) {
+          extrudedLayer.visible = buildingsVisible && buildingsExtruded
+          flatLayer.visible = buildingsVisible && !buildingsExtruded
           view.notifyChange()
         }
       }
@@ -677,6 +705,10 @@ export default {
       function extrudeBuildings(properties) {
         return parseFloat(properties.hauteur)
       }
+      function flatAltitudeBuildings(properties) {
+        // Highest ground point + small offset to keep flat footprints above the terrain
+        return parseFloat(properties.altitude_maximale_sol || properties.altitude_minimale_sol) + 0.5
+      }
 
       scaler = function update(/* dt */) {
         let i;
@@ -698,7 +730,7 @@ export default {
       // OLD VALUE : https://wxs.ign.fr/topographie/geoportail/wfs?
       // NEW VALUE : https://data.geopf.fr/wfs?
       // (SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0&TYPENAMES=BDTOPO_V3%3Abatiment&OUTPUTFORMAT=application%2Fjson&SRSNAME=EPSG%3A4326)
-      let wfsBuildingSource = new itowns.WFSSource({
+      let wfsBuildingSourceConfig = {
         url: 'https://data.geopf.fr/wfs?',
         version: '2.0.0',
         typeName: 'BDTOPO_V3:batiment',
@@ -711,7 +743,8 @@ export default {
           south: 45.437,
           north: 46.03,
         },
-      });
+      }
+      let wfsBuildingSource = new itowns.WFSSource(wfsBuildingSourceConfig)
 
       // Create layer on wfs building source
       let wfsBuildingLayer = new itowns.FeatureGeometryLayer('IGN_Buildings',{
@@ -738,6 +771,54 @@ export default {
       })
       // Finally add layer
       view.addLayer(wfsBuildingLayer)
+
+      // Same buildings without extrusion, shown instead of the extruded layer when extrusion is disabled.
+      // It needs its own source: parsed features are cached in the source with the style of the first layer using them.
+      let wfsBuildingFlatSource = new itowns.WFSSource(wfsBuildingSourceConfig)
+      // WebGL lines are always 1px wide: transparency makes the outline look thinner
+      let outlineMaterial = new itowns.THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false })
+      let wfsBuildingFlatLayer = new itowns.FeatureGeometryLayer('IGN_Buildings_Flat',{
+          name: 'Bâtiments IGN (à plat)',
+          batchId: function(property, featureId) { return featureId },
+          accurate: true,
+          // iTowns doesn't draw polygon strokes: build outlines from the rings of each footprint
+          onMeshCreated: function addOutlines(featureMesh) {
+            featureMesh.traverse(obj => {
+              if (!obj.isMesh || !obj.feature) {
+                return
+              }
+              let lineIndices = []
+              obj.feature.geometries.forEach(geometry => {
+                geometry.indices.forEach(ring => {
+                  for (let i = 0; i < ring.count; i++) {
+                    lineIndices.push(ring.offset + i, ring.offset + (i + 1) % ring.count)
+                  }
+                })
+              })
+              // Reuse the footprint vertices (same order as feature.vertices)
+              let outlineGeometry = new itowns.THREE.BufferGeometry()
+              outlineGeometry.setAttribute('position', obj.geometry.getAttribute('position'))
+              outlineGeometry.setIndex(lineIndices)
+              let outline = new itowns.THREE.LineSegments(outlineGeometry, outlineMaterial)
+              // Slightly above the fill to avoid z-fighting, on the same three.js layer as the mesh
+              outline.position.z = 0.1
+              outline.layers.mask = obj.layers.mask
+              obj.add(outline)
+            })
+          },
+          filter: acceptFeature,
+          source: wfsBuildingFlatSource,
+          zoom: { min: 15 },
+          style: new itowns.Style({
+            fill: {
+              color: colorBuildings,
+              base_altitude: flatAltitudeBuildings,
+            },
+            stroke: { color: color.set(0x546A7B) },
+          })
+      })
+      wfsBuildingFlatLayer.visible = false
+      view.addLayer(wfsBuildingFlatLayer)
     },
 
     lookAtCoordinate(coordinates, range, tilt) {
