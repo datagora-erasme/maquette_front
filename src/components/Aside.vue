@@ -268,12 +268,11 @@ export default {
     computeBaseLayers() {
       if (this.iTownsBaseLayers.length) {
         let tempBaseLayers = []
+        // Technical layers and layers listed in additional data (see computeCustomLayers)
+        const excludedLayerIds = ['globe', 'atmosphere', 'IGN_MNT', 'IGN_MNT_HIGHRES', 'MNT_WORLD_SRTM3', 'IGN_Buildings', 'Calque_Planta', 'Calque_Planta_2025', 'Bruit']
         this.iTownsBaseLayers.forEach(bLayer => {
-          if (bLayer.id !== 'globe' && bLayer.id !== 'atmosphere' && bLayer.id !== 'IGN_MNT' && bLayer.id !== 'IGN_MNT_HIGHRES' && bLayer.id !== 'MNT_WORLD_SRTM3' && bLayer.id !== 'Calque_Planta' && bLayer.id !== 'Bruit') {
+          if (!excludedLayerIds.includes(bLayer.id)) {
             let newSubtitle = 'Fond de plan'
-            if (bLayer.id === 'IGN_Buildings') {
-              newSubtitle = 'BD Topo - Juin 2023'
-            }
             if (bLayer.id === 'Lyon_Districts') {
               newSubtitle = 'Métropole de Lyon'
             }
@@ -296,6 +295,17 @@ export default {
     computeCustomLayers() {
       let tempBaseLayers = []
       // Add layers
+      let newLayerBuildings = {
+        id: 'IGN_Buildings',
+        name: 'Bâtiments IGN',
+        icon: 'mdi-office-building',
+        subtitle: 'BD Topo - Juin 2023',
+        openSub: false,
+        visible: true,
+        opacity: 1 * 100,
+      }
+      tempBaseLayers.push(newLayerBuildings)
+
       let newLayerBruit = {
         id: 'Bruit',
         name: 'Bruit routier LDEN',
@@ -317,6 +327,17 @@ export default {
         opacity: 1 * 100,
       }
       tempBaseLayers.push(newLayerCalque)
+
+      let newLayerCalque2025 = {
+        id: 'Calque_Planta_2025',
+        name: 'Calque de plantabilité',
+        icon: 'mdi-forest',
+        subtitle: 'Métropole de Lyon - 2025',
+        openSub: false,
+        visible: false,
+        opacity: 1 * 100,
+      }
+      tempBaseLayers.push(newLayerCalque2025)
       
       // Final set in data
       this.allCustomLayers = tempBaseLayers

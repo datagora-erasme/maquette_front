@@ -582,6 +582,22 @@ export default {
       calquePlantaLayer.visible = false
       view.addLayer(calquePlantaLayer)
 
+      // Calque de plantabilité layer (WMTS Grand Lyon 2025)
+      let calquePlanta2025 = require('../datas/Calque_Plantabilite_2025.json')
+      let calquePlanta2025Source = new itowns.WMTSSource({
+        ...calquePlanta2025.source,
+        // GeoWebCache names its TileMatrix 'EPSG:900913:<zoom>'
+        tileMatrixCallback: (zoomLevel) => `${calquePlanta2025.source.tileMatrixSet}:${zoomLevel}`,
+      })
+      let calquePlanta2025Layer = new itowns.ColorLayer(calquePlanta2025.id, {
+        name: 'Calque de plantabilité 2025',
+        source: calquePlanta2025Source,
+        transparent: true,
+        opacity: 1,
+      })
+      calquePlanta2025Layer.visible = false
+      view.addLayer(calquePlanta2025Layer)
+
       // Bruit routier LDEN layer (WMTS Grand Lyon 2022)
       let bruit = require('../datas/Bruit_Routier.json')
       let bruitSource = new itowns.WMTSSource({

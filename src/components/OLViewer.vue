@@ -342,6 +342,19 @@
               id: 'Calque_Planta'
             }
           }),
+          // INFO: WMS CALQUE Layer 2025
+          new TileLayer({
+            visible: false,
+            source: new TileWMS({
+              url: 'https://data.grandlyon.com/geoserver/grandlyon/ows',
+              params: { 'LAYERS': 'grandlyon:calque_plantabilite_2025' },
+              serverType: 'geoserver',
+              transition: 0,
+            }),
+            properties: {
+              id: 'Calque_Planta_2025'
+            }
+          }),
           // INFO: WFS BDTOPO (IGN)
           new VectorLayer({
             visible: true,
