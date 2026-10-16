@@ -1,0 +1,140 @@
+{
+  "id": "Bruit",
+  "source": {
+    "url": "https://data.grandlyon.com/geoserver/gwc/service/wmts",
+    "crs": "EPSG:3857",
+    "networkOptions": {
+      "crossOrigin": "anonymous"
+    },
+    "format": "image/png",
+    "attribution": {
+      "name": "Métropole de Lyon",
+      "url": "https://data.grandlyon.com"
+    },
+    "name": "grandlyon:GL_Rte_Lden",
+    "style": "grandlyon:bruit_avec_couleur",
+    "tileMatrixSet": "EPSG:900913",
+    "tileMatrixSetLimits": {
+      "2": {
+        "minTileRow": 1,
+        "maxTileRow": 1,
+        "minTileCol": 2,
+        "maxTileCol": 2
+      },
+      "3": {
+        "minTileRow": 2,
+        "maxTileRow": 2,
+        "minTileCol": 4,
+        "maxTileCol": 4
+      },
+      "4": {
+        "minTileRow": 5,
+        "maxTileRow": 5,
+        "minTileCol": 8,
+        "maxTileCol": 8
+      },
+      "5": {
+        "minTileRow": 11,
+        "maxTileRow": 11,
+        "minTileCol": 16,
+        "maxTileCol": 16
+      },
+      "6": {
+        "minTileRow": 22,
+        "maxTileRow": 22,
+        "minTileCol": 32,
+        "maxTileCol": 32
+      },
+      "7": {
+        "minTileRow": 45,
+        "maxTileRow": 45,
+        "minTileCol": 65,
+        "maxTileCol": 65
+      },
+      "8": {
+        "minTileRow": 91,
+        "maxTileRow": 91,
+        "minTileCol": 131,
+        "maxTileCol": 131
+      },
+      "9": {
+        "minTileRow": 182,
+        "maxTileRow": 183,
+        "minTileCol": 262,
+        "maxTileCol": 263
+      },
+      "10": {
+        "minTileRow": 364,
+        "maxTileRow": 366,
+        "minTileCol": 525,
+        "maxTileCol": 526
+      },
+      "11": {
+        "minTileRow": 729,
+        "maxTileRow": 732,
+        "minTileCol": 1050,
+        "maxTileCol": 1053
+      },
+      "12": {
+        "minTileRow": 1458,
+        "maxTileRow": 1464,
+        "minTileCol": 2100,
+        "maxTileCol": 2106
+      },
+      "13": {
+        "minTileRow": 2916,
+        "maxTileRow": 2929,
+        "minTileCol": 4201,
+        "maxTileCol": 4212
+      },
+      "14": {
+        "minTileRow": 5832,
+        "maxTileRow": 5858,
+        "minTileCol": 8403,
+        "maxTileCol": 8424
+      },
+      "15": {
+        "minTileRow": 11664,
+        "maxTileRow": 11717,
+        "minTileCol": 16806,
+        "maxTileCol": 16849
+      },
+      "16": {
+        "minTileRow": 23328,
+        "maxTileRow": 23434,
+        "minTileCol": 33612,
+        "maxTileCol": 33699
+      },
+      "17": {
+        "minTileRow": 46657,
+        "maxTileRow": 46868,
+        "minTileCol": 67225,
+        "maxTileCol": 67399
+      },
+      "18": {
+        "minTileRow": 93315,
+        "maxTileRow": 93737,
+        "minTileCol": 134451,
+        "maxTileCol": 134798
+      },
+      "19": {
+        "minTileRow": 186631,
+        "maxTileRow": 187474,
+        "minTileCol": 268902,
+        "maxTileCol": 269596
+      },
+      "20": {
+        "minTileRow": 373262,
+        "maxTileRow": 374948,
+        "minTileCol": 537804,
+        "maxTileCol": 539192
+      },
+      "21": {
+        "minTileRow": 746524,
+        "maxTileRow": 749896,
+        "minTileCol": 1075609,
+        "maxTileCol": 1078385
+      }
+    }
+  }
+}

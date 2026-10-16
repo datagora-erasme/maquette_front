@@ -108,10 +108,10 @@
             </div>
           </div>
         </v-list>
-        <!-- Custom data layers -->
-        <v-list v-if="isFullscreen" class="layers-list">
+        <!-- Additionnal data layers -->
+        <v-list class="layers-list">
           <div class="d-flex align-left subgroup-title-text">
-            Données personnalisées
+            Données supplémentaires
           </div>
 
           <!-- v-for -->
@@ -269,7 +269,7 @@ export default {
       if (this.iTownsBaseLayers.length) {
         let tempBaseLayers = []
         this.iTownsBaseLayers.forEach(bLayer => {
-          if (bLayer.id !== 'globe' && bLayer.id !== 'atmosphere' && bLayer.id !== 'IGN_MNT' && bLayer.id !== 'IGN_MNT_HIGHRES' && bLayer.id !== 'MNT_WORLD_SRTM3') {
+          if (bLayer.id !== 'globe' && bLayer.id !== 'atmosphere' && bLayer.id !== 'IGN_MNT' && bLayer.id !== 'IGN_MNT_HIGHRES' && bLayer.id !== 'MNT_WORLD_SRTM3' && bLayer.id !== 'Calque_Planta' && bLayer.id !== 'Bruit') {
             let newSubtitle = 'Fond de plan'
             if (bLayer.id === 'IGN_Buildings') {
               newSubtitle = 'BD Topo - Juin 2023'

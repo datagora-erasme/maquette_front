@@ -329,7 +329,7 @@
               id: 'Bruit'
             }
           }),
-          // INFO: WMTS CALQUE Layer
+          // INFO: WMTS CALQUE Layer 2022
           new TileLayer({
             visible: false,
             source: new TileWMS({

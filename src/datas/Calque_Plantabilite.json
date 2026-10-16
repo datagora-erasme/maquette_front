@@ -1,0 +1,140 @@
+{
+  "id": "Calque_Planta",
+  "source": {
+    "url": "https://data.grandlyon.com/geoserver/gwc/service/wmts",
+    "crs": "EPSG:3857",
+    "networkOptions": {
+      "crossOrigin": "anonymous"
+    },
+    "format": "image/png",
+    "attribution": {
+      "name": "Métropole de Lyon",
+      "url": "https://data.grandlyon.com/portail/fr/jeux-de-donnees/calque-plantabilite-metropole-lyon"
+    },
+    "name": "grandlyon:calque_plantabilite",
+    "style": "grandlyon:calque_plantabilite_2022",
+    "tileMatrixSet": "EPSG:900913",
+    "tileMatrixSetLimits": {
+      "2": {
+        "minTileRow": 1,
+        "maxTileRow": 1,
+        "minTileCol": 2,
+        "maxTileCol": 2
+      },
+      "3": {
+        "minTileRow": 2,
+        "maxTileRow": 2,
+        "minTileCol": 4,
+        "maxTileCol": 4
+      },
+      "4": {
+        "minTileRow": 5,
+        "maxTileRow": 5,
+        "minTileCol": 8,
+        "maxTileCol": 8
+      },
+      "5": {
+        "minTileRow": 11,
+        "maxTileRow": 11,
+        "minTileCol": 16,
+        "maxTileCol": 16
+      },
+      "6": {
+        "minTileRow": 22,
+        "maxTileRow": 22,
+        "minTileCol": 32,
+        "maxTileCol": 32
+      },
+      "7": {
+        "minTileRow": 45,
+        "maxTileRow": 45,
+        "minTileCol": 65,
+        "maxTileCol": 65
+      },
+      "8": {
+        "minTileRow": 91,
+        "maxTileRow": 91,
+        "minTileCol": 131,
+        "maxTileCol": 131
+      },
+      "9": {
+        "minTileRow": 182,
+        "maxTileRow": 183,
+        "minTileCol": 262,
+        "maxTileCol": 263
+      },
+      "10": {
+        "minTileRow": 364,
+        "maxTileRow": 366,
+        "minTileCol": 525,
+        "maxTileCol": 526
+      },
+      "11": {
+        "minTileRow": 729,
+        "maxTileRow": 732,
+        "minTileCol": 1050,
+        "maxTileCol": 1052
+      },
+      "12": {
+        "minTileRow": 1458,
+        "maxTileRow": 1464,
+        "minTileCol": 2101,
+        "maxTileCol": 2105
+      },
+      "13": {
+        "minTileRow": 2916,
+        "maxTileRow": 2929,
+        "minTileCol": 4202,
+        "maxTileCol": 4211
+      },
+      "14": {
+        "minTileRow": 5832,
+        "maxTileRow": 5858,
+        "minTileCol": 8405,
+        "maxTileCol": 8422
+      },
+      "15": {
+        "minTileRow": 11665,
+        "maxTileRow": 11716,
+        "minTileCol": 16810,
+        "maxTileCol": 16845
+      },
+      "16": {
+        "minTileRow": 23330,
+        "maxTileRow": 23432,
+        "minTileCol": 33620,
+        "maxTileCol": 33690
+      },
+      "17": {
+        "minTileRow": 46661,
+        "maxTileRow": 46864,
+        "minTileCol": 67241,
+        "maxTileCol": 67380
+      },
+      "18": {
+        "minTileRow": 93323,
+        "maxTileRow": 93728,
+        "minTileCol": 134483,
+        "maxTileCol": 134761
+      },
+      "19": {
+        "minTileRow": 186646,
+        "maxTileRow": 187456,
+        "minTileCol": 268966,
+        "maxTileCol": 269523
+      },
+      "20": {
+        "minTileRow": 373292,
+        "maxTileRow": 374913,
+        "minTileCol": 537933,
+        "maxTileCol": 539046
+      },
+      "21": {
+        "minTileRow": 746585,
+        "maxTileRow": 749826,
+        "minTileCol": 1075866,
+        "maxTileCol": 1078093
+      }
+    }
+  }
+}

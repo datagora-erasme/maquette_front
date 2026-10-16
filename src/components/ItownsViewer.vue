@@ -272,6 +272,8 @@ export default {
         this.getViewCurrentExtent()
         // ! ===== Init Data and add layer to iTowns =====
         this.loadFdpData(view)
+        // ! ===== Add MDL Data Layers =====
+        this.addMDLDataLayers()
         // ! ===== Add 3D Building =====
         this.addIGNBuildingLayer()
         // ! ===== Show Debug =====
@@ -561,6 +563,40 @@ export default {
       })
       worldDTMLayer.visible = true
       view.addLayer(worldDTMLayer)
+
+    },
+    addMDLDataLayers() {
+      // Calque de plantabilité layer (WMTS Grand Lyon 2022)
+      let calquePlanta = require('../datas/Calque_Plantabilite.json')
+      let calquePlantaSource = new itowns.WMTSSource({
+        ...calquePlanta.source,
+        // GeoWebCache names its TileMatrix 'EPSG:900913:<zoom>'
+        tileMatrixCallback: (zoomLevel) => `${calquePlanta.source.tileMatrixSet}:${zoomLevel}`,
+      })
+      let calquePlantaLayer = new itowns.ColorLayer(calquePlanta.id, {
+        name: 'Calque de plantabilité',
+        source: calquePlantaSource,
+        transparent: true,
+        opacity: 1,
+      })
+      calquePlantaLayer.visible = false
+      view.addLayer(calquePlantaLayer)
+
+      // Bruit routier LDEN layer (WMTS Grand Lyon 2022)
+      let bruit = require('../datas/Bruit_Routier.json')
+      let bruitSource = new itowns.WMTSSource({
+        ...bruit.source,
+        // GeoWebCache names its TileMatrix 'EPSG:900913:<zoom>'
+        tileMatrixCallback: (zoomLevel) => `${bruit.source.tileMatrixSet}:${zoomLevel}`,
+      })
+      let bruitLayer = new itowns.ColorLayer(bruit.id, {
+        name: 'Bruit routier LDEN',
+        source: bruitSource,
+        transparent: true,
+        opacity: 1,
+      })
+      bruitLayer.visible = false
+      view.addLayer(bruitLayer)
 
       // WMS Communes of Metropole de Lyon
       // let wmsCommuneLyonSource = new itowns.WMSSource({
