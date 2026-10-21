@@ -1,0 +1,73 @@
+{
+  "id": "Vegestrate",
+  "source": {
+    "networkOptions": {
+      "crossOrigin": "anonymous"
+    },
+    "attribution": {
+      "name": "IA·rbre - Métropole de Lyon",
+      "url": "https://carte.iarbre.fr"
+    },
+    "style": {
+      "version": 8,
+      "sources": {
+        "vegestrate": {
+          "type": "vector",
+          "tiles": ["https://carte.iarbre.fr/api/tiles/tile/vegestrate/{z}/{x}/{y}.mvt"]
+        }
+      },
+      "layers": [
+        {
+          "id": "vegestrate-herbacee",
+          "type": "fill",
+          "source": "vegestrate",
+          "source-layer": "tile--vegestrate",
+          "filter": ["==", "indice", "herbacee"],
+          "paint": { "fill-color": "#ecdeb1" }
+        },
+        {
+          "id": "vegestrate-arbustif",
+          "type": "fill",
+          "source": "vegestrate",
+          "source-layer": "tile--vegestrate",
+          "filter": ["==", "indice", "arbustif"],
+          "paint": { "fill-color": "#8bb971" }
+        },
+        {
+          "id": "vegestrate-arborescent",
+          "type": "fill",
+          "source": "vegestrate",
+          "source-layer": "tile--vegestrate",
+          "filter": ["==", "indice", "arborescent"],
+          "paint": { "fill-color": "#0f6f4f" }
+        }
+      ]
+    },
+    "tileMatrixSetLimits": {
+      "15": {
+        "minTileRow": 11665,
+        "maxTileRow": 11715,
+        "minTileCol": 16809,
+        "maxTileCol": 16845
+      },
+      "16": {
+        "minTileRow": 23331,
+        "maxTileRow": 23431,
+        "minTileCol": 33619,
+        "maxTileCol": 33690
+      },
+      "17": {
+        "minTileRow": 46663,
+        "maxTileRow": 46862,
+        "minTileCol": 67239,
+        "maxTileCol": 67381
+      },
+      "18": {
+        "minTileRow": 93327,
+        "maxTileRow": 93724,
+        "minTileCol": 134478,
+        "maxTileCol": 134763
+      }
+    }
+  }
+}

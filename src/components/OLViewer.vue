@@ -106,6 +106,8 @@
   import { bbox as bboxStrategy } from 'ol/loadingstrategy.js'
   import WMTS from 'ol/source/WMTS.js'
   import WMTSTileGrid from 'ol/tilegrid/WMTS.js'
+  import MVT from 'ol/format/MVT.js'
+  import Feature from 'ol/Feature.js'
   import proj4 from 'proj4'
   import { register } from 'ol/proj/proj4'
 
@@ -115,6 +117,11 @@
 
   // Import Ortho data conf file
   let ortho = require('../datas/Ortho.json')
+  // Import Végéstrate data conf file (MVT tiles + colors by 'indice', shared with iTowns)
+  let vegestrate = require('../datas/Vegestrate.json')
+  // Végéstrate tiles level loaded in OL (view is in EPSG:2154, so tiles can't follow the view zoom)
+  const VEGESTRATE_TILE_ZOOM = 16
+  const WEB_MERCATOR_HALF_SIZE = 20037508.342789244
 
   export default {
     name: 'MapContainer',
@@ -355,6 +362,18 @@
               id: 'Calque_Planta_2025'
             }
           }),
+          // INFO: MVT Végéstrate (IA·rbre)
+          // OL can't reproject vector tiles (view is in EPSG:2154): tiles are loaded in a vector source instead
+          new VectorLayer({
+            visible: false,
+            // Only loaded when zoomed in (~ web zoom 15), to limit the number of tiles
+            maxResolution: 3,
+            source: this.createVegestrateSource(),
+            style: this.createVegestrateStyle(),
+            properties: {
+              id: 'Vegestrate'
+            }
+          }),
           // INFO: WFS BDTOPO (IGN)
           new VectorLayer({
             visible: true,
@@ -394,6 +413,84 @@
           ',EPSG:2154'
           // ',EPSG:3857'
         )
+      },
+      createVegestrateStyle() {
+        // One style per 'indice', with the colors of the Mapbox style (JSON file)
+        const stylesByIndice = {}
+        vegestrate.source.style.layers.forEach(layer => {
+          stylesByIndice[layer.filter[2]] = new Style({ fill: new Fill({ color: layer.paint['fill-color'] }) })
+        })
+        return feature => stylesByIndice[feature.get('indice')]
+      },
+      createVegestrateSource() {
+        const format = new MVT({ featureClass: Feature })
+        const tileUrl = vegestrate.source.style.sources.vegestrate.tiles[0]
+        const tileLimits = vegestrate.source.tileMatrixSetLimits[VEGESTRATE_TILE_ZOOM]
+        const tileSize = (2 * WEB_MERCATOR_HALF_SIZE) / Math.pow(2, VEGESTRATE_TILE_ZOOM)
+        const loadedTiles = new Set()
+
+        const source = new VectorSource({
+          strategy: bboxStrategy,
+          loader: (extent, resolution, projection, success) => {
+            // XYZ tiles covering the requested extent, inside the data limits
+            const [minX, minY, maxX, maxY] = olProj.transformExtent(extent, projection, 'EPSG:3857')
+            const minCol = Math.max(tileLimits.minTileCol, Math.floor((minX + WEB_MERCATOR_HALF_SIZE) / tileSize))
+            const maxCol = Math.min(tileLimits.maxTileCol, Math.floor((maxX + WEB_MERCATOR_HALF_SIZE) / tileSize))
+            const minRow = Math.max(tileLimits.minTileRow, Math.floor((WEB_MERCATOR_HALF_SIZE - maxY) / tileSize))
+            const maxRow = Math.min(tileLimits.maxTileRow, Math.floor((WEB_MERCATOR_HALF_SIZE - minY) / tileSize))
+
+            const tileRequests = []
+            for (let col = minCol; col <= maxCol; col++) {
+              for (let row = minRow; row <= maxRow; row++) {
+                const tileKey = `${col}/${row}`
+                if (loadedTiles.has(tileKey)) {
+                  continue
+                }
+                loadedTiles.add(tileKey)
+
+                const url = tileUrl.replace('{z}', VEGESTRATE_TILE_ZOOM).replace('{x}', col).replace('{y}', row)
+                const tileExtent = [
+                  col * tileSize - WEB_MERCATOR_HALF_SIZE,
+                  WEB_MERCATOR_HALF_SIZE - (row + 1) * tileSize,
+                  (col + 1) * tileSize - WEB_MERCATOR_HALF_SIZE,
+                  WEB_MERCATOR_HALF_SIZE - row * tileSize,
+                ]
+                tileRequests.push(
+                  fetch(url)
+                    .then(response => {
+                      // 404 = no vegetation in this tile
+                      if (response.status === 404) {
+                        return null
+                      }
+                      if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`)
+                      }
+                      return response.arrayBuffer()
+                    })
+                    .then(buffer => {
+                      if (!buffer) {
+                        return
+                      }
+                      const features = format.readFeatures(buffer, { extent: tileExtent, featureProjection: 'EPSG:3857' })
+                      features.forEach(f => {
+                        f.getGeometry().transform('EPSG:3857', projection)
+                        // A polygon cut by tile borders has the same id in each tile: ids would make the source drop the other parts
+                        f.setId(undefined)
+                      })
+                      source.addFeatures(features)
+                    })
+                    .catch(err => {
+                      // Allow a new try on next view change
+                      loadedTiles.delete(tileKey)
+                      console.warn('Végéstrate tile not loaded: ' + url, err)
+                    })
+                )
+              }
+            }
+            Promise.all(tileRequests).then(() => success())
+          },
+        })
+        return source
       },
       addCustomProj() {
         // Define new custom coord

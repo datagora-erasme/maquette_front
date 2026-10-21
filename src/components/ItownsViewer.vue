@@ -642,6 +642,18 @@ export default {
       bruitLayer.visible = false
       view.addLayer(bruitLayer)
 
+      // Végéstrate layer (MVT IA·rbre, colored by 'indice' with the style of the JSON file)
+      let vegestrate = require('../datas/Vegestrate.json')
+      let vegestrateSource = new itowns.VectorTilesSource(vegestrate.source)
+      let vegestrateLayer = new itowns.ColorLayer(vegestrate.id, {
+        name: 'Végéstrate',
+        source: vegestrateSource,
+        transparent: true,
+        opacity: 1,
+      })
+      vegestrateLayer.visible = false
+      view.addLayer(vegestrateLayer)
+
       // WMS Communes of Metropole de Lyon
       // let wmsCommuneLyonSource = new itowns.WMSSource({
       //   url: 'https://data.grandlyon.com/geoserver/metropole-de-lyon/ows',

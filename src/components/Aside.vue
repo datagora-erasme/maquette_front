@@ -286,7 +286,7 @@ export default {
       if (this.iTownsBaseLayers.length) {
         let tempBaseLayers = []
         // Technical layers and layers listed in additional data (see computeCustomLayers)
-        const excludedLayerIds = ['globe', 'atmosphere', 'IGN_MNT', 'IGN_MNT_HIGHRES', 'MNT_WORLD_SRTM3', 'IGN_Buildings', 'IGN_Buildings_Flat', 'Calque_Planta', 'Calque_Planta_2025', 'Bruit']
+        const excludedLayerIds = ['globe', 'atmosphere', 'IGN_MNT', 'IGN_MNT_HIGHRES', 'MNT_WORLD_SRTM3', 'IGN_Buildings', 'IGN_Buildings_Flat', 'Calque_Planta', 'Calque_Planta_2025', 'Bruit', 'Vegestrate']
         this.iTownsBaseLayers.forEach(bLayer => {
           if (!excludedLayerIds.includes(bLayer.id)) {
             let newSubtitle = 'Fond de plan'
@@ -356,6 +356,17 @@ export default {
         opacity: 1 * 100,
       }
       tempBaseLayers.push(newLayerCalque2025)
+
+      let newLayerVegestrate = {
+        id: 'Vegestrate',
+        name: 'Végéstrate',
+        icon: 'mdi-tree',
+        subtitle: 'IA·rbre - 2023',
+        openSub: false,
+        visible: false,
+        opacity: 1 * 100,
+      }
+      tempBaseLayers.push(newLayerVegestrate)
       
       // Final set in data
       this.allCustomLayers = tempBaseLayers
