@@ -3,6 +3,7 @@
   "name": "Open Free Map Dark",
   "styleUrl": "https://tiles.openfreemap.org/styles/dark",
   "vectorSource": "openmaptiles",
+  "maxZoom": 14,
   "attribution": {
     "name": "© OpenFreeMap © OpenMapTiles © OpenStreetMap",
     "url": "https://openfreemap.org/"

@@ -1,0 +1,11 @@
+{
+  "id": "Monochrome_Black",
+  "name": "Monochrome Black",
+  "styleUrl": "https://viglino.github.io/geoservice-style/mono/mono_black.json",
+  "vectorSource": "plan_ign",
+  "maxZoom": 18,
+  "attribution": {
+    "name": "Style © Jean-Marc Viglino - Plan IGN © IGN",
+    "url": "https://github.com/Viglino/geoservice-style"
+  }
+}

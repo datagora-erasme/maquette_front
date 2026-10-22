@@ -16,318 +16,333 @@
       <v-card-text class="pa-0 layer-card-text">
         <!-- Base Layers List -->
         <v-list class="pa-0 layers-list">
-          <div class="d-flex align-left subgroup-title-text">
+          <div class="d-flex align-center subgroup-title-text section-toggle" @click="toggleSection('base')">
+            <v-icon :icon="openSections.base ? 'mdi-chevron-down' : 'mdi-chevron-right'" size="small" class="mr-1" />
             Couches de base
           </div>
-          <!-- v-for -->
-          <div
-            v-for="(bLayer, index) in allBaseLayers"
-            :key="bLayer.id"
-          >
-            <v-list-item
-              :title="bLayer.name"
-              :subtitle="bLayer.subtitle"
-              :prepend-icon="bLayer.icon"
-              class="layers-list-item"
-            >
-              <template #prepend="{prepend}">
-                <v-icon :color="allBaseLayers[index].visible ? 'black' : 'grey'" :icon="prepend" />
-              </template>
-              <template #title="{title}">
-                <div class="d-flex align-left">
-                  <span :class="bLayer.visible ? '':'text-grey'">{{ title }}</span>
+          <v-expand-transition>
+            <div v-show="openSections.base">
+              <!-- v-for -->
+              <div
+                v-for="(bLayer, index) in allBaseLayers"
+                :key="bLayer.id"
+              >
+                <v-list-item
+                  :title="bLayer.name"
+                  :subtitle="bLayer.subtitle"
+                  :prepend-icon="bLayer.icon"
+                  class="layers-list-item"
+                >
+                  <template #prepend="{prepend}">
+                    <v-icon :color="allBaseLayers[index].visible ? 'black' : 'grey'" :icon="prepend" />
+                  </template>
+                  <template #title="{title}">
+                    <div class="d-flex align-left">
+                      <span :class="bLayer.visible ? '':'text-grey'">{{ title }}</span>
+                    </div>
+                  </template>
+                  <template #subtitle="{subtitle}">
+                    <div class="d-flex align-left">
+                      {{ subtitle }}
+                    </div>
+                  </template>
+                  <template #append>
+                    <v-btn
+                      v-if="bLayer.visible"
+                      color="green-darken-2"
+                      icon="mdi-eye"
+                      variant="outlined"
+                      density="comfortable"
+                      class="ml-1"
+                      @click="toggleVisible(index)"
+                    />
+                    <v-btn
+                      v-else
+                      color="grey"
+                      icon="mdi-eye-off"
+                      variant="outlined"
+                      density="comfortable"
+                      class="ml-1"
+                      @click="toggleVisible(index)"
+                    />
+                    <v-btn
+                      :color="allBaseLayers[index].openSub ? 'blue': 'black'"
+                      icon="mdi-cog"
+                      variant="outlined"
+                      density="comfortable"
+                      class="ml-1"
+                      :active="allBaseLayers[index].openSub"
+                      :disabled="!bLayer.opacity"
+                      @click="toggleSub(index)"
+                    />
+                    <v-btn
+                      color="cyan-darken-3"
+                      icon="mdi-help"
+                      variant="outlined"
+                      density="comfortable"
+                      class="ml-1"
+                      disabled
+                    />
+                  </template>
+                </v-list-item>
+                <div v-if="allBaseLayers[index].openSub" class="sub-item">
+                  <v-row class="justify-space-between">
+                    <v-col lg="12" class="pb-0">
+                      <span class="fs-16" :class="bLayer.visible ? '':'text-grey'">Opacité de la couche : <b>{{ Math.round(bLayer.opacity) }}%</b></span>
+                      <v-slider
+                        v-model="bLayer.opacity"
+                        class="layers-slider"
+                        :color="bLayer.visible ? 'blue':'grey'"
+                        track-color="grey"
+                        min="0"
+                        max="100"
+                        :step="1"
+                        @update:modelValue="changeOpacity(index)"
+                      >
+                        <template #prepend>
+                          <span :class="bLayer.visible ? '':'text-grey'">0%</span>
+                        </template>
+                        <template #append>
+                          <span :class="bLayer.visible ? '':'text-grey'">100%</span>
+                        </template>
+                      </v-slider>
+                    </v-col>
+                  </v-row>
                 </div>
-              </template>
-              <template #subtitle="{subtitle}">
-                <div class="d-flex align-left">
-                  {{ subtitle }}
-                </div>
-              </template>
-              <template #append>
-                <v-btn
-                  v-if="bLayer.visible"
-                  color="green-darken-2"
-                  icon="mdi-eye"
-                  variant="outlined"
-                  density="comfortable"
-                  class="ml-1"
-                  @click="toggleVisible(index)"
-                />
-                <v-btn
-                  v-else
-                  color="grey"
-                  icon="mdi-eye-off"
-                  variant="outlined"
-                  density="comfortable"
-                  class="ml-1"
-                  @click="toggleVisible(index)"
-                />
-                <v-btn
-                  :color="allBaseLayers[index].openSub ? 'blue': 'black'"
-                  icon="mdi-cog"
-                  variant="outlined"
-                  density="comfortable"
-                  class="ml-1"
-                  :active="allBaseLayers[index].openSub"
-                  :disabled="!bLayer.opacity"
-                  @click="toggleSub(index)"
-                />
-                <v-btn
-                  color="cyan-darken-3"
-                  icon="mdi-help"
-                  variant="outlined"
-                  density="comfortable"
-                  class="ml-1"
-                  disabled
-                />
-              </template>
-            </v-list-item>
-            <div v-if="allBaseLayers[index].openSub" class="sub-item">
-              <v-row class="justify-space-between">
-                <v-col lg="12" class="pb-0">
-                  <span class="fs-16" :class="bLayer.visible ? '':'text-grey'">Opacité de la couche : <b>{{ Math.round(bLayer.opacity) }}%</b></span>
-                  <v-slider
-                    v-model="bLayer.opacity"
-                    class="layers-slider"
-                    :color="bLayer.visible ? 'blue':'grey'"
-                    track-color="grey"
-                    min="0"
-                    max="100"
-                    :step="1"
-                    @update:modelValue="changeOpacity(index)"
-                  >
-                    <template #prepend>
-                      <span :class="bLayer.visible ? '':'text-grey'">0%</span>
-                    </template>
-                    <template #append>
-                      <span :class="bLayer.visible ? '':'text-grey'">100%</span>
-                    </template>
-                  </v-slider>
-                </v-col>
-              </v-row>
+              </div>
             </div>
-          </div>
+          </v-expand-transition>
         </v-list>
         <!-- Additionnal data layers -->
         <v-list class="layers-list">
-          <div class="d-flex align-left subgroup-title-text">
+          <div class="d-flex align-center subgroup-title-text section-toggle" @click="toggleSection('custom')">
+            <v-icon :icon="openSections.custom ? 'mdi-chevron-down' : 'mdi-chevron-right'" size="small" class="mr-1" />
             Données supplémentaires
           </div>
-
-          <!-- v-for -->
-          <div
-            v-for="(bLayer, index) in allCustomLayers"
-            :key="bLayer.id"
-          >
-            <v-list-item
-              :title="bLayer.name"
-              :subtitle="bLayer.subtitle"
-              :prepend-icon="bLayer.icon"
-              class="layers-list-item"
-            >
-              <template #prepend="{prepend}">
-                <v-icon :color="allCustomLayers[index].visible ? 'black' : 'grey'" :icon="prepend" />
-              </template>
-              <template #title="{title}">
-                <div class="d-flex align-left">
-                  <span :class="bLayer.visible ? '':'text-grey'">{{ title }}</span>
+          <v-expand-transition>
+            <div v-show="openSections.custom">
+              <!-- v-for -->
+              <div
+                v-for="(bLayer, index) in allCustomLayers"
+                :key="bLayer.id"
+              >
+                <v-list-item
+                  :title="bLayer.name"
+                  :subtitle="bLayer.subtitle"
+                  :prepend-icon="bLayer.icon"
+                  class="layers-list-item"
+                >
+                  <template #prepend="{prepend}">
+                    <v-icon :color="allCustomLayers[index].visible ? 'black' : 'grey'" :icon="prepend" />
+                  </template>
+                  <template #title="{title}">
+                    <div class="d-flex align-left">
+                      <span :class="bLayer.visible ? '':'text-grey'">{{ title }}</span>
+                    </div>
+                  </template>
+                  <template #subtitle="{subtitle}">
+                    <div class="d-flex align-left">
+                      {{ subtitle }}
+                    </div>
+                  </template>
+                  <template #append>
+                    <v-btn
+                      v-if="bLayer.visible"
+                      color="green-darken-2"
+                      icon="mdi-eye"
+                      variant="outlined"
+                      density="comfortable"
+                      class="ml-1"
+                      @click="toggleVisibleCustom(index)"
+                    />
+                    <v-btn
+                      v-else
+                      color="grey"
+                      icon="mdi-eye-off"
+                      variant="outlined"
+                      density="comfortable"
+                      class="ml-1"
+                      @click="toggleVisibleCustom(index)"
+                    />
+                    <v-btn
+                      :color="allCustomLayers[index].openSub ? 'blue': 'black'"
+                      icon="mdi-cog"
+                      variant="outlined"
+                      density="comfortable"
+                      class="ml-1"
+                      :active="allCustomLayers[index].openSub"
+                      :disabled="!bLayer.opacity"
+                      @click="toggleSubCustom(index)"
+                    />
+                    <v-btn
+                      color="cyan-darken-3"
+                      icon="mdi-help"
+                      variant="outlined"
+                      density="comfortable"
+                      class="ml-1"
+                      disabled
+                    />
+                  </template>
+                </v-list-item>
+                <div v-if="allCustomLayers[index].openSub" class="sub-item">
+                  <v-row class="justify-space-between">
+                    <v-col lg="12" class="pb-0">
+                      <span class="fs-16" :class="bLayer.visible ? '':'text-grey'">Opacité de la couche : <b>{{ Math.round(bLayer.opacity) }}%</b></span>
+                      <v-slider
+                        v-model="bLayer.opacity"
+                        class="layers-slider"
+                        :color="bLayer.visible ? 'blue':'grey'"
+                        track-color="grey"
+                        min="0"
+                        max="100"
+                        :step="1"
+                        @update:modelValue="changeOpacityCustom(index)"
+                      >
+                        <template #prepend>
+                          <span :class="bLayer.visible ? '':'text-grey'">0%</span>
+                        </template>
+                        <template #append>
+                          <span :class="bLayer.visible ? '':'text-grey'">100%</span>
+                        </template>
+                      </v-slider>
+                    </v-col>
+                  </v-row>
+                  <!-- Buildings extrusion (iTowns viewer only) -->
+                  <v-row v-if="bLayer.id === 'IGN_Buildings' && !isFullscreen" class="justify-space-between">
+                    <v-col lg="12" class="pt-0">
+                      <v-checkbox
+                        v-model="bLayer.extruded"
+                        class="layers-checkbox"
+                        :color="bLayer.visible ? 'blue':'grey'"
+                        density="compact"
+                        hide-details
+                        @update:modelValue="toggleBuildingsExtrusion(index)"
+                      >
+                        <template #label>
+                          <span class="fs-16" :class="bLayer.visible ? '':'text-grey'">Extruder les bâtiments (3D)</span>
+                        </template>
+                      </v-checkbox>
+                    </v-col>
+                  </v-row>
                 </div>
-              </template>
-              <template #subtitle="{subtitle}">
-                <div class="d-flex align-left">
-                  {{ subtitle }}
-                </div>
-              </template>
-              <template #append>
-                <v-btn
-                  v-if="bLayer.visible"
-                  color="green-darken-2"
-                  icon="mdi-eye"
-                  variant="outlined"
-                  density="comfortable"
-                  class="ml-1"
-                  @click="toggleVisibleCustom(index)"
-                />
-                <v-btn
-                  v-else
-                  color="grey"
-                  icon="mdi-eye-off"
-                  variant="outlined"
-                  density="comfortable"
-                  class="ml-1"
-                  @click="toggleVisibleCustom(index)"
-                />
-                <v-btn
-                  :color="allCustomLayers[index].openSub ? 'blue': 'black'"
-                  icon="mdi-cog"
-                  variant="outlined"
-                  density="comfortable"
-                  class="ml-1"
-                  :active="allCustomLayers[index].openSub"
-                  :disabled="!bLayer.opacity"
-                  @click="toggleSubCustom(index)"
-                />
-                <v-btn
-                  color="cyan-darken-3"
-                  icon="mdi-help"
-                  variant="outlined"
-                  density="comfortable"
-                  class="ml-1"
-                  disabled
-                />
-              </template>
-            </v-list-item>
-            <div v-if="allCustomLayers[index].openSub" class="sub-item">
-              <v-row class="justify-space-between">
-                <v-col lg="12" class="pb-0">
-                  <span class="fs-16" :class="bLayer.visible ? '':'text-grey'">Opacité de la couche : <b>{{ Math.round(bLayer.opacity) }}%</b></span>
-                  <v-slider
-                    v-model="bLayer.opacity"
-                    class="layers-slider"
-                    :color="bLayer.visible ? 'blue':'grey'"
-                    track-color="grey"
-                    min="0"
-                    max="100"
-                    :step="1"
-                    @update:modelValue="changeOpacityCustom(index)"
-                  >
-                    <template #prepend>
-                      <span :class="bLayer.visible ? '':'text-grey'">0%</span>
-                    </template>
-                    <template #append>
-                      <span :class="bLayer.visible ? '':'text-grey'">100%</span>
-                    </template>
-                  </v-slider>
-                </v-col>
-              </v-row>
-              <!-- Buildings extrusion (iTowns viewer only) -->
-              <v-row v-if="bLayer.id === 'IGN_Buildings' && !isFullscreen" class="justify-space-between">
-                <v-col lg="12" class="pt-0">
-                  <v-checkbox
-                    v-model="bLayer.extruded"
-                    class="layers-checkbox"
-                    :color="bLayer.visible ? 'blue':'grey'"
-                    density="compact"
-                    hide-details
-                    @update:modelValue="toggleBuildingsExtrusion(index)"
-                  >
-                    <template #label>
-                      <span class="fs-16" :class="bLayer.visible ? '':'text-grey'">Extruder les bâtiments (3D)</span>
-                    </template>
-                  </v-checkbox>
-                </v-col>
-              </v-row>
+              </div>
             </div>
-          </div>
+          </v-expand-transition>
         </v-list>
         <!-- User data layers (imported GeoJSON files) -->
         <v-list class="layers-list">
-          <div class="d-flex align-center justify-space-between subgroup-title-text">
-            Mes données
+          <div class="d-flex align-center justify-space-between subgroup-title-text section-toggle" @click="toggleSection('user')">
+            <span class="d-flex align-center">
+              <v-icon :icon="openSections.user ? 'mdi-chevron-down' : 'mdi-chevron-right'" size="small" class="mr-1" />
+              Mes données
+            </span>
             <v-btn
               color="#1976D3"
               variant="outlined"
               size="small"
               prepend-icon="mdi-upload"
               class="mr-3"
-              @click="openImportUser()"
+              @click.stop="openImportUser()"
             >
               Importer une couche
             </v-btn>
           </div>
+          <v-expand-transition>
+            <div v-show="openSections.user">
+              <!-- Placeholder (as long as no layer is imported) -->
+              <div v-if="!allUserLayers.length" class="d-flex align-center justify-center py-4 text-grey">
+                <i>Aucune couche importée</i>
+              </div>
 
-          <!-- Placeholder (as long as no layer is imported) -->
-          <div v-if="!allUserLayers.length" class="d-flex align-center justify-center py-4 text-grey">
-            <i>Aucune couche importée</i>
-          </div>
-
-          <!-- v-for -->
-          <div
-            v-for="(bLayer, index) in allUserLayers"
-            :key="bLayer.id"
-          >
-            <v-list-item
-              :title="bLayer.name"
-              :subtitle="bLayer.subtitle"
-              :prepend-icon="bLayer.icon"
-              class="layers-list-item"
-            >
-              <template #prepend="{prepend}">
-                <v-icon :color="allUserLayers[index].visible ? 'black' : 'grey'" :icon="prepend" />
-              </template>
-              <template #title="{title}">
-                <div class="d-flex align-left">
-                  <span :class="bLayer.visible ? '':'text-grey'">{{ title }}</span>
+              <!-- v-for -->
+              <div
+                v-for="(bLayer, index) in allUserLayers"
+                :key="bLayer.id"
+              >
+                <v-list-item
+                  :title="bLayer.name"
+                  :subtitle="bLayer.subtitle"
+                  :prepend-icon="bLayer.icon"
+                  class="layers-list-item"
+                >
+                  <template #prepend="{prepend}">
+                    <v-icon :color="allUserLayers[index].visible ? 'black' : 'grey'" :icon="prepend" />
+                  </template>
+                  <template #title="{title}">
+                    <div class="d-flex align-left">
+                      <span :class="bLayer.visible ? '':'text-grey'">{{ title }}</span>
+                    </div>
+                  </template>
+                  <template #subtitle="{subtitle}">
+                    <div class="d-flex align-left">
+                      {{ subtitle }}
+                    </div>
+                  </template>
+                  <template #append>
+                    <v-btn
+                      v-if="bLayer.visible"
+                      color="green-darken-2"
+                      icon="mdi-eye"
+                      variant="outlined"
+                      density="comfortable"
+                      class="ml-1"
+                      @click="toggleVisibleUser(index)"
+                    />
+                    <v-btn
+                      v-else
+                      color="grey"
+                      icon="mdi-eye-off"
+                      variant="outlined"
+                      density="comfortable"
+                      class="ml-1"
+                      @click="toggleVisibleUser(index)"
+                    />
+                    <v-btn
+                      :color="allUserLayers[index].openSub ? 'blue': 'black'"
+                      icon="mdi-cog"
+                      variant="outlined"
+                      density="comfortable"
+                      class="ml-1"
+                      :active="allUserLayers[index].openSub"
+                      @click="toggleSubUser(index)"
+                    />
+                    <v-btn
+                      color="#1976D3"
+                      icon="mdi-pencil"
+                      variant="outlined"
+                      density="comfortable"
+                      class="ml-1"
+                      @click="openEditUser(index)"
+                    />
+                  </template>
+                </v-list-item>
+                <div v-if="allUserLayers[index].openSub" class="sub-item">
+                  <v-row class="justify-space-between">
+                    <v-col lg="12" class="pb-0">
+                      <span class="fs-16" :class="bLayer.visible ? '':'text-grey'">Opacité de la couche : <b>{{ Math.round(bLayer.opacity) }}%</b></span>
+                      <v-slider
+                        v-model="bLayer.opacity"
+                        class="layers-slider"
+                        :color="bLayer.visible ? 'blue':'grey'"
+                        track-color="grey"
+                        min="0"
+                        max="100"
+                        :step="1"
+                        @update:modelValue="changeOpacityUser(index)"
+                      >
+                        <template #prepend>
+                          <span :class="bLayer.visible ? '':'text-grey'">0%</span>
+                        </template>
+                        <template #append>
+                          <span :class="bLayer.visible ? '':'text-grey'">100%</span>
+                        </template>
+                      </v-slider>
+                    </v-col>
+                  </v-row>
                 </div>
-              </template>
-              <template #subtitle="{subtitle}">
-                <div class="d-flex align-left">
-                  {{ subtitle }}
-                </div>
-              </template>
-              <template #append>
-                <v-btn
-                  v-if="bLayer.visible"
-                  color="green-darken-2"
-                  icon="mdi-eye"
-                  variant="outlined"
-                  density="comfortable"
-                  class="ml-1"
-                  @click="toggleVisibleUser(index)"
-                />
-                <v-btn
-                  v-else
-                  color="grey"
-                  icon="mdi-eye-off"
-                  variant="outlined"
-                  density="comfortable"
-                  class="ml-1"
-                  @click="toggleVisibleUser(index)"
-                />
-                <v-btn
-                  :color="allUserLayers[index].openSub ? 'blue': 'black'"
-                  icon="mdi-cog"
-                  variant="outlined"
-                  density="comfortable"
-                  class="ml-1"
-                  :active="allUserLayers[index].openSub"
-                  @click="toggleSubUser(index)"
-                />
-                <v-btn
-                  color="#1976D3"
-                  icon="mdi-pencil"
-                  variant="outlined"
-                  density="comfortable"
-                  class="ml-1"
-                  @click="openEditUser(index)"
-                />
-              </template>
-            </v-list-item>
-            <div v-if="allUserLayers[index].openSub" class="sub-item">
-              <v-row class="justify-space-between">
-                <v-col lg="12" class="pb-0">
-                  <span class="fs-16" :class="bLayer.visible ? '':'text-grey'">Opacité de la couche : <b>{{ Math.round(bLayer.opacity) }}%</b></span>
-                  <v-slider
-                    v-model="bLayer.opacity"
-                    class="layers-slider"
-                    :color="bLayer.visible ? 'blue':'grey'"
-                    track-color="grey"
-                    min="0"
-                    max="100"
-                    :step="1"
-                    @update:modelValue="changeOpacityUser(index)"
-                  >
-                    <template #prepend>
-                      <span :class="bLayer.visible ? '':'text-grey'">0%</span>
-                    </template>
-                    <template #append>
-                      <span :class="bLayer.visible ? '':'text-grey'">100%</span>
-                    </template>
-                  </v-slider>
-                </v-col>
-              </v-row>
+              </div>
             </div>
-          </div>
+          </v-expand-transition>
         </v-list>
       </v-card-text>
       <ImportLayerDialog
@@ -358,6 +373,12 @@ export default {
       importLayerDialog: false,
       // User layer edited in the dialog (null: import)
       editedUserLayer: null,
+      // Opened sections of the menu
+      openSections: {
+        base: false,
+        custom: true,
+        user: true,
+      },
     }
   },
   computed: {
@@ -409,6 +430,9 @@ export default {
             let newSubtitle = 'Fond de plan'
             if (bLayer.id === 'Lyon_Districts') {
               newSubtitle = 'Métropole de Lyon'
+            }
+            if (bLayer.id === 'Monochrome_Black') {
+              newSubtitle = 'Jean-Marc Viglino'
             }
             // Add layers
             let newLayer = {
@@ -509,6 +533,9 @@ export default {
 
       // Final set in data
       this.allCustomLayers = tempBaseLayers
+    },
+    toggleSection(section) {
+      this.openSections[section] = !this.openSections[section]
     },
     closeAside() {
       this.setAsideStatus(false)
@@ -667,6 +694,11 @@ export default {
   font-weight: bold;
   color: #194275;
   border-bottom: 1px solid #e4e4e4;
+}
+// Section titles open / close their section
+.section-toggle {
+  cursor: pointer;
+  user-select: none;
 }
 .sub-item {
   width: 98%;

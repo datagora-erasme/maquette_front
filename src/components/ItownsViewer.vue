@@ -341,6 +341,30 @@ export default {
       setOpenedMockup: 'map/setOpenedMockup',
       setCurrentMockupBbox: 'map/setCurrentMockupBbox',
     }),
+    addVectorStyleColorLayer(conf, visible) {
+      // Basemap from a MapLibre style (conf file: id, name, styleUrl, vectorSource, maxZoom, attribution)
+      // Source created when the layer is displayed for the first time
+      let vectorStyleSource = null
+      this.addManagedColorLayer(conf.id, conf.name, () => {
+        vectorStyleSource = vectorStyleSource || new itowns.VectorTilesSource({
+          // Style with only the vector source (iTowns reads the tiles URL in the first source of the style)
+          style: loadVectorStyle(conf.styleUrl, conf.vectorSource).then(({ style }) => {
+            // No sprite: icons are only used by symbol layers, not drawn in a color layer
+            delete style.sprite
+            return style
+          }),
+          // Labels (symbol layers) are not drawn in a color layer
+          filter: layer => layer.type !== 'symbol',
+          // Last level of the tiles: deeper levels are drawn from it
+          zoom: { min: 0, max: conf.maxZoom },
+          attribution: conf.attribution,
+        })
+        return new itowns.ColorLayer(conf.id, {
+          name: conf.name,
+          source: vectorStyleSource,
+        })
+      }, visible)
+    },
     addManagedColorLayer(id, name, createLayer, visible) {
       // createLayer() must return a new ColorLayer (with id) each time, using a source created once (its data stay cached)
       const managedLayer = { id, name, createLayer, visible, opacity: 1, attached: false }
@@ -640,28 +664,9 @@ export default {
         source: osmSource,
       }), false)
 
-      // Open Free Map Dark layer (vector tiles + MapLibre style), source created when displayed for the first time
-      let openFreeMapDark = require('../datas/OpenFreeMap_Dark.json')
-      let openFreeMapDarkSource = null
-      this.addManagedColorLayer(openFreeMapDark.id, openFreeMapDark.name, () => {
-        openFreeMapDarkSource = openFreeMapDarkSource || new itowns.VectorTilesSource({
-          // Style with only the vector source (iTowns reads the tiles URL in the first source of the style)
-          style: loadVectorStyle(openFreeMapDark.styleUrl, openFreeMapDark.vectorSource).then(({ style }) => {
-            // No sprite: icons are only used by symbol layers, not drawn in a color layer
-            delete style.sprite
-            return style
-          }),
-          // Labels (symbol layers) are not drawn in a color layer
-          filter: layer => layer.type !== 'symbol',
-          // Last level of the tiles: deeper levels are drawn from it
-          zoom: { min: 0, max: 14 },
-          attribution: openFreeMapDark.attribution,
-        })
-        return new itowns.ColorLayer(openFreeMapDark.id, {
-          name: openFreeMapDark.name,
-          source: openFreeMapDarkSource,
-        })
-      }, false)
+      // Vector basemaps (vector tiles + MapLibre style)
+      this.addVectorStyleColorLayer(require('../datas/OpenFreeMap_Dark.json'), false)
+      this.addVectorStyleColorLayer(require('../datas/Monochrome_Black.json'), false)
 
       // Ortho layer
       let ortho = require('../datas/Ortho.json')

@@ -125,6 +125,7 @@
   let ortho = require('../datas/Ortho.json')
   // Import Open Free Map Dark data conf file (MapLibre style of vector tiles, shared with iTowns)
   let openFreeMapDark = require('../datas/OpenFreeMap_Dark.json')
+  let monochromeBlack = require('../datas/Monochrome_Black.json')
   // Ground size of web mercator meters at Lyon: EPSG:2154 meters ≈ ground meters, web mercator ones are 1/cos(lat) bigger
   const LYON_MERCATOR_SCALE = Math.cos(45.76 * Math.PI / 180)
   // Resolutions of the MapLibre zoom levels (512 px tiles), in the units of the view (EPSG:2154) at Lyon
@@ -324,6 +325,8 @@
           }),
           // INFO: Open Free Map Dark fdp (vector tiles + MapLibre style)
           this.createVectorStyleLayer(openFreeMapDark),
+          // INFO: Monochrome Black fdp (Plan IGN vector tiles + style of Jean-Marc Viglino)
+          this.createVectorStyleLayer(monochromeBlack),
           // INFO: WMTS IGN OrthoImagery Layer
           new TileLayer({
             visible: true,
@@ -549,7 +552,8 @@
         // Basemap from a MapLibre style: OL can't reproject vector tiles (view is in EPSG:2154),
         // so tiles are loaded in a vector source (level following the zoom) and styled with ol-mapbox-style
         const loadedStyle = loadVectorStyle(conf.styleUrl, conf.vectorSource)
-        let maxZoom = 14
+        // Last level of the tiles (given in conf: some styles announce more levels than the server has)
+        let maxZoom = conf.maxZoom || 14
         const vectorStyleLayer = new VectorLayer({
           visible: false,
           declutter: true,
@@ -568,7 +572,7 @@
         vectorStyleLayer.getSource().setAttributions("<a href='" + conf.attribution.url + "' target='_blank'>" + conf.attribution.name + '</a>')
         loadedStyle
           .then(loaded => {
-            maxZoom = loaded.maxZoom
+            maxZoom = conf.maxZoom || loaded.maxZoom
             return applyStyle(vectorStyleLayer, loaded.style, {
               source: conf.vectorSource,
               updateSource: false,
