@@ -112,7 +112,7 @@
   import Feature from 'ol/Feature.js'
   import proj4 from 'proj4'
   import { register } from 'ol/proj/proj4'
-  import { parseCategorizedQml, getQmlCategoryStyle } from '../utils/qmlStyle'
+  import { parseSld, getSldStyle } from '../utils/sldStyle'
 
   // Singleton OL Map
   let olMap = null
@@ -130,9 +130,9 @@
   const VEGESTRATE_TILE_ZOOM = 16
   // LCZ polygons are larger: a lower level is enough and limits the number of tiles
   const LCZ_TILE_ZOOM = 14
-  // Guide de montage (user data): GeoJSON file in EPSG:2154 + QGIS style, shared with iTowns
-  const guideMontageUrl = require('../datas/Tous_niveaux.geojson')
-  const guideMontageQml = parseCategorizedQml(require('../datas/Tous_niveaux.qml'))
+  // 3 Villeurbanne: buildings GeoJSON file in EPSG:2154 + SLD style, shared with iTowns
+  const villeurbanneArbresUrl = require('../datas/bati_nb_arbres_visibles_villeurbanne.geojson')
+  const villeurbanneArbresSld = parseSld(require('../datas/3_symbologie.sld'))
   const WEB_MERCATOR_HALF_SIZE = 20037508.342789244
 
   export default {
@@ -430,36 +430,36 @@
               id: 'IGN_Buildings'
             }
           }),
-          // INFO: GeoJSON Guide de montage (Mes données), styled with the QGIS file
-          // VectorImage: faster for many polygons, and not refreshed on 'moveend' (file is loaded once)
+          // INFO: GeoJSON 3 Villeurbanne (buildings by number of visible trees), styled with the SLD file
+          // Above IGN buildings (same footprints). VectorImage: faster for many polygons, and not refreshed on 'moveend' (file is loaded once)
           new VectorImageLayer({
             visible: false,
             source: new VectorSource({
-              url: guideMontageUrl,
+              url: villeurbanneArbresUrl,
               format: new GeoJSON({ dataProjection: 'EPSG:2154' }),
             }),
-            style: this.createQmlStyle(guideMontageQml),
+            style: this.createRulesStyle(properties => getSldStyle(villeurbanneArbresSld, properties)),
             properties: {
-              id: 'Guide_Montage'
+              id: 'Villeurbanne_Arbres'
             }
           })
         ]
       },
-      createQmlStyle(qmlStyle) {
-        // One OL style per QGIS category ('Map' is the OL map class in this file)
+      createRulesStyle(getRuleStyle) {
+        // One OL style per rule ('Map' is the OL map class in this file)
         const olStyles = new WeakMap()
         return feature => {
-          const categoryStyle = getQmlCategoryStyle(qmlStyle, feature.getProperties())
-          if (!categoryStyle) {
+          const ruleStyle = getRuleStyle(feature.getProperties())
+          if (!ruleStyle) {
             return null
           }
-          if (!olStyles.has(categoryStyle)) {
-            olStyles.set(categoryStyle, new Style({
-              fill: categoryStyle.fill ? new Fill({ color: categoryStyle.fill }) : undefined,
-              stroke: categoryStyle.stroke ? new Stroke({ color: categoryStyle.stroke, width: categoryStyle.strokeWidth }) : undefined,
+          if (!olStyles.has(ruleStyle)) {
+            olStyles.set(ruleStyle, new Style({
+              fill: ruleStyle.fill ? new Fill({ color: ruleStyle.fill }) : undefined,
+              stroke: ruleStyle.stroke ? new Stroke({ color: ruleStyle.stroke, width: ruleStyle.strokeWidth }) : undefined,
             }))
           }
-          return olStyles.get(categoryStyle)
+          return olStyles.get(ruleStyle)
         }
       },
       computeWFSLink(extent) {

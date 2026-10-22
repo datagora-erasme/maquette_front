@@ -129,7 +129,7 @@ import SidebarComponent from './SidebarComponent.vue'
 import PreviewComponent from './PreviewComponent.vue'
 import UserInfo from './UserInfo.vue'
 import { objToMesh, convertBboxToGeoJSON } from '../utils/threeUtils'
-import { parseCategorizedQml, getQmlCategoryStyle } from '../utils/qmlStyle'
+import { parseSld, getSldStyle } from '../utils/sldStyle'
 import { MathUtils } from 'three'
 
 // Global vars...
@@ -686,29 +686,29 @@ export default {
       lczColorLayer.visible = false
       view.addLayer(lczColorLayer)
 
-      // Guide de montage layer (Mes données): GeoJSON file in EPSG:2154, styled with the QGIS file (.qml)
-      let guideMontageQml = parseCategorizedQml(require('../datas/Tous_niveaux.qml'))
-      let guideMontageStyle = properties => getQmlCategoryStyle(guideMontageQml, properties) || {}
-      let guideMontageSource = new itowns.FileSource({
-        url: require('../datas/Tous_niveaux.geojson'),
+      // 3 Villeurbanne layer (buildings by number of visible trees): GeoJSON file in EPSG:2154, styled with the SLD file
+      let villeurbanneArbresSld = parseSld(require('../datas/3_symbologie.sld'))
+      let villeurbanneArbresStyle = properties => getSldStyle(villeurbanneArbresSld, properties) || {}
+      let villeurbanneArbresSource = new itowns.FileSource({
+        url: require('../datas/bati_nb_arbres_visibles_villeurbanne.geojson'),
         crs: 'EPSG:2154',
         format: 'application/json',
       })
-      let guideMontageLayer = new itowns.ColorLayer('Guide_Montage', {
-        name: 'Guide de montage',
-        source: guideMontageSource,
+      let villeurbanneArbresLayer = new itowns.ColorLayer('Villeurbanne_Arbres', {
+        name: '3 Villeurbanne',
+        source: villeurbanneArbresSource,
         transparent: true,
         opacity: 1,
         style: new itowns.Style({
-          fill: { color: properties => guideMontageStyle(properties).fill || 'rgba(0,0,0,0)' },
+          fill: { color: properties => villeurbanneArbresStyle(properties).fill || 'rgba(0,0,0,0)' },
           stroke: {
-            color: properties => guideMontageStyle(properties).stroke || 'rgba(0,0,0,0)',
-            width: properties => guideMontageStyle(properties).strokeWidth || 0,
+            color: properties => villeurbanneArbresStyle(properties).stroke || 'rgba(0,0,0,0)',
+            width: properties => villeurbanneArbresStyle(properties).strokeWidth || 0,
           },
         }),
       })
-      guideMontageLayer.visible = false
-      view.addLayer(guideMontageLayer)
+      villeurbanneArbresLayer.visible = false
+      view.addLayer(villeurbanneArbresLayer)
 
       // WMS Communes of Metropole de Lyon
       // let wmsCommuneLyonSource = new itowns.WMSSource({
