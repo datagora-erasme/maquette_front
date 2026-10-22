@@ -216,6 +216,15 @@ export default {
       return this.getIsFullscreen
     }
   },
+  watch: {
+    isFullscreen(newIsFullscreen) {
+      // iTowns listens to the keyboard on the whole window: while the view is hidden (OL projection),
+      // arrow keys (e.g. in the zoom input) would move its camera and crash on NaN coordinates
+      if (view && view.controls) {
+        view.controls.states.enabled = !newIsFullscreen
+      }
+    }
+  },
   mounted() {
     // ===== Bind Events =====
     this.$evtBus.on('onToggleLayerVisibility', this.toggleLayerVisibility)
