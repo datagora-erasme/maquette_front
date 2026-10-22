@@ -191,8 +191,9 @@
               </h2>
               <!-- <v-row class="d-flex align-center pa-0" style="width=500px;">
                 <v-col class="py-0 px-0 d-flex flex-column justify-space-evenly align-center"> -->
-              <div>
+              <div style="width: 100%;">
                 <v-btn
+                  v-if="!openedMockup"
                   color="#414288"
                   class="last-step-buttons mb-3"
                   prepend-icon="mdi-printer-3d"
@@ -209,6 +210,7 @@
                   <v-col class="pr-0">
                     <!-- TODO: V-if pour générer et télécharger -->
                     <v-btn
+                      v-if="!openedMockup"
                       color="#414288"
                       class="last-step-buttons mb-3"
                       prepend-icon="mdi-file-excel"
@@ -244,7 +246,6 @@
                   prepend-icon="mdi-cloud-download"
                   height="50"
                   block
-                  :disabled="openedMockup"
                   @click="downloadEmprise"
                 >
                   <span class="py-2">Télécharger l'emprise<br> géographique</span>
@@ -1056,8 +1057,12 @@ export default {
       downloadLink.click();
     },
     downloadEmprise() {
+      // Opened mockup : bbox is stored in the project's JSON props
+      const bbox = this.openedMockup
+        ? JSON.parse(this.openedMockup.bbox).bbox
+        : this.currentAreaBbox
       // Convert bbox to geojson
-      let empriseGeojson = convertBboxToGeoJSON(this.currentAreaBbox)
+      let empriseGeojson = convertBboxToGeoJSON(bbox)
       // Trigger blob download
       this.downloadFileObj(empriseGeojson, 'emprise.geojson')
     },

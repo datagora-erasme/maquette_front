@@ -276,10 +276,13 @@
           this.newOlCenterY = newCenter[1]
           this.setOlCenterY(this.newOlCenterY)
 
-          // Re-set Extent and refresh all VectorLayers in OL
+          // Basemaps tiles level follows the zoom: their tiles are loaded again when it changes
+          // (other vector layers have a fixed level or only depend on the mockup area: nothing to reload)
+          const resolution = olMap.getView().getResolution()
           olMap.getAllLayers().forEach(layer => {
-            if (layer.constructor.name === 'VectorLayer') {
-              layer.setExtent(this.currExtent)
+            const tileZoom = layer.get('tileZoom')
+            if (tileZoom && tileZoom(resolution) !== layer.get('loadedTileZoom')) {
+              layer.set('loadedTileZoom', tileZoom(resolution))
               layer.getSource().refresh()
             }
           })
@@ -433,7 +436,8 @@
               url: function(extent) {
                 return this.computeWFSLink(extent)
               }.bind(this),
-              strategy: bboxStrategy,
+              // Only the mockup area is loaded (nothing before the projection): the view extent is far too big for the WFS
+              strategy: () => (this.currExtent ? [this.currExtent] : []),
             }),
             style: {
               'stroke-width': 0.75,
@@ -458,6 +462,8 @@
             }
           })
         ]
+        // Crop all vector layers to the mockup area in projection
+        olLayers.filter(layer => layer instanceof VectorLayer).forEach(layer => this.clipVectorLayer(layer))
       },
       createRulesStyle(getRuleStyle) {
         // One OL style per rule ('Map' is the OL map class in this file)
@@ -525,11 +531,6 @@
         return userOlLayer
       },
       computeWFSLink(extent) {
-        let goodExtent = extent
-        if (this.currExtent) {
-          goodExtent = this.currExtent
-        }
-
         return (
           // 'https://wxs.ign.fr/topographie/geoportail/wfs?SERVICE=WFS&' +
           'https://data.geopf.fr/wfs?SERVICE=WFS&' +
@@ -537,7 +538,7 @@
           'outputFormat=application/json&srsname=EPSG:2154&' +
           // 'outputFormat=application/json&srsname=EPSG:3857&' +
           'bbox=' +
-          goodExtent.join(',') +
+          extent.join(',') +
           ',EPSG:2154'
           // ',EPSG:3857'
         )
@@ -556,6 +557,8 @@
         const loadedStyle = loadVectorStyle(conf.styleUrl, conf.vectorSource)
         // Last level of the tiles (given in conf: some styles announce more levels than the server has)
         let maxZoom = conf.maxZoom || 14
+        // Level of the style zoom (resolutions of the view at Lyon), up to the last level of the tiles
+        const tileZoom = resolution => Math.max(0, Math.min(maxZoom, Math.floor(Math.log2(GL_STYLE_RESOLUTIONS[0] / resolution))))
         const vectorStyleLayer = new VectorLayer({
           visible: false,
           declutter: true,
@@ -564,15 +567,15 @@
           source: this.createMVTSource({
             name: conf.id,
             tileUrl: loadedStyle.then(loaded => loaded.tileUrl),
-            // Level of the style zoom (resolutions of the view at Lyon), up to the last level of the tiles
-            tileZoom: resolution => Math.max(0, Math.min(maxZoom, Math.floor(Math.log2(GL_STYLE_RESOLUTIONS[0] / resolution)))),
+            tileZoom,
           }),
           properties: {
-            id: conf.id
+            id: conf.id,
+            // Used on 'moveend' to reload the tiles when their level changes
+            tileZoom
           }
         })
         vectorStyleLayer.getSource().setAttributions("<a href='" + conf.attribution.url + "' target='_blank'>" + conf.attribution.name + '</a>')
-        this.clipDeclutteredLayer(vectorStyleLayer)
         loadedStyle
           .then(loaded => {
             maxZoom = conf.maxZoom || loaded.maxZoom
@@ -585,9 +588,10 @@
           .catch(e => console.error(conf.id + ' style not loaded', e))
         return vectorStyleLayer
       },
-      clipDeclutteredLayer(layer) {
-        // OL 9 doesn't clip a decluttered layer to its extent (mockup area in projection): features with a zIndex
-        // (all of them with ol-mapbox-style) are drawn in a deferred pass, without the clip of the layer extent.
+      clipVectorLayer(layer) {
+        // OL 9 doesn't clip vector layers to their extent (mockup area in projection) as soon as one layer of the map
+        // is decluttered (the MapLibre basemaps, even hidden): all vector layers are then drawn in a deferred pass,
+        // without the clip of the layer extent.
         // Render events of this pass are used to clip it (they are only sent in the deferred pass when decluttering)
         layer.on('prerender', event => {
           const context = event.context
@@ -690,7 +694,7 @@
             Promise.all(tileRequests).then(() => success())
           },
         })
-        // Features are removed on refresh (done on each 'moveend'): tiles must be loaded again
+        // Features are removed on refresh (done on 'moveend' when the tiles level changes): tiles must be loaded again
         source.on('clear', () => {
           loadedTiles.clear()
           generation++
@@ -760,6 +764,8 @@
         olMap.getAllLayers().forEach(layer => {
           layer.setExtent(this.currExtent)
         })
+        // Load the buildings of the new mockup area
+        olMap.getAllLayers().find(l => l.get('id') === 'IGN_Buildings').getSource().refresh()
 
         // IF Pos in OpenedMockup exist
         if (this.currOpenedMockupPos) {
