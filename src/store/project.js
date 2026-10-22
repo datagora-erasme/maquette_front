@@ -16,9 +16,18 @@ const project = {
     }
   },
   actions: {
-    fetchProjectsList({ commit }) {
-      return axios
-        .get('/projects')
+    fetchProjectsList({ commit, dispatch, rootGetters }) {
+      // The role is not known right after login : fetch user infos if needed
+      const userInfosPromise = rootGetters['authentication/getLoggedUser'].role
+        ? Promise.resolve()
+        : dispatch('authentication/fetchUserInfo', null, { root: true });
+      return userInfosPromise
+        .then(() => {
+          const { role, id_user } = rootGetters['authentication/getLoggedUser'];
+          // A SUPERADMIN can see all projects, other users only their own
+          const params = role === 'SUPERADMIN' ? {} : { user_id: id_user };
+          return axios.get('/projects', { params });
+        })
         .then((response) => {
           commit('SET_PROJECTS_LIST', response.data);
           return Promise.resolve(response.data);

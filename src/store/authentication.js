@@ -150,6 +150,7 @@ const authentication = {
             email: userInfos.email,
             id: userInfos.id,
             id_user: userInfos.id_user,
+            role: userInfos.role,
           });
           return Promise.resolve(response);
         })
@@ -167,6 +168,7 @@ const authentication = {
             email: updatedUserInfos.email,
             id: updatedUserInfos.id,
             id_user: updatedUserInfos.id_user,
+            role: updatedUserInfos.role,
           });
           return Promise.resolve(response);
         })
