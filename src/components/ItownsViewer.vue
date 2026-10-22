@@ -553,6 +553,16 @@ export default {
       osmLayer.visible = false
       view.addLayer(osmLayer)
 
+      // Stamen Toner Dark layer (Stadia Maps)
+      let stamenTonerDark = require('../datas/Stamen_Toner_Dark.json')
+      let stamenTonerDarkSource = new itowns.TMSSource(stamenTonerDark.source)
+      let stamenTonerDarkLayer = new itowns.ColorLayer(stamenTonerDark.id, {
+        name: 'Stamen Toner Dark',
+        source: stamenTonerDarkSource,
+      })
+      stamenTonerDarkLayer.visible = false
+      view.addLayer(stamenTonerDarkLayer)
+
       // Ortho layer
       let ortho = require('../datas/Ortho.json')
       let orthoSource = new itowns.WMTSSource(ortho.source)
@@ -653,6 +663,18 @@ export default {
       })
       vegestrateLayer.visible = false
       view.addLayer(vegestrateLayer)
+
+      // Zones Climatiques Locales layer (MVT IA·rbre, colored by 'indice' with the CEREMA colors of the JSON file)
+      let lczColor = require('../datas/Lcz_Color.json')
+      let lczColorSource = new itowns.VectorTilesSource(lczColor.source)
+      let lczColorLayer = new itowns.ColorLayer(lczColor.id, {
+        name: 'Zones Climatiques Locales (ZCL)',
+        source: lczColorSource,
+        transparent: true,
+        opacity: 1,
+      })
+      lczColorLayer.visible = false
+      view.addLayer(lczColorLayer)
 
       // WMS Communes of Metropole de Lyon
       // let wmsCommuneLyonSource = new itowns.WMSSource({

@@ -98,6 +98,7 @@
   import Fill from 'ol/style/Fill'
   import Stroke from 'ol/style/Stroke'
   import OSM from 'ol/source/OSM'
+  import XYZ from 'ol/source/XYZ.js'
   import TileLayer from 'ol/layer/Tile'
   import TileWMS from 'ol/source/TileWMS.js'
   import VectorLayer from 'ol/layer/Vector.js'
@@ -117,10 +118,16 @@
 
   // Import Ortho data conf file
   let ortho = require('../datas/Ortho.json')
+  // Import Stamen Toner Dark data conf file (XYZ tiles, shared with iTowns)
+  let stamenTonerDark = require('../datas/Stamen_Toner_Dark.json')
   // Import Végéstrate data conf file (MVT tiles + colors by 'indice', shared with iTowns)
   let vegestrate = require('../datas/Vegestrate.json')
-  // Végéstrate tiles level loaded in OL (view is in EPSG:2154, so tiles can't follow the view zoom)
+  // Import Zones Climatiques Locales data conf file (MVT tiles + colors by 'indice', shared with iTowns)
+  let lczColor = require('../datas/Lcz_Color.json')
+  // MVT tiles level loaded in OL (view is in EPSG:2154, so tiles can't follow the view zoom)
   const VEGESTRATE_TILE_ZOOM = 16
+  // LCZ polygons are larger: a lower level is enough and limits the number of tiles
+  const LCZ_TILE_ZOOM = 14
   const WEB_MERCATOR_HALF_SIZE = 20037508.342789244
 
   export default {
@@ -300,6 +307,19 @@
               id: 'OpenStreetMap'
             }
           }),
+          // INFO: Stamen Toner Dark fdp (Stadia Maps)
+          new TileLayer({
+            visible: false,
+            source: new XYZ({
+              attributions: "<a href='" + stamenTonerDark.source.attribution.url + "' target='_blank'>" + stamenTonerDark.source.attribution.name + '</a>',
+              // OL uses {z}/{x}/{y} placeholders (iTowns uses ${z}/${x}/${y})
+              url: stamenTonerDark.source.url.replace(/\$\{/g, '{'),
+              crossOrigin: 'anonymous',
+            }),
+            properties: {
+              id: 'Stamen_Toner_Dark'
+            }
+          }),
           // INFO: WMTS IGN OrthoImagery Layer
           new TileLayer({
             visible: true,
@@ -368,10 +388,21 @@
             visible: false,
             // Only loaded when zoomed in (~ web zoom 15), to limit the number of tiles
             maxResolution: 3,
-            source: this.createVegestrateSource(),
-            style: this.createVegestrateStyle(),
+            source: this.createMVTSource(vegestrate, VEGESTRATE_TILE_ZOOM),
+            style: this.createMVTStyle(vegestrate),
             properties: {
               id: 'Vegestrate'
+            }
+          }),
+          // INFO: MVT Zones Climatiques Locales (IA·rbre)
+          new VectorLayer({
+            visible: false,
+            // Only loaded when zoomed in (~ web zoom 13), to limit the number of tiles
+            maxResolution: 10,
+            source: this.createMVTSource(lczColor, LCZ_TILE_ZOOM),
+            style: this.createMVTStyle(lczColor),
+            properties: {
+              id: 'lcz_color'
             }
           }),
           // INFO: WFS BDTOPO (IGN)
@@ -414,19 +445,19 @@
           // ',EPSG:3857'
         )
       },
-      createVegestrateStyle() {
+      createMVTStyle(conf) {
         // One style per 'indice', with the colors of the Mapbox style (JSON file)
         const stylesByIndice = {}
-        vegestrate.source.style.layers.forEach(layer => {
+        conf.source.style.layers.forEach(layer => {
           stylesByIndice[layer.filter[2]] = new Style({ fill: new Fill({ color: layer.paint['fill-color'] }) })
         })
         return feature => stylesByIndice[feature.get('indice')]
       },
-      createVegestrateSource() {
+      createMVTSource(conf, tileZoom) {
         const format = new MVT({ featureClass: Feature })
-        const tileUrl = vegestrate.source.style.sources.vegestrate.tiles[0]
-        const tileLimits = vegestrate.source.tileMatrixSetLimits[VEGESTRATE_TILE_ZOOM]
-        const tileSize = (2 * WEB_MERCATOR_HALF_SIZE) / Math.pow(2, VEGESTRATE_TILE_ZOOM)
+        const tileUrl = Object.values(conf.source.style.sources)[0].tiles[0]
+        const tileLimits = conf.source.tileMatrixSetLimits[tileZoom]
+        const tileSize = (2 * WEB_MERCATOR_HALF_SIZE) / Math.pow(2, tileZoom)
         const loadedTiles = new Set()
 
         const source = new VectorSource({
@@ -448,7 +479,7 @@
                 }
                 loadedTiles.add(tileKey)
 
-                const url = tileUrl.replace('{z}', VEGESTRATE_TILE_ZOOM).replace('{x}', col).replace('{y}', row)
+                const url = tileUrl.replace('{z}', tileZoom).replace('{x}', col).replace('{y}', row)
                 const tileExtent = [
                   col * tileSize - WEB_MERCATOR_HALF_SIZE,
                   WEB_MERCATOR_HALF_SIZE - (row + 1) * tileSize,
@@ -458,7 +489,7 @@
                 tileRequests.push(
                   fetch(url)
                     .then(response => {
-                      // 404 = no vegetation in this tile
+                      // 404 = no data in this tile
                       if (response.status === 404) {
                         return null
                       }
@@ -482,7 +513,7 @@
                     .catch(err => {
                       // Allow a new try on next view change
                       loadedTiles.delete(tileKey)
-                      console.warn('Végéstrate tile not loaded: ' + url, err)
+                      console.warn(conf.id + ' tile not loaded: ' + url, err)
                     })
                 )
               }
@@ -490,6 +521,8 @@
             Promise.all(tileRequests).then(() => success())
           },
         })
+        // Features are removed on refresh (done on each 'moveend'): tiles must be loaded again
+        source.on('clear', () => loadedTiles.clear())
         return source
       },
       addCustomProj() {

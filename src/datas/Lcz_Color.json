@@ -1,0 +1,189 @@
+{
+  "id": "lcz_color",
+  "source": {
+    "networkOptions": {
+      "crossOrigin": "anonymous"
+    },
+    "attribution": {
+      "name": "IA·rbre - Métropole de Lyon (classification CEREMA)",
+      "url": "https://carte.iarbre.fr"
+    },
+    "style": {
+      "version": 8,
+      "sources": {
+        "lcz": {
+          "type": "vector",
+          "tiles": ["https://carte.iarbre.fr/api/tiles/lcz/lcz/{z}/{x}/{y}.mvt"]
+        }
+      },
+      "layers": [
+        {
+          "id": "lcz-1",
+          "type": "fill",
+          "source": "lcz",
+          "source-layer": "lcz--lcz",
+          "filter": ["==", "indice", "1"],
+          "paint": { "fill-color": "#8C0000" }
+        },
+        {
+          "id": "lcz-2",
+          "type": "fill",
+          "source": "lcz",
+          "source-layer": "lcz--lcz",
+          "filter": ["==", "indice", "2"],
+          "paint": { "fill-color": "#D10000" }
+        },
+        {
+          "id": "lcz-3",
+          "type": "fill",
+          "source": "lcz",
+          "source-layer": "lcz--lcz",
+          "filter": ["==", "indice", "3"],
+          "paint": { "fill-color": "#FF0000" }
+        },
+        {
+          "id": "lcz-4",
+          "type": "fill",
+          "source": "lcz",
+          "source-layer": "lcz--lcz",
+          "filter": ["==", "indice", "4"],
+          "paint": { "fill-color": "#BF4D00" }
+        },
+        {
+          "id": "lcz-5",
+          "type": "fill",
+          "source": "lcz",
+          "source-layer": "lcz--lcz",
+          "filter": ["==", "indice", "5"],
+          "paint": { "fill-color": "#fa6600" }
+        },
+        {
+          "id": "lcz-6",
+          "type": "fill",
+          "source": "lcz",
+          "source-layer": "lcz--lcz",
+          "filter": ["==", "indice", "6"],
+          "paint": { "fill-color": "#ff9955" }
+        },
+        {
+          "id": "lcz-7",
+          "type": "fill",
+          "source": "lcz",
+          "source-layer": "lcz--lcz",
+          "filter": ["==", "indice", "7"],
+          "paint": { "fill-color": "#faee05" }
+        },
+        {
+          "id": "lcz-8",
+          "type": "fill",
+          "source": "lcz",
+          "source-layer": "lcz--lcz",
+          "filter": ["==", "indice", "8"],
+          "paint": { "fill-color": "#bcbcbc" }
+        },
+        {
+          "id": "lcz-9",
+          "type": "fill",
+          "source": "lcz",
+          "source-layer": "lcz--lcz",
+          "filter": ["==", "indice", "9"],
+          "paint": { "fill-color": "#ffccaa" }
+        },
+        {
+          "id": "lcz-A",
+          "type": "fill",
+          "source": "lcz",
+          "source-layer": "lcz--lcz",
+          "filter": ["==", "indice", "A"],
+          "paint": { "fill-color": "#006a00" }
+        },
+        {
+          "id": "lcz-B",
+          "type": "fill",
+          "source": "lcz",
+          "source-layer": "lcz--lcz",
+          "filter": ["==", "indice", "B"],
+          "paint": { "fill-color": "#00aa00" }
+        },
+        {
+          "id": "lcz-C",
+          "type": "fill",
+          "source": "lcz",
+          "source-layer": "lcz--lcz",
+          "filter": ["==", "indice", "C"],
+          "paint": { "fill-color": "#648525" }
+        },
+        {
+          "id": "lcz-D",
+          "type": "fill",
+          "source": "lcz",
+          "source-layer": "lcz--lcz",
+          "filter": ["==", "indice", "D"],
+          "paint": { "fill-color": "#b9db79" }
+        },
+        {
+          "id": "lcz-E",
+          "type": "fill",
+          "source": "lcz",
+          "source-layer": "lcz--lcz",
+          "filter": ["==", "indice", "E"],
+          "paint": { "fill-color": "#000000" }
+        },
+        {
+          "id": "lcz-F",
+          "type": "fill",
+          "source": "lcz",
+          "source-layer": "lcz--lcz",
+          "filter": ["==", "indice", "F"],
+          "paint": { "fill-color": "#FBF7AE" }
+        },
+        {
+          "id": "lcz-G",
+          "type": "fill",
+          "source": "lcz",
+          "source-layer": "lcz--lcz",
+          "filter": ["==", "indice", "G"],
+          "paint": { "fill-color": "#6A6AFF" }
+        }
+      ]
+    },
+    "tileMatrixSetLimits": {
+      "13": {
+        "minTileRow": 2916,
+        "maxTileRow": 2928,
+        "minTileCol": 4202,
+        "maxTileCol": 4211
+      },
+      "14": {
+        "minTileRow": 5832,
+        "maxTileRow": 5857,
+        "minTileCol": 8404,
+        "maxTileCol": 8422
+      },
+      "15": {
+        "minTileRow": 11665,
+        "maxTileRow": 11715,
+        "minTileCol": 16809,
+        "maxTileCol": 16845
+      },
+      "16": {
+        "minTileRow": 23330,
+        "maxTileRow": 23431,
+        "minTileCol": 33618,
+        "maxTileCol": 33691
+      },
+      "17": {
+        "minTileRow": 46660,
+        "maxTileRow": 46863,
+        "minTileCol": 67236,
+        "maxTileCol": 67383
+      },
+      "18": {
+        "minTileRow": 93320,
+        "maxTileRow": 93727,
+        "minTileCol": 134472,
+        "maxTileCol": 134767
+      }
+    }
+  }
+}
