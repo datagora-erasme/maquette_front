@@ -99,7 +99,6 @@
   import Stroke from 'ol/style/Stroke'
   import CircleStyle from 'ol/style/Circle'
   import OSM from 'ol/source/OSM'
-  import XYZ from 'ol/source/XYZ.js'
   import TileLayer from 'ol/layer/Tile'
   import TileWMS from 'ol/source/TileWMS.js'
   import VectorLayer from 'ol/layer/Vector.js'
@@ -115,6 +114,8 @@
   import { register } from 'ol/proj/proj4'
   import { parseSld, getSldStyle } from '../utils/sldStyle'
   import { getUserLayerStyle } from '../utils/userLayer'
+  import { loadVectorStyle } from '../utils/vectorStyle'
+  import { applyStyle } from 'ol-mapbox-style'
 
   // Singleton OL Map
   let olMap = null
@@ -122,8 +123,12 @@
 
   // Import Ortho data conf file
   let ortho = require('../datas/Ortho.json')
-  // Import Stamen Toner Dark data conf file (XYZ tiles, shared with iTowns)
-  let stamenTonerDark = require('../datas/Stamen_Toner_Dark.json')
+  // Import Open Free Map Dark data conf file (MapLibre style of vector tiles, shared with iTowns)
+  let openFreeMapDark = require('../datas/OpenFreeMap_Dark.json')
+  // Ground size of web mercator meters at Lyon: EPSG:2154 meters ≈ ground meters, web mercator ones are 1/cos(lat) bigger
+  const LYON_MERCATOR_SCALE = Math.cos(45.76 * Math.PI / 180)
+  // Resolutions of the MapLibre zoom levels (512 px tiles), in the units of the view (EPSG:2154) at Lyon
+  const GL_STYLE_RESOLUTIONS = Array.from({ length: 25 }, (v, zoom) => 78271.51696402048 * LYON_MERCATOR_SCALE / Math.pow(2, zoom))
   // Import Végéstrate data conf file (MVT tiles + colors by 'indice', shared with iTowns)
   let vegestrate = require('../datas/Vegestrate.json')
   // Import Zones Climatiques Locales data conf file (MVT tiles + colors by 'indice', shared with iTowns)
@@ -317,19 +322,8 @@
               id: 'OpenStreetMap'
             }
           }),
-          // INFO: Stamen Toner Dark fdp (Stadia Maps)
-          new TileLayer({
-            visible: false,
-            source: new XYZ({
-              attributions: "<a href='" + stamenTonerDark.source.attribution.url + "' target='_blank'>" + stamenTonerDark.source.attribution.name + '</a>',
-              // OL uses {z}/{x}/{y} placeholders (iTowns uses ${z}/${x}/${y})
-              url: stamenTonerDark.source.url.replace(/\$\{/g, '{'),
-              crossOrigin: 'anonymous',
-            }),
-            properties: {
-              id: 'Stamen_Toner_Dark'
-            }
-          }),
+          // INFO: Open Free Map Dark fdp (vector tiles + MapLibre style)
+          this.createVectorStyleLayer(openFreeMapDark),
           // INFO: WMTS IGN OrthoImagery Layer
           new TileLayer({
             visible: true,
@@ -398,7 +392,12 @@
             visible: false,
             // Only loaded when zoomed in (~ web zoom 15), to limit the number of tiles
             maxResolution: 3,
-            source: this.createMVTSource(vegestrate, VEGESTRATE_TILE_ZOOM),
+            source: this.createMVTSource({
+              name: vegestrate.id,
+              tileUrl: vegestrate.source.style.sources.vegestrate.tiles[0],
+              tileZoom: VEGESTRATE_TILE_ZOOM,
+              tileMatrixSetLimits: vegestrate.source.tileMatrixSetLimits,
+            }),
             style: this.createMVTStyle(vegestrate),
             properties: {
               id: 'Vegestrate'
@@ -409,7 +408,12 @@
             visible: false,
             // Only loaded when zoomed in (~ web zoom 13), to limit the number of tiles
             maxResolution: 10,
-            source: this.createMVTSource(lczColor, LCZ_TILE_ZOOM),
+            source: this.createMVTSource({
+              name: lczColor.id,
+              tileUrl: lczColor.source.style.sources.lcz.tiles[0],
+              tileZoom: LCZ_TILE_ZOOM,
+              tileMatrixSetLimits: lczColor.source.tileMatrixSetLimits,
+            }),
             style: this.createMVTStyle(lczColor),
             properties: {
               id: 'lcz_color'
@@ -541,16 +545,58 @@
         })
         return feature => stylesByIndice[feature.get('indice')]
       },
-      createMVTSource(conf, tileZoom) {
+      createVectorStyleLayer(conf) {
+        // Basemap from a MapLibre style: OL can't reproject vector tiles (view is in EPSG:2154),
+        // so tiles are loaded in a vector source (level following the zoom) and styled with ol-mapbox-style
+        const loadedStyle = loadVectorStyle(conf.styleUrl, conf.vectorSource)
+        let maxZoom = 14
+        const vectorStyleLayer = new VectorLayer({
+          visible: false,
+          declutter: true,
+          // Nothing drawn until the style is loaded
+          style: null,
+          source: this.createMVTSource({
+            name: conf.id,
+            tileUrl: loadedStyle.then(loaded => loaded.tileUrl),
+            // Level of the style zoom (resolutions of the view at Lyon), up to the last level of the tiles
+            tileZoom: resolution => Math.max(0, Math.min(maxZoom, Math.floor(Math.log2(GL_STYLE_RESOLUTIONS[0] / resolution)))),
+          }),
+          properties: {
+            id: conf.id
+          }
+        })
+        vectorStyleLayer.getSource().setAttributions("<a href='" + conf.attribution.url + "' target='_blank'>" + conf.attribution.name + '</a>')
+        loadedStyle
+          .then(loaded => {
+            maxZoom = loaded.maxZoom
+            return applyStyle(vectorStyleLayer, loaded.style, {
+              source: conf.vectorSource,
+              updateSource: false,
+              resolutions: GL_STYLE_RESOLUTIONS,
+            })
+          })
+          .catch(e => console.error(conf.id + ' style not loaded', e))
+        return vectorStyleLayer
+      },
+      createMVTSource({ name, tileUrl, tileZoom, tileMatrixSetLimits }) {
+        // MVT tiles (EPSG:3857) loaded in a vector source, reprojected in the view projection
+        // - tileUrl: URL template ({z}/{x}/{y}), or a promise of it
+        // - tileZoom: level of the loaded tiles, or function(resolution) returning it
+        // - tileMatrixSetLimits (optional): tiles with data, by level
         const format = new MVT({ featureClass: Feature })
-        const tileUrl = Object.values(conf.source.style.sources)[0].tiles[0]
-        const tileLimits = conf.source.tileMatrixSetLimits[tileZoom]
-        const tileSize = (2 * WEB_MERCATOR_HALF_SIZE) / Math.pow(2, tileZoom)
         const loadedTiles = new Set()
+        // Incremented when features are removed: tiles still loading for previous features are ignored
+        let generation = 0
 
         const source = new VectorSource({
           strategy: bboxStrategy,
           loader: (extent, resolution, projection, success) => {
+            const loaderGeneration = generation
+            const zoom = typeof tileZoom === 'function' ? tileZoom(resolution) : tileZoom
+            const tileSize = (2 * WEB_MERCATOR_HALF_SIZE) / Math.pow(2, zoom)
+            const tileLimits = (tileMatrixSetLimits && tileMatrixSetLimits[zoom]) || {
+              minTileCol: 0, maxTileCol: Math.pow(2, zoom) - 1, minTileRow: 0, maxTileRow: Math.pow(2, zoom) - 1,
+            }
             // XYZ tiles covering the requested extent, inside the data limits
             const [minX, minY, maxX, maxY] = olProj.transformExtent(extent, projection, 'EPSG:3857')
             const minCol = Math.max(tileLimits.minTileCol, Math.floor((minX + WEB_MERCATOR_HALF_SIZE) / tileSize))
@@ -561,13 +607,13 @@
             const tileRequests = []
             for (let col = minCol; col <= maxCol; col++) {
               for (let row = minRow; row <= maxRow; row++) {
-                const tileKey = `${col}/${row}`
+                const tileKey = `${zoom}/${col}/${row}`
                 if (loadedTiles.has(tileKey)) {
                   continue
                 }
                 loadedTiles.add(tileKey)
 
-                const url = tileUrl.replace('{z}', tileZoom).replace('{x}', col).replace('{y}', row)
+                let url = null
                 const tileExtent = [
                   col * tileSize - WEB_MERCATOR_HALF_SIZE,
                   WEB_MERCATOR_HALF_SIZE - (row + 1) * tileSize,
@@ -575,7 +621,11 @@
                   WEB_MERCATOR_HALF_SIZE - row * tileSize,
                 ]
                 tileRequests.push(
-                  fetch(url)
+                  Promise.resolve(tileUrl)
+                    .then(template => {
+                      url = template.replace('{z}', zoom).replace('{x}', col).replace('{y}', row)
+                      return fetch(url)
+                    })
                     .then(response => {
                       // 404 = no data in this tile
                       if (response.status === 404) {
@@ -587,7 +637,7 @@
                       return response.arrayBuffer()
                     })
                     .then(buffer => {
-                      if (!buffer) {
+                      if (!buffer || loaderGeneration !== generation) {
                         return
                       }
                       const features = format.readFeatures(buffer, { extent: tileExtent, featureProjection: 'EPSG:3857' })
@@ -601,7 +651,7 @@
                     .catch(err => {
                       // Allow a new try on next view change
                       loadedTiles.delete(tileKey)
-                      console.warn(conf.id + ' tile not loaded: ' + url, err)
+                      console.warn(name + ' tile not loaded: ' + url, err)
                     })
                 )
               }
@@ -610,7 +660,10 @@
           },
         })
         // Features are removed on refresh (done on each 'moveend'): tiles must be loaded again
-        source.on('clear', () => loadedTiles.clear())
+        source.on('clear', () => {
+          loadedTiles.clear()
+          generation++
+        })
         return source
       },
       addCustomProj() {

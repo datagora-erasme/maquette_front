@@ -1,0 +1,10 @@
+{
+  "id": "OpenFreeMap_Dark",
+  "name": "Open Free Map Dark",
+  "styleUrl": "https://tiles.openfreemap.org/styles/dark",
+  "vectorSource": "openmaptiles",
+  "attribution": {
+    "name": "© OpenFreeMap © OpenMapTiles © OpenStreetMap",
+    "url": "https://openfreemap.org/"
+  }
+}

@@ -1074,7 +1074,7 @@
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/@mapbox/jsonlint-lines-primitives/-/jsonlint-lines-primitives-2.0.2.tgz#ce56e539f83552b58d10d672ea4d6fc9adc7b234"
 
-"@mapbox/mapbox-gl-style-spec@^13.24.0":
+"@mapbox/mapbox-gl-style-spec@^13.23.1", "@mapbox/mapbox-gl-style-spec@^13.24.0":
   version "13.28.0"
   resolved "https://registry.yarnpkg.com/@mapbox/mapbox-gl-style-spec/-/mapbox-gl-style-spec-13.28.0.tgz#2ec226320a0f77856046e000df9b419303a56458"
   dependencies:
@@ -4051,6 +4051,11 @@ make-dir@^3.0.2, make-dir@^3.1.0:
   dependencies:
     semver "^6.0.0"
 
+mapbox-to-css-font@^2.4.1:
+  version "2.4.5"
+  resolved "https://registry.yarnpkg.com/mapbox-to-css-font/-/mapbox-to-css-font-2.4.5.tgz#b10a7a33af3e1a9a1369e4d5e8285492a7943c46"
+  integrity sha512-VJ6nB8emkO9VODI0Fk+TQ/0zKBTqmf/Pkt8Xv0kHstoc0iXRajA00DAid4Kc3K5xeFIOoiZrVxijEzj0GLVO2w==
+
 mdn-data@2.0.14:
   version "2.0.14"
   resolved "https://registry.npmmirror.com/mdn-data/-/mdn-data-2.0.14.tgz#7113fc4281917d63ce29b43446f701e68c25ba50"
@@ -4317,6 +4322,14 @@ ol-ext@^4.0.18:
   version "4.0.18"
   resolved "https://registry.yarnpkg.com/ol-ext/-/ol-ext-4.0.18.tgz#87e68566bae1a7821e3a1af8b7019409ce922324"
   integrity sha512-zzeTAoCg9IocaM7LlXiLNnVCgVmfxxLzlDTWvYn3Y2gFxtICHSfRrIQl/8vumgBjftBksVl1Fds8P5uFReTmew==
+
+ol-mapbox-style@12.3.2:
+  version "12.3.2"
+  resolved "https://registry.yarnpkg.com/ol-mapbox-style/-/ol-mapbox-style-12.3.2.tgz#1cad02b1fca019fce4a2e8814049b5706588c1fb"
+  integrity sha512-Qw9I6+WHz9zBsLNm8zWWb707Y/hXrQP1fcwK86pxcX/FklwyDxAhfJAdTkINHncZ331CBEWcqvi2tzoN23dgwg==
+  dependencies:
+    "@mapbox/mapbox-gl-style-spec" "^13.23.1"
+    mapbox-to-css-font "^2.4.1"
 
 ol@^9.1.0:
   version "9.1.0"

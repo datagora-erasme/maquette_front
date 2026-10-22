@@ -131,6 +131,7 @@ import UserInfo from './UserInfo.vue'
 import { objToMesh, convertBboxToGeoJSON } from '../utils/threeUtils'
 import { parseSld, getSldStyle } from '../utils/sldStyle'
 import { getUserLayerStyle } from '../utils/userLayer'
+import { loadVectorStyle } from '../utils/vectorStyle'
 import { MathUtils } from 'three'
 
 // Global vars...
@@ -639,13 +640,28 @@ export default {
         source: osmSource,
       }), false)
 
-      // Stamen Toner Dark layer (Stadia Maps)
-      let stamenTonerDark = require('../datas/Stamen_Toner_Dark.json')
-      let stamenTonerDarkSource = new itowns.TMSSource(stamenTonerDark.source)
-      this.addManagedColorLayer(stamenTonerDark.id, 'Stamen Toner Dark', () => new itowns.ColorLayer(stamenTonerDark.id, {
-        name: 'Stamen Toner Dark',
-        source: stamenTonerDarkSource,
-      }), false)
+      // Open Free Map Dark layer (vector tiles + MapLibre style), source created when displayed for the first time
+      let openFreeMapDark = require('../datas/OpenFreeMap_Dark.json')
+      let openFreeMapDarkSource = null
+      this.addManagedColorLayer(openFreeMapDark.id, openFreeMapDark.name, () => {
+        openFreeMapDarkSource = openFreeMapDarkSource || new itowns.VectorTilesSource({
+          // Style with only the vector source (iTowns reads the tiles URL in the first source of the style)
+          style: loadVectorStyle(openFreeMapDark.styleUrl, openFreeMapDark.vectorSource).then(({ style }) => {
+            // No sprite: icons are only used by symbol layers, not drawn in a color layer
+            delete style.sprite
+            return style
+          }),
+          // Labels (symbol layers) are not drawn in a color layer
+          filter: layer => layer.type !== 'symbol',
+          // Last level of the tiles: deeper levels are drawn from it
+          zoom: { min: 0, max: 14 },
+          attribution: openFreeMapDark.attribution,
+        })
+        return new itowns.ColorLayer(openFreeMapDark.id, {
+          name: openFreeMapDark.name,
+          source: openFreeMapDarkSource,
+        })
+      }, false)
 
       // Ortho layer
       let ortho = require('../datas/Ortho.json')
