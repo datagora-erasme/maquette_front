@@ -186,9 +186,14 @@
           </v-row>
           <v-row v-if="currentStep === 2" class="step3 d-flex justify-center">
             <v-col class="title-buttons-container w-100 d-flex flex-column align-center justify-space-around">
-              <h2 class="mockup-ready-title">
-                Votre maquette est prête !
-              </h2>
+              <div class="text-center">
+                <h2 class="mockup-ready-title">
+                  Votre maquette est prête !
+                </h2>
+                <h3 v-if="savedMockupName" class="mockup-ready-name">
+                  {{ savedMockupName }}
+                </h3>
+              </div>
               <!-- <v-row class="d-flex align-center pa-0" style="width=500px;">
                 <v-col class="py-0 px-0 d-flex flex-column justify-space-evenly align-center"> -->
               <div style="width: 100%;">
@@ -671,6 +676,13 @@ export default {
     openedMockup() {
       return this.getOpenedMockup
     },
+    savedMockupName() {
+      // Opened mockup, or new mockup once saved
+      if (this.openedMockup) {
+        return this.openedMockup.name
+      }
+      return this.newMockupSend ? this.newMockupName : null
+    },
   },
   watch: {
     ongoingTravel() {
@@ -733,9 +745,9 @@ export default {
       this.setIsFullscreen(true)
 
       // FIXME: Need to replace - REFACTO
+      // Sidebar is only hidden in fullscreen (not closed): its step & the mockup area are kept when leaving the projection
       setTimeout(() => {
         this.$evtBus.emit('onTravelForProjection', this.plates)
-        this.$emit('onCloseNavbar')
       }, 1000);
     },
     // TODO: Remove
@@ -1176,6 +1188,10 @@ export default {
 
 .mockup-ready-title {
   color: #414288;
+}
+.mockup-ready-name {
+  color: #37474F;
+  word-break: break-word;
 }
 .sidebar-title {
   color: #414288;

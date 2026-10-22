@@ -434,6 +434,9 @@ export default {
             if (bLayer.id === 'Monochrome_Black') {
               newSubtitle = 'Jean-Marc Viglino'
             }
+            if (bLayer.id === 'Carto_Dark_Matter') {
+              newSubtitle = 'Carto'
+            }
             // Add layers
             let newLayer = {
               id: bLayer.id,

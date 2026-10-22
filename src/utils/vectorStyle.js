@@ -13,7 +13,7 @@ function fetchJson(url) {
 }
 
 // Style keeping only its vector tiles source 'sourceId' (and the layers using it), with the tiles URL resolved from the TileJSON
-// (the URL of the tiles is versioned by some servers, like OpenFreeMap: it must not be hard coded)
+// (the URL of the tiles is versioned by some servers, like Carto: it must not be hard coded)
 // => Promise of { style, tileUrl, maxZoom }. Each call gets its own copy of the style (viewers modify it)
 export function loadVectorStyle(styleUrl, sourceId) {
   if (!loadedStyles[styleUrl]) {

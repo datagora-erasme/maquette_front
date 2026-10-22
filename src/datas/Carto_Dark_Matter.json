@@ -1,0 +1,11 @@
+{
+  "id": "Carto_Dark_Matter",
+  "name": "Carto Dark Matter",
+  "styleUrl": "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+  "vectorSource": "protomaps",
+  "maxZoom": 15,
+  "attribution": {
+    "name": "© CARTO © OpenStreetMap",
+    "url": "https://carto.com/basemaps"
+  }
+}

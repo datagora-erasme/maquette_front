@@ -125,8 +125,8 @@
 
   // Import Ortho data conf file
   let ortho = require('../datas/Ortho.json')
-  // Import Open Free Map Dark data conf file (MapLibre style of vector tiles, shared with iTowns)
-  let openFreeMapDark = require('../datas/OpenFreeMap_Dark.json')
+  // Import Carto Dark Matter data conf file (MapLibre style of vector tiles, shared with iTowns)
+  let cartoDarkMatter = require('../datas/Carto_Dark_Matter.json')
   let monochromeBlack = require('../datas/Monochrome_Black.json')
   // Ground size of web mercator meters at Lyon: EPSG:2154 meters ≈ ground meters, web mercator ones are 1/cos(lat) bigger
   const LYON_MERCATOR_SCALE = Math.cos(45.76 * Math.PI / 180)
@@ -328,8 +328,8 @@
               id: 'OpenStreetMap'
             }
           }),
-          // INFO: Open Free Map Dark fdp (vector tiles + MapLibre style)
-          this.createVectorStyleLayer(openFreeMapDark),
+          // INFO: Carto Dark Matter fdp (vector tiles + MapLibre style)
+          this.createVectorStyleLayer(cartoDarkMatter),
           // INFO: Monochrome Black fdp (Plan IGN vector tiles + style of Jean-Marc Viglino)
           this.createVectorStyleLayer(monochromeBlack),
           // INFO: WMTS IGN OrthoImagery Layer

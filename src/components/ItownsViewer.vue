@@ -351,6 +351,17 @@ export default {
           style: loadVectorStyle(conf.styleUrl, conf.vectorSource).then(({ style }) => {
             // No sprite: icons are only used by symbol layers, not drawn in a color layer
             delete style.sprite
+            // iTowns reads the 'base' of a zoom function instead of its stops (e.g. Carto buildings
+            // "fill-color": { "base": 1, "stops": [...] } => crash on colors): without it, stops are read by steps like the other functions
+            style.layers.forEach(layer => {
+              [layer.paint, layer.layout].forEach(properties => {
+                Object.values(properties || {}).forEach(value => {
+                  if (value && value.stops && value.base !== undefined) {
+                    delete value.base
+                  }
+                })
+              })
+            })
             return style
           }),
           // Labels (symbol layers) are not drawn in a color layer
@@ -396,6 +407,10 @@ export default {
           });
         } else {
           console.error(e)
+          // Layer not usable: removed from the view, so that it can be added again later (same id)
+          if (view.getLayerById(managedLayer.id)) {
+            view.removeLayer(managedLayer.id)
+          }
         }
       })
     },
@@ -665,7 +680,7 @@ export default {
       }), false)
 
       // Vector basemaps (vector tiles + MapLibre style)
-      this.addVectorStyleColorLayer(require('../datas/OpenFreeMap_Dark.json'), false)
+      this.addVectorStyleColorLayer(require('../datas/Carto_Dark_Matter.json'), false)
       this.addVectorStyleColorLayer(require('../datas/Monochrome_Black.json'), false)
 
       // Ortho layer
