@@ -130,6 +130,7 @@ import PreviewComponent from './PreviewComponent.vue'
 import UserInfo from './UserInfo.vue'
 import { objToMesh, convertBboxToGeoJSON } from '../utils/threeUtils'
 import { parseSld, getSldStyle } from '../utils/sldStyle'
+import { getUserLayerStyle } from '../utils/userLayer'
 import { MathUtils } from 'three'
 
 // Global vars...
@@ -146,6 +147,12 @@ let scaler
 // Buildings are displayed by 2 layers (extruded / flat): only one is visible at a time
 let buildingsVisible = true
 let buildingsExtruded = true
+// User layers (3D features) are set this height (m) above the terrain, to not be hidden by it between vertices
+const USER_LAYER_GROUND_OFFSET = 1
+// Color layers (draped on the globe) are limited by the GPU texture units (max 15, 3 for each EPSG:3857 layer):
+// they are declared once, but only added to the view while they are visible (see addManagedColorLayer)
+// [{ id, name, createLayer, visible, opacity, attached }], in display order (first = bottom)
+let managedColorLayers = []
 const raycaster = new itowns.THREE.Raycaster(); // create once
 const clickMouse = new itowns.THREE.Vector2();  // create once
 
@@ -235,6 +242,9 @@ export default {
     this.$evtBus.on('onRefreshMap', this.refreshMap)
     this.$evtBus.on('onResetMapLocation', this.resetMapLocation)
     this.$evtBus.on('onResetArea', this.resetOpenedMockup)
+    this.$evtBus.on('onAddUserLayer', this.addUserLayer)
+    this.$evtBus.on('onUpdateUserLayer', this.updateUserLayer)
+    this.$evtBus.on('onRemoveUserLayer', this.removeUserLayer)
 
     // ===== Init iTowns vars =====
     
@@ -330,11 +340,67 @@ export default {
       setOpenedMockup: 'map/setOpenedMockup',
       setCurrentMockupBbox: 'map/setCurrentMockupBbox',
     }),
+    addManagedColorLayer(id, name, createLayer, visible) {
+      // createLayer() must return a new ColorLayer (with id) each time, using a source created once (its data stay cached)
+      const managedLayer = { id, name, createLayer, visible, opacity: 1, attached: false }
+      managedColorLayers.push(managedLayer)
+      if (visible) {
+        this.attachColorLayer(managedLayer)
+      }
+    },
+    attachColorLayer(managedLayer) {
+      const layer = managedLayer.createLayer()
+      layer.visible = true
+      layer.opacity = managedLayer.opacity
+      managedLayer.attached = true
+      view.addLayer(layer)
+      // Rejected if the texture units limit is reached (addLayer doesn't return a promise in this case)
+      layer.whenReady.then(() => {
+        // Keep the declaration order between displayed color layers
+        const index = managedColorLayers.filter(l => l.attached && managedColorLayers.indexOf(l) < managedColorLayers.indexOf(managedLayer)).length
+        itowns.ColorLayersOrdering.moveLayerToIndex(view, managedLayer.id, index)
+        view.notifyChange()
+      }).catch((e) => {
+        managedLayer.attached = false
+        if (e && /maximum layer is reached/.test(e.message)) {
+          // Still wanted: added as soon as another color layer is hidden (see attachPendingColorLayers)
+          this.$notify({
+            title: 'Couche non affichée en 3D',
+            text: `Trop de couches sont affichées en même temps sur le globe : masquez-en une pour afficher « ${managedLayer.name} »`,
+            type: 'warn'
+          });
+        } else {
+          console.error(e)
+        }
+      })
+    },
+    detachColorLayer(managedLayer) {
+      managedLayer.attached = false
+      if (view.getLayerById(managedLayer.id)) {
+        view.removeLayer(managedLayer.id)
+      }
+      view.notifyChange()
+      // Some texture units are free: visible layers refused before can be added
+      this.attachPendingColorLayers()
+    },
+    attachPendingColorLayers() {
+      managedColorLayers.filter(l => l.visible && !l.attached).forEach(l => this.attachColorLayer(l))
+    },
     toggleLayerVisibility(layerId) {
       if(view) {
         if (layerId === 'IGN_Buildings') {
           buildingsVisible = !buildingsVisible
           this.updateBuildingsLayersVisibility()
+          return
+        }
+        const managedLayer = managedColorLayers.find(l => l.id === layerId)
+        if (managedLayer) {
+          managedLayer.visible = !managedLayer.visible
+          if (managedLayer.visible) {
+            this.attachColorLayer(managedLayer)
+          } else if (managedLayer.attached) {
+            this.detachColorLayer(managedLayer)
+          }
           return
         }
         const currLayer = view.getLayerById(layerId)
@@ -347,6 +413,11 @@ export default {
     changeLayerOpacity(newLayerOp) {
       if(view) {
         // Opacity of buildings is shared by extruded and flat layers
+        // Kept for color layers not added to the view yet
+        const managedLayer = managedColorLayers.find(l => l.id === newLayerOp.id)
+        if (managedLayer) {
+          managedLayer.opacity = newLayerOp.opacity / 100
+        }
         const layerIds = newLayerOp.id === 'IGN_Buildings' ? ['IGN_Buildings', 'IGN_Buildings_Flat'] : [newLayerOp.id]
         layerIds.forEach(layerId => {
           const currLayer = view.getLayerById(layerId)
@@ -431,7 +502,12 @@ export default {
     },
     showAllLayers() {
       // ! Add all Layers in Store
-      let allViewLayers = view.getLayers()
+      // Color layers are listed even when not in the view (hidden ones are not added, see addManagedColorLayer)
+      const managedIds = managedColorLayers.map(l => l.id)
+      let allViewLayers = [
+        ...managedColorLayers.map(l => ({ id: l.id, name: l.name, visible: l.visible, opacity: l.opacity })),
+        ...view.getLayers().filter(l => !managedIds.includes(l.id)),
+      ]
       this.setBaseLayers(allViewLayers)
 
       // DEBUG Show layers
@@ -553,36 +629,32 @@ export default {
     loadFdpData() {
       // -- Init Data and add layer to iTowns --
 
+      // (Color layers: only added to the view while visible, see addManagedColorLayer)
+      managedColorLayers = []
       // OSM layer
       let osm = require('../datas/OPENSM.json')
       let osmSource = new itowns.WMTSSource(osm.source)
-      let osmLayer = new itowns.ColorLayer('OpenStreetMap', {
+      this.addManagedColorLayer('OpenStreetMap', 'OpenStreetMap', () => new itowns.ColorLayer('OpenStreetMap', {
         name: 'OpenStreetMap',
         source: osmSource,
-      })
-      osmLayer.visible = false
-      view.addLayer(osmLayer)
+      }), false)
 
       // Stamen Toner Dark layer (Stadia Maps)
       let stamenTonerDark = require('../datas/Stamen_Toner_Dark.json')
       let stamenTonerDarkSource = new itowns.TMSSource(stamenTonerDark.source)
-      let stamenTonerDarkLayer = new itowns.ColorLayer(stamenTonerDark.id, {
+      this.addManagedColorLayer(stamenTonerDark.id, 'Stamen Toner Dark', () => new itowns.ColorLayer(stamenTonerDark.id, {
         name: 'Stamen Toner Dark',
         source: stamenTonerDarkSource,
-      })
-      stamenTonerDarkLayer.visible = false
-      view.addLayer(stamenTonerDarkLayer)
+      }), false)
 
       // Ortho layer
       let ortho = require('../datas/Ortho.json')
       let orthoSource = new itowns.WMTSSource(ortho.source)
-      let orthoLayer = new itowns.ColorLayer('IGN_Orthophotos', {
+      this.addManagedColorLayer('IGN_Orthophotos', 'Plan Orthophotos IGN', () => new itowns.ColorLayer('IGN_Orthophotos', {
         name: 'Plan Orthophotos IGN',
         source: orthoSource,
         opacity: 1,
-      })
-      orthoLayer.visible = true
-      view.addLayer(orthoLayer)
+      }), true)
 
       // MNT layer
       let mnt = require('../datas/IGN_MNT.json')
@@ -621,14 +693,12 @@ export default {
         // GeoWebCache names its TileMatrix 'EPSG:900913:<zoom>'
         tileMatrixCallback: (zoomLevel) => `${calquePlanta.source.tileMatrixSet}:${zoomLevel}`,
       })
-      let calquePlantaLayer = new itowns.ColorLayer(calquePlanta.id, {
+      this.addManagedColorLayer(calquePlanta.id, 'Calque de plantabilité', () => new itowns.ColorLayer(calquePlanta.id, {
         name: 'Calque de plantabilité',
         source: calquePlantaSource,
         transparent: true,
         opacity: 1,
-      })
-      calquePlantaLayer.visible = false
-      view.addLayer(calquePlantaLayer)
+      }), false)
 
       // Calque de plantabilité layer (WMTS Grand Lyon 2025)
       let calquePlanta2025 = require('../datas/Calque_Plantabilite_2025.json')
@@ -637,14 +707,12 @@ export default {
         // GeoWebCache names its TileMatrix 'EPSG:900913:<zoom>'
         tileMatrixCallback: (zoomLevel) => `${calquePlanta2025.source.tileMatrixSet}:${zoomLevel}`,
       })
-      let calquePlanta2025Layer = new itowns.ColorLayer(calquePlanta2025.id, {
+      this.addManagedColorLayer(calquePlanta2025.id, 'Calque de plantabilité 2025', () => new itowns.ColorLayer(calquePlanta2025.id, {
         name: 'Calque de plantabilité 2025',
         source: calquePlanta2025Source,
         transparent: true,
         opacity: 1,
-      })
-      calquePlanta2025Layer.visible = false
-      view.addLayer(calquePlanta2025Layer)
+      }), false)
 
       // Bruit routier LDEN layer (WMTS Grand Lyon 2022)
       let bruit = require('../datas/Bruit_Routier.json')
@@ -653,62 +721,51 @@ export default {
         // GeoWebCache names its TileMatrix 'EPSG:900913:<zoom>'
         tileMatrixCallback: (zoomLevel) => `${bruit.source.tileMatrixSet}:${zoomLevel}`,
       })
-      let bruitLayer = new itowns.ColorLayer(bruit.id, {
+      this.addManagedColorLayer(bruit.id, 'Bruit routier LDEN', () => new itowns.ColorLayer(bruit.id, {
         name: 'Bruit routier LDEN',
         source: bruitSource,
         transparent: true,
         opacity: 1,
-      })
-      bruitLayer.visible = false
-      view.addLayer(bruitLayer)
+      }), false)
 
       // Végéstrate layer (MVT IA·rbre, colored by 'indice' with the style of the JSON file)
       let vegestrate = require('../datas/Vegestrate.json')
       let vegestrateSource = new itowns.VectorTilesSource(vegestrate.source)
-      let vegestrateLayer = new itowns.ColorLayer(vegestrate.id, {
+      this.addManagedColorLayer(vegestrate.id, 'Végéstrate', () => new itowns.ColorLayer(vegestrate.id, {
         name: 'Végéstrate',
         source: vegestrateSource,
         transparent: true,
         opacity: 1,
-      })
-      vegestrateLayer.visible = false
-      view.addLayer(vegestrateLayer)
+      }), false)
 
       // Zones Climatiques Locales layer (MVT IA·rbre, colored by 'indice' with the CEREMA colors of the JSON file)
       let lczColor = require('../datas/Lcz_Color.json')
       let lczColorSource = new itowns.VectorTilesSource(lczColor.source)
-      let lczColorLayer = new itowns.ColorLayer(lczColor.id, {
+      this.addManagedColorLayer(lczColor.id, 'Zones Climatiques Locales (ZCL)', () => new itowns.ColorLayer(lczColor.id, {
         name: 'Zones Climatiques Locales (ZCL)',
         source: lczColorSource,
         transparent: true,
         opacity: 1,
-      })
-      lczColorLayer.visible = false
-      view.addLayer(lczColorLayer)
+      }), false)
 
       // 3 Villeurbanne layer (buildings by number of visible trees): GeoJSON file in EPSG:2154, styled with the SLD file
       let villeurbanneArbresSld = parseSld(require('../datas/3_symbologie.sld'))
-      let villeurbanneArbresStyle = properties => getSldStyle(villeurbanneArbresSld, properties) || {}
-      let villeurbanneArbresSource = new itowns.FileSource({
-        url: require('../datas/bati_nb_arbres_visibles_villeurbanne.geojson'),
-        crs: 'EPSG:2154',
-        format: 'application/json',
-      })
-      let villeurbanneArbresLayer = new itowns.ColorLayer('Villeurbanne_Arbres', {
-        name: '3 Villeurbanne',
-        source: villeurbanneArbresSource,
-        transparent: true,
-        opacity: 1,
-        style: new itowns.Style({
-          fill: { color: properties => villeurbanneArbresStyle(properties).fill || 'rgba(0,0,0,0)' },
-          stroke: {
-            color: properties => villeurbanneArbresStyle(properties).stroke || 'rgba(0,0,0,0)',
-            width: properties => villeurbanneArbresStyle(properties).strokeWidth || 0,
-          },
-        }),
-      })
-      villeurbanneArbresLayer.visible = false
-      view.addLayer(villeurbanneArbresLayer)
+      // The file (13 MB) is downloaded by the source: created when the layer is displayed for the first time
+      let villeurbanneArbresSource = null
+      this.addManagedColorLayer('Villeurbanne_Arbres', '3 Villeurbanne', () => {
+        villeurbanneArbresSource = villeurbanneArbresSource || new itowns.FileSource({
+          url: require('../datas/bati_nb_arbres_visibles_villeurbanne.geojson'),
+          crs: 'EPSG:2154',
+          format: 'application/json',
+        })
+        return new itowns.ColorLayer('Villeurbanne_Arbres', {
+          name: '3 Villeurbanne',
+          source: villeurbanneArbresSource,
+          transparent: true,
+          opacity: 1,
+          style: this.createRulesStyle(properties => getSldStyle(villeurbanneArbresSld, properties)),
+        })
+      }, false)
 
       // WMS Communes of Metropole de Lyon
       // let wmsCommuneLyonSource = new itowns.WMSSource({
@@ -755,6 +812,100 @@ export default {
       // })
       // wfsCommuneLyonLayer.visible = true
       // view.addLayer(wfsCommuneLyonLayer)
+    },
+    createRulesStyle(getRuleStyle) {
+      // iTowns style from a function giving { fill, stroke, strokeWidth, pointRadius } (or null: not drawn) for the properties of a feature
+      const ruleStyle = properties => getRuleStyle(properties) || {}
+      const transparent = 'rgba(0,0,0,0)'
+      return new itowns.Style({
+        fill: { color: properties => ruleStyle(properties).fill || transparent },
+        stroke: {
+          color: properties => ruleStyle(properties).stroke || transparent,
+          width: properties => ruleStyle(properties).strokeWidth || 0,
+        },
+        point: {
+          color: properties => ruleStyle(properties).fill || transparent,
+          line: properties => ruleStyle(properties).stroke || transparent,
+          width: properties => ruleStyle(properties).strokeWidth || 0,
+          radius: properties => ruleStyle(properties).pointRadius || 0,
+        },
+      })
+    },
+    addUserLayer(userLayer) {
+      // GeoJSON imported by the user ("Mes données"), visible when added
+      if (!view) {
+        return
+      }
+      view.addLayer(this.createUserItownsLayer(userLayer))
+    },
+    updateUserLayer({ userLayer, visible, opacity }) {
+      // Edited user layer: replaced at the same place, with the same visibility & opacity
+      const oldLayer = view ? view.getLayerById(userLayer.id) : null
+      if (!oldLayer) {
+        return
+      }
+      view.removeLayer(userLayer.id)
+      const newLayer = this.createUserItownsLayer(userLayer)
+      newLayer.visible = visible
+      newLayer.opacity = opacity
+      view.addLayer(newLayer).then(() => view.notifyChange())
+    },
+    removeUserLayer(layerId) {
+      if (view && view.getLayerById(layerId)) {
+        view.removeLayer(layerId)
+        view.notifyChange()
+      }
+    },
+    createUserItownsLayer(userLayer) {
+      // 3D features (like IGN buildings) instead of a ColorLayer: color layers are limited by the GPU texture units
+      // (globe: max 15, 3 for each EPSG:3857 layer) and this limit is already reached by the other layers
+      let userLayerSource = new itowns.FileSource({
+        fetchedData: userLayer.geojson,
+        crs: userLayer.crs,
+        format: 'application/json',
+      })
+      const ruleStyle = properties => getUserLayerStyle(userLayer, properties)
+      return new itowns.FeatureGeometryLayer(userLayer.id, {
+        name: userLayer.name,
+        source: userLayerSource,
+        batchId: (properties, featureId) => featureId,
+        // Features not drawn by the style (no matching SLD rule) are not loaded
+        filter: properties => !!ruleStyle(properties),
+        // A file is attached to the tile (of this level) containing its center: a low level keeps it displayed around
+        zoom: { min: 9 },
+        transparent: true,
+        opacity: 1,
+        style: this.createRulesMeshStyle(ruleStyle),
+      })
+    },
+    createRulesMeshStyle(getRuleStyle) {
+      // iTowns style for 3D features (FeatureGeometryLayer), from a function giving { fill, stroke, pointRadius } for the properties of a feature
+      // Mesh colors are opaque ('rgba()' would also log a three.js warning for each feature): opacity is the one of the layer
+      const opaque = cssColor => (cssColor || '#000000').replace(/^rgba\(([^,]+),([^,]+),([^,]+),[^)]*\)$/, 'rgb($1,$2,$3)')
+      const ruleStyle = properties => getRuleStyle(properties) || {}
+      // Features have no altitude: each vertex is set on the terrain currently loaded (+ offset to stay above it)
+      const groundAltitude = (properties, coordinates) => {
+        if (!coordinates) {
+          return USER_LAYER_GROUND_OFFSET
+        }
+        const terrainAltitude = itowns.DEMUtils.getElevationValueAt(view.tileLayer, coordinates, itowns.DEMUtils.FAST_READ_Z)
+        return (terrainAltitude !== undefined ? terrainAltitude : coordinates.z || 0) + USER_LAYER_GROUND_OFFSET
+      }
+      return new itowns.Style({
+        fill: {
+          color: properties => opaque(ruleStyle(properties).fill || ruleStyle(properties).stroke),
+          base_altitude: groundAltitude,
+        },
+        stroke: {
+          color: properties => opaque(ruleStyle(properties).stroke || ruleStyle(properties).fill),
+          base_altitude: groundAltitude,
+        },
+        point: {
+          color: properties => opaque(ruleStyle(properties).fill || ruleStyle(properties).stroke),
+          radius: properties => ruleStyle(properties).pointRadius || 3,
+          base_altitude: groundAltitude,
+        },
+      })
     },
     addIGNBuildingLayer() {
       let color = new itowns.THREE.Color()

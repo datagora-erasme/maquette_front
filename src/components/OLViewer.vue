@@ -97,6 +97,7 @@
   import Style from 'ol/style/Style'
   import Fill from 'ol/style/Fill'
   import Stroke from 'ol/style/Stroke'
+  import CircleStyle from 'ol/style/Circle'
   import OSM from 'ol/source/OSM'
   import XYZ from 'ol/source/XYZ.js'
   import TileLayer from 'ol/layer/Tile'
@@ -113,6 +114,7 @@
   import proj4 from 'proj4'
   import { register } from 'ol/proj/proj4'
   import { parseSld, getSldStyle } from '../utils/sldStyle'
+  import { getUserLayerStyle } from '../utils/userLayer'
 
   // Singleton OL Map
   let olMap = null
@@ -195,6 +197,9 @@
       this.$evtBus.on('onChangeLayerOpacity', this.changeLayerOpacity)
       this.$evtBus.on('onChangeZoom', this.changeZoom)
       this.$evtBus.on('onChangeCenter', this.changeCenter)
+      this.$evtBus.on('onAddUserLayer', this.addUserLayer)
+      this.$evtBus.on('onUpdateUserLayer', this.updateUserLayer)
+      this.$evtBus.on('onRemoveUserLayer', this.removeUserLayer)
       
       // ===== Init OL =====
       this.initOlLayers()
@@ -454,13 +459,61 @@
             return null
           }
           if (!olStyles.has(ruleStyle)) {
+            const fill = ruleStyle.fill ? new Fill({ color: ruleStyle.fill }) : undefined
+            const stroke = ruleStyle.stroke ? new Stroke({ color: ruleStyle.stroke, width: ruleStyle.strokeWidth }) : undefined
             olStyles.set(ruleStyle, new Style({
-              fill: ruleStyle.fill ? new Fill({ color: ruleStyle.fill }) : undefined,
-              stroke: ruleStyle.stroke ? new Stroke({ color: ruleStyle.stroke, width: ruleStyle.strokeWidth }) : undefined,
+              fill,
+              stroke,
+              // Only used by points
+              image: ruleStyle.pointRadius ? new CircleStyle({ radius: ruleStyle.pointRadius, fill, stroke }) : undefined,
             }))
           }
           return olStyles.get(ruleStyle)
         }
+      },
+      addUserLayer(userLayer) {
+        // GeoJSON imported by the user ("Mes données"), visible when added, above all other layers
+        olMap.addLayer(this.createUserOlLayer(userLayer))
+      },
+      updateUserLayer({ userLayer, visible, opacity }) {
+        // Edited user layer: replaced at the same place, with the same visibility & opacity
+        const olLayers = olMap.getLayers()
+        const oldLayer = olLayers.getArray().find(l => l.get('id') === userLayer.id)
+        if (!oldLayer) {
+          return
+        }
+        const newLayer = this.createUserOlLayer(userLayer)
+        newLayer.setVisible(visible)
+        newLayer.setOpacity(opacity)
+        const index = olLayers.getArray().indexOf(oldLayer)
+        olLayers.removeAt(index)
+        olLayers.insertAt(index, newLayer)
+      },
+      removeUserLayer(layerId) {
+        const userOlLayer = olMap.getAllLayers().find(l => l.get('id') === layerId)
+        if (userOlLayer) {
+          olMap.removeLayer(userOlLayer)
+        }
+      },
+      createUserOlLayer(userLayer) {
+        const viewProjection = olMap.getView().getProjection()
+        const features = new GeoJSON().readFeatures(userLayer.geojson, {
+          dataProjection: userLayer.crs,
+          featureProjection: viewProjection,
+        })
+        // VectorImage: faster for many features, and not refreshed on 'moveend' (it would remove the features: there is no loader)
+        const userOlLayer = new VectorImageLayer({
+          source: new VectorSource({ features }),
+          style: this.createRulesStyle(properties => getUserLayerStyle(userLayer, properties)),
+          properties: {
+            id: userLayer.id
+          }
+        })
+        // Same extent as the other layers in projection
+        if (this.currExtent) {
+          userOlLayer.setExtent(this.currExtent)
+        }
+        return userOlLayer
       },
       computeWFSLink(extent) {
         let goodExtent = extent
@@ -564,6 +617,8 @@
         // Define new custom coord
         proj4.defs('EPSG:2154','+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs');
         proj4.defs('EPSG:4978','+proj=geocent +datum=WGS84 +units=m +no_defs +type=crs');
+        // CC46 (Lyon), accepted for user layers like in iTowns
+        proj4.defs('EPSG:3946','+proj=lcc +lat_0=46 +lon_0=3 +lat_1=45.25 +lat_2=46.75 +x_0=1700000 +y_0=5200000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs');
         // Register new custom coord
         register(proj4)
       },

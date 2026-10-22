@@ -220,30 +220,144 @@
             </div>
           </div>
         </v-list>
-        <!-- User data layers (hidden for now) -->
-        <!-- <v-list class="layers-list">
-          <div class="d-flex align-left subgroup-title-text">
+        <!-- User data layers (imported GeoJSON files) -->
+        <v-list class="layers-list">
+          <div class="d-flex align-center justify-space-between subgroup-title-text">
             Mes données
+            <v-btn
+              color="#1976D3"
+              variant="outlined"
+              size="small"
+              prepend-icon="mdi-upload"
+              class="mr-3"
+              @click="openImportUser()"
+            >
+              Importer une couche
+            </v-btn>
           </div>
 
-          <div class="d-flex align-center justify-center mt-2">
-            <i>A venir...</i>
+          <!-- Placeholder (as long as no layer is imported) -->
+          <div v-if="!allUserLayers.length" class="d-flex align-center justify-center py-4 text-grey">
+            <i>Aucune couche importée</i>
           </div>
-        </v-list> -->
+
+          <!-- v-for -->
+          <div
+            v-for="(bLayer, index) in allUserLayers"
+            :key="bLayer.id"
+          >
+            <v-list-item
+              :title="bLayer.name"
+              :subtitle="bLayer.subtitle"
+              :prepend-icon="bLayer.icon"
+              class="layers-list-item"
+            >
+              <template #prepend="{prepend}">
+                <v-icon :color="allUserLayers[index].visible ? 'black' : 'grey'" :icon="prepend" />
+              </template>
+              <template #title="{title}">
+                <div class="d-flex align-left">
+                  <span :class="bLayer.visible ? '':'text-grey'">{{ title }}</span>
+                </div>
+              </template>
+              <template #subtitle="{subtitle}">
+                <div class="d-flex align-left">
+                  {{ subtitle }}
+                </div>
+              </template>
+              <template #append>
+                <v-btn
+                  v-if="bLayer.visible"
+                  color="green-darken-2"
+                  icon="mdi-eye"
+                  variant="outlined"
+                  density="comfortable"
+                  class="ml-1"
+                  @click="toggleVisibleUser(index)"
+                />
+                <v-btn
+                  v-else
+                  color="grey"
+                  icon="mdi-eye-off"
+                  variant="outlined"
+                  density="comfortable"
+                  class="ml-1"
+                  @click="toggleVisibleUser(index)"
+                />
+                <v-btn
+                  :color="allUserLayers[index].openSub ? 'blue': 'black'"
+                  icon="mdi-cog"
+                  variant="outlined"
+                  density="comfortable"
+                  class="ml-1"
+                  :active="allUserLayers[index].openSub"
+                  @click="toggleSubUser(index)"
+                />
+                <v-btn
+                  color="#1976D3"
+                  icon="mdi-pencil"
+                  variant="outlined"
+                  density="comfortable"
+                  class="ml-1"
+                  @click="openEditUser(index)"
+                />
+              </template>
+            </v-list-item>
+            <div v-if="allUserLayers[index].openSub" class="sub-item">
+              <v-row class="justify-space-between">
+                <v-col lg="12" class="pb-0">
+                  <span class="fs-16" :class="bLayer.visible ? '':'text-grey'">Opacité de la couche : <b>{{ Math.round(bLayer.opacity) }}%</b></span>
+                  <v-slider
+                    v-model="bLayer.opacity"
+                    class="layers-slider"
+                    :color="bLayer.visible ? 'blue':'grey'"
+                    track-color="grey"
+                    min="0"
+                    max="100"
+                    :step="1"
+                    @update:modelValue="changeOpacityUser(index)"
+                  >
+                    <template #prepend>
+                      <span :class="bLayer.visible ? '':'text-grey'">0%</span>
+                    </template>
+                    <template #append>
+                      <span :class="bLayer.visible ? '':'text-grey'">100%</span>
+                    </template>
+                  </v-slider>
+                </v-col>
+              </v-row>
+            </div>
+          </div>
+        </v-list>
       </v-card-text>
+      <ImportLayerDialog
+        v-model="importLayerDialog"
+        :user-layer="editedUserLayer"
+        @onLayerImported="addUserLayer"
+        @onLayerUpdated="updateUserLayer"
+        @onLayerDeleted="removeUserLayer"
+      />
     </v-card>
   </v-slide-x-transition>
 </template>
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
+import ImportLayerDialog from './ImportLayerDialog.vue'
 
 export default {
   name: 'AsideComp',
+  components: {
+    ImportLayerDialog,
+  },
   data() {
     return {
       allBaseLayers: [],
       allCustomLayers: [],
+      allUserLayers: [],
+      importLayerDialog: false,
+      // User layer edited in the dialog (null: import)
+      editedUserLayer: null,
     }
   },
   computed: {
@@ -272,6 +386,10 @@ export default {
         this.computeCustomLayers()
       }
     }
+  },
+  created() {
+    // Full definitions of user layers (GeoJSON, files...) by id: not in data, to keep them out of Vue reactivity
+    this.userLayerDefs = {}
   },
   mounted() {
     this.computeBaseLayers()
@@ -428,6 +546,66 @@ export default {
       let newLayerOpacity = {
         id: this.allCustomLayers[index].id,
         opacity: this.allCustomLayers[index].opacity
+      }
+      this.$evtBus.emit('onChangeLayerOpacity', newLayerOpacity)
+    },
+    openImportUser() {
+      this.editedUserLayer = null
+      this.importLayerDialog = true
+    },
+    openEditUser(index) {
+      this.editedUserLayer = this.userLayerDefs[this.allUserLayers[index].id]
+      this.importLayerDialog = true
+    },
+    addUserLayer(userLayer) {
+      this.userLayerDefs[userLayer.id] = userLayer
+      // Add in list (only display infos: the GeoJSON stays out of Vue reactivity)
+      this.allUserLayers.push({
+        id: userLayer.id,
+        name: userLayer.name,
+        icon: 'mdi-file-upload',
+        subtitle: userLayer.geojsonFile.name,
+        openSub: false,
+        visible: true,
+        opacity: 1 * 100,
+      })
+      // Emit Event to ItownsViewer & OL (layer is visible when added)
+      this.$evtBus.emit('onAddUserLayer', userLayer)
+    },
+    updateUserLayer(userLayer) {
+      this.userLayerDefs[userLayer.id] = userLayer
+      // Update list (visibility & opacity are kept)
+      const layerItem = this.allUserLayers.find(l => l.id === userLayer.id)
+      layerItem.name = userLayer.name
+      layerItem.subtitle = userLayer.geojsonFile.name
+      // Emit Event to ItownsViewer & OL (layer is replaced, at the same place)
+      this.$evtBus.emit('onUpdateUserLayer', {
+        userLayer,
+        visible: layerItem.visible,
+        opacity: layerItem.opacity / 100,
+      })
+    },
+    removeUserLayer(layerId) {
+      delete this.userLayerDefs[layerId]
+      this.allUserLayers = this.allUserLayers.filter(l => l.id !== layerId)
+      // Emit Event to ItownsViewer & OL
+      this.$evtBus.emit('onRemoveUserLayer', layerId)
+    },
+    toggleSubUser(index) {
+      // Toggle sub menu
+      this.allUserLayers[index].openSub = !this.allUserLayers[index].openSub
+    },
+    toggleVisibleUser(index) {
+      // Toggle button
+      this.allUserLayers[index].visible = !this.allUserLayers[index].visible
+      // Emit Event to ItownsViewer & OL
+      this.$evtBus.emit('onToggleLayerVisibility', this.allUserLayers[index].id)
+    },
+    changeOpacityUser(index) {
+      // Emit Event to ItownsViewer & OL
+      let newLayerOpacity = {
+        id: this.allUserLayers[index].id,
+        opacity: this.allUserLayers[index].opacity
       }
       this.$evtBus.emit('onChangeLayerOpacity', newLayerOpacity)
     },
