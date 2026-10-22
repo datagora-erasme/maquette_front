@@ -102,6 +102,7 @@
   import TileLayer from 'ol/layer/Tile'
   import TileWMS from 'ol/source/TileWMS.js'
   import VectorLayer from 'ol/layer/Vector.js'
+  import VectorImageLayer from 'ol/layer/VectorImage.js'
   import VectorSource from 'ol/source/Vector.js'
   import GeoJSON from 'ol/format/GeoJSON.js'
   import { bbox as bboxStrategy } from 'ol/loadingstrategy.js'
@@ -111,6 +112,7 @@
   import Feature from 'ol/Feature.js'
   import proj4 from 'proj4'
   import { register } from 'ol/proj/proj4'
+  import { parseCategorizedQml, getQmlCategoryStyle } from '../utils/qmlStyle'
 
   // Singleton OL Map
   let olMap = null
@@ -128,6 +130,9 @@
   const VEGESTRATE_TILE_ZOOM = 16
   // LCZ polygons are larger: a lower level is enough and limits the number of tiles
   const LCZ_TILE_ZOOM = 14
+  // Guide de montage (user data): GeoJSON file in EPSG:2154 + QGIS style, shared with iTowns
+  const guideMontageUrl = require('../datas/Tous_niveaux.geojson')
+  const guideMontageQml = parseCategorizedQml(require('../datas/Tous_niveaux.qml'))
   const WEB_MERCATOR_HALF_SIZE = 20037508.342789244
 
   export default {
@@ -424,8 +429,38 @@
             properties: {
               id: 'IGN_Buildings'
             }
+          }),
+          // INFO: GeoJSON Guide de montage (Mes données), styled with the QGIS file
+          // VectorImage: faster for many polygons, and not refreshed on 'moveend' (file is loaded once)
+          new VectorImageLayer({
+            visible: false,
+            source: new VectorSource({
+              url: guideMontageUrl,
+              format: new GeoJSON({ dataProjection: 'EPSG:2154' }),
+            }),
+            style: this.createQmlStyle(guideMontageQml),
+            properties: {
+              id: 'Guide_Montage'
+            }
           })
         ]
+      },
+      createQmlStyle(qmlStyle) {
+        // One OL style per QGIS category ('Map' is the OL map class in this file)
+        const olStyles = new WeakMap()
+        return feature => {
+          const categoryStyle = getQmlCategoryStyle(qmlStyle, feature.getProperties())
+          if (!categoryStyle) {
+            return null
+          }
+          if (!olStyles.has(categoryStyle)) {
+            olStyles.set(categoryStyle, new Style({
+              fill: categoryStyle.fill ? new Fill({ color: categoryStyle.fill }) : undefined,
+              stroke: categoryStyle.stroke ? new Stroke({ color: categoryStyle.stroke, width: categoryStyle.strokeWidth }) : undefined,
+            }))
+          }
+          return olStyles.get(categoryStyle)
+        }
       },
       computeWFSLink(extent) {
         let goodExtent = extent
@@ -547,7 +582,8 @@
         
         const ratioOpacity = newLayerOp.opacity / 100
         if (currLayer) {
-          if (currLayer.constructor.name === 'VectorLayer') {
+          // Only the buildings have their opacity in the style (other vector layers keep their own style)
+          if (newLayerOp.id === 'IGN_Buildings') {
             // Change style (color alpha in rgba)
             let newStyle = new Style({
               fill: new Fill({

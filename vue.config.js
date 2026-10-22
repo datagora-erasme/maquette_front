@@ -5,8 +5,16 @@ module.exports = defineConfig({
   configureWebpack: {  
     resolve: {  
       alias: {  
-        '@': path.resolve(__dirname, './'),  
-      },  
-    },  
+        '@': path.resolve(__dirname, './'),
+      },
+    },
+    module: {
+      rules: [
+        // GeoJSON files are served as static files (require() gives their URL), not bundled in the JS
+        { test: /\.geojson$/, type: 'asset/resource' },
+        // QGIS styles: require() gives the XML content
+        { test: /\.qml$/, type: 'asset/source' },
+      ],
+    },
   }
 })

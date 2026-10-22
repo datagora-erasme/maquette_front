@@ -221,16 +221,100 @@
           </div>
         </v-list>
         <!-- User data layers -->
-        <!-- <v-list class="layers-list">
+        <v-list class="layers-list">
           <div class="d-flex align-left subgroup-title-text">
             Mes données
-          </div> -->
-
-        <!-- Placeholder -->
-        <!-- <div class="d-flex align-center justify-center mt-2">
-            <i>A venir...</i>
           </div>
-        </v-list> -->
+
+          <!-- v-for -->
+          <div
+            v-for="(bLayer, index) in allUserLayers"
+            :key="bLayer.id"
+          >
+            <v-list-item
+              :title="bLayer.name"
+              :subtitle="bLayer.subtitle"
+              :prepend-icon="bLayer.icon"
+              class="layers-list-item"
+            >
+              <template #prepend="{prepend}">
+                <v-icon :color="allUserLayers[index].visible ? 'black' : 'grey'" :icon="prepend" />
+              </template>
+              <template #title="{title}">
+                <div class="d-flex align-left">
+                  <span :class="bLayer.visible ? '':'text-grey'">{{ title }}</span>
+                </div>
+              </template>
+              <template #subtitle="{subtitle}">
+                <div class="d-flex align-left">
+                  {{ subtitle }}
+                </div>
+              </template>
+              <template #append>
+                <v-btn
+                  v-if="bLayer.visible"
+                  color="green-darken-2"
+                  icon="mdi-eye"
+                  variant="outlined"
+                  density="comfortable"
+                  class="ml-1"
+                  @click="toggleVisibleUser(index)"
+                />
+                <v-btn
+                  v-else
+                  color="grey"
+                  icon="mdi-eye-off"
+                  variant="outlined"
+                  density="comfortable"
+                  class="ml-1"
+                  @click="toggleVisibleUser(index)"
+                />
+                <v-btn
+                  :color="allUserLayers[index].openSub ? 'blue': 'black'"
+                  icon="mdi-cog"
+                  variant="outlined"
+                  density="comfortable"
+                  class="ml-1"
+                  :active="allUserLayers[index].openSub"
+                  :disabled="!bLayer.opacity"
+                  @click="toggleSubUser(index)"
+                />
+                <v-btn
+                  color="cyan-darken-3"
+                  icon="mdi-help"
+                  variant="outlined"
+                  density="comfortable"
+                  class="ml-1"
+                  disabled
+                />
+              </template>
+            </v-list-item>
+            <div v-if="allUserLayers[index].openSub" class="sub-item">
+              <v-row class="justify-space-between">
+                <v-col lg="12" class="pb-0">
+                  <span class="fs-16" :class="bLayer.visible ? '':'text-grey'">Opacité de la couche : <b>{{ Math.round(bLayer.opacity) }}%</b></span>
+                  <v-slider
+                    v-model="bLayer.opacity"
+                    class="layers-slider"
+                    :color="bLayer.visible ? 'blue':'grey'"
+                    track-color="grey"
+                    min="0"
+                    max="100"
+                    :step="1"
+                    @update:modelValue="changeOpacityUser(index)"
+                  >
+                    <template #prepend>
+                      <span :class="bLayer.visible ? '':'text-grey'">0%</span>
+                    </template>
+                    <template #append>
+                      <span :class="bLayer.visible ? '':'text-grey'">100%</span>
+                    </template>
+                  </v-slider>
+                </v-col>
+              </v-row>
+            </div>
+          </div>
+        </v-list>
       </v-card-text>
     </v-card>
   </v-slide-x-transition>
@@ -245,6 +329,7 @@ export default {
     return {
       allBaseLayers: [],
       allCustomLayers: [],
+      allUserLayers: [],
     }
   },
   computed: {
@@ -271,12 +356,14 @@ export default {
       if(!this.allBaseLayers.length) {
         this.computeBaseLayers()
         this.computeCustomLayers()
+        this.computeUserLayers()
       }
     }
   },
   mounted() {
     this.computeBaseLayers()
     this.computeCustomLayers()
+    this.computeUserLayers()
   },
   methods: {
     ...mapActions({
@@ -286,7 +373,7 @@ export default {
       if (this.iTownsBaseLayers.length) {
         let tempBaseLayers = []
         // Technical layers and layers listed in additional data (see computeCustomLayers)
-        const excludedLayerIds = ['globe', 'atmosphere', 'IGN_MNT', 'IGN_MNT_HIGHRES', 'MNT_WORLD_SRTM3', 'IGN_Buildings', 'IGN_Buildings_Flat', 'Calque_Planta', 'Calque_Planta_2025', 'Bruit', 'Vegestrate', 'lcz_color']
+        const excludedLayerIds = ['globe', 'atmosphere', 'IGN_MNT', 'IGN_MNT_HIGHRES', 'MNT_WORLD_SRTM3', 'IGN_Buildings', 'IGN_Buildings_Flat', 'Calque_Planta', 'Calque_Planta_2025', 'Bruit', 'Vegestrate', 'lcz_color', 'Guide_Montage']
         this.iTownsBaseLayers.forEach(bLayer => {
           if (!excludedLayerIds.includes(bLayer.id)) {
             let newSubtitle = 'Fond de plan'
@@ -382,6 +469,23 @@ export default {
       // Final set in data
       this.allCustomLayers = tempBaseLayers
     },
+    computeUserLayers() {
+      let tempUserLayers = []
+      // Add layers (local files in src/datas)
+      let newLayerGuideMontage = {
+        id: 'Guide_Montage',
+        name: 'Guide de montage',
+        icon: 'mdi-grid',
+        subtitle: 'Tous niveaux',
+        openSub: false,
+        visible: false,
+        opacity: 1 * 100,
+      }
+      tempUserLayers.push(newLayerGuideMontage)
+
+      // Final set in data
+      this.allUserLayers = tempUserLayers
+    },
     closeAside() {
       this.setAsideStatus(false)
     },
@@ -418,6 +522,24 @@ export default {
       let newLayerOpacity = {
         id: this.allCustomLayers[index].id,
         opacity: this.allCustomLayers[index].opacity
+      }
+      this.$evtBus.emit('onChangeLayerOpacity', newLayerOpacity)
+    },
+    toggleSubUser(index) {
+      // Toggle sub menu
+      this.allUserLayers[index].openSub = !this.allUserLayers[index].openSub
+    },
+    toggleVisibleUser(index) {
+      // Toggle button
+      this.allUserLayers[index].visible = !this.allUserLayers[index].visible
+      // Emit Event to ItownsViewer & OL
+      this.$evtBus.emit('onToggleLayerVisibility', this.allUserLayers[index].id)
+    },
+    changeOpacityUser(index) {
+      // Emit Event to ItownsViewer & OL
+      let newLayerOpacity = {
+        id: this.allUserLayers[index].id,
+        opacity: this.allUserLayers[index].opacity
       }
       this.$evtBus.emit('onChangeLayerOpacity', newLayerOpacity)
     },
