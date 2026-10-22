@@ -116,6 +116,8 @@
   import { getUserLayerStyle } from '../utils/userLayer'
   import { loadVectorStyle } from '../utils/vectorStyle'
   import { applyStyle } from 'ol-mapbox-style'
+  import { getRenderPixel } from 'ol/render.js'
+  import { apply as applyTransform } from 'ol/transform.js'
 
   // Singleton OL Map
   let olMap = null
@@ -570,6 +572,7 @@
           }
         })
         vectorStyleLayer.getSource().setAttributions("<a href='" + conf.attribution.url + "' target='_blank'>" + conf.attribution.name + '</a>')
+        this.clipDeclutteredLayer(vectorStyleLayer)
         loadedStyle
           .then(loaded => {
             maxZoom = conf.maxZoom || loaded.maxZoom
@@ -581,6 +584,30 @@
           })
           .catch(e => console.error(conf.id + ' style not loaded', e))
         return vectorStyleLayer
+      },
+      clipDeclutteredLayer(layer) {
+        // OL 9 doesn't clip a decluttered layer to its extent (mockup area in projection): features with a zIndex
+        // (all of them with ol-mapbox-style) are drawn in a deferred pass, without the clip of the layer extent.
+        // Render events of this pass are used to clip it (they are only sent in the deferred pass when decluttering)
+        layer.on('prerender', event => {
+          const context = event.context
+          context.save()
+          const extent = layer.getExtent()
+          if (!extent) {
+            return
+          }
+          const [minX, minY, maxX, maxY] = extent
+          // Map coordinates => CSS pixels of this frame => pixels of the layer canvas
+          const corners = [[minX, minY], [maxX, minY], [maxX, maxY], [minX, maxY]].map(corner =>
+            getRenderPixel(event, applyTransform(event.frameState.coordinateToPixelTransform, corner))
+          )
+          context.beginPath()
+          context.moveTo(corners[0][0], corners[0][1])
+          corners.slice(1).forEach(corner => context.lineTo(corner[0], corner[1]))
+          context.closePath()
+          context.clip()
+        })
+        layer.on('postrender', event => event.context.restore())
       },
       createMVTSource({ name, tileUrl, tileZoom, tileMatrixSetLimits }) {
         // MVT tiles (EPSG:3857) loaded in a vector source, reprojected in the view projection
