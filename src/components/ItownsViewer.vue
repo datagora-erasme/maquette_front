@@ -1331,7 +1331,8 @@ export default {
           // console.log('objContent')
           // console.log(objContent)
 
-          objToMesh(objContent)
+          // Return the promise so that a parsing error is also caught below
+          return objToMesh(objContent)
           .then((mesh) => {
             // console.log('mesh')
             // console.log(mesh)
@@ -1344,26 +1345,19 @@ export default {
           })
         })
         .catch((e) => {
-          // Is area empty of building ?
-          if (e.response.data.isEmpty) {
-            this.$notify({
-              title: 'Erreur lors de la création',
-              text: "Une erreur s'est produite lors de la création. La zone séléctionnée ne contient peut-être pas de bâtiment ? Merci de recommencer ce processus.",
-              type: 'error',
-              duration: 10000
-            })
-            // Clean selected Area + redirect step 0 sidebar
-            this.$evtBus.emit('onResetStepperPos')
-          } else {
-            this.$notify({
-              title: 'Erreur lors de la création',
-              text: "Une erreur s'est produite lors de la création. Merci de recommencer ce processus.",
-              type: 'error',
-              duration: 10000
-            })
-            // Clean selected Area + redirect step 0 sidebar
-            this.$evtBus.emit('onResetStepperPos')
-          }
+          console.error(e)
+          // Is area empty of building ? (no response on network error / timeout)
+          const isEmptyArea = e?.response?.data?.isEmpty
+          this.$notify({
+            title: 'Échec de la création de la maquette',
+            text: isEmptyArea
+              ? "Une erreur s'est produite lors de la création. La zone séléctionnée ne contient peut-être pas de bâtiment ? Vous pouvez modifier votre sélection et réessayer."
+              : "Une erreur s'est produite lors de la création. Vous pouvez réessayer ou modifier votre sélection.",
+            type: 'error',
+            duration: 10000
+          })
+          // Back to area selection step, keeping the selected area
+          this.$refs.sidebarComponent.failVoxelisation();
         })
       }
     },

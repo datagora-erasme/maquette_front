@@ -1065,6 +1065,11 @@ export default {
       this.isLoading = false;
       this.goToNextStep();
     },
+    failVoxelisation() {
+      // Back to area selection step, keeping plates & selected area to allow a retry
+      this.isLoading = false;
+      this.currentStep = 0;
+    },
     goToNextStep() {
       this.currentStep++;
       this.setPlates({ x: this.nbPlatesHorizontal, y: this.nbPlatesVertical })
